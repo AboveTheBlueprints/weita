@@ -107,6 +107,7 @@ function territory(m, lz, player) {
     for (let i = 0; i < 2; i++) {
       if (man(pos, o.pos) <= 1) break;
       const [n, k] = m.stepToward(pos, o.pos); if (!k || eq(n, o.pos)) break;
+      if (m.V.has('记恩') && (lz.fed || 0) >= 1 && eq(n, player)) { face = k; break; }   // 第二个 07:50：认得你的去赶邻居，路上撞上你就停在你跟前，不压你（第三个当玩家玩第 15 张：青认得她，冲去嘶红，顺路把站在中间的她扑了）
       pos = n; face = k;
       if (eq(pos, player)) return [keep({ pos, face, mode: '赶' }), true];
     }

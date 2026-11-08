@@ -429,7 +429,7 @@ function act(k) {
   if (r === null) {
     const d = S.DIRS[k] || [0, 0];
     deadMark = { at: [st.pl[0] + d[0], st.pl[1] + d[1]], from: (S.killedBy === 'B' && st.lzB) ? st.lzB.pos : st.lz.pos };
-    log.unshift(`第 ${n} 步（${KNAME[k]}）：你走完这一步，蜥蜴扑到了你身上。（红叉是它扑到你的那一格）`);
+    log.unshift(`第 ${n} 步（${KNAME[k]}）：你走完这一步，${st.lzB ? (S.killedBy === 'B' ? '青蜥蜴' : '红蜥蜴') : '蜥蜴'}扑到了你身上。（红叉是它扑到你的那一格）`);   // 第二个 07:50：两只的时候写是哪只（第三个：分不清是谁压的）
     over = true; msg.textContent = '你被吃掉了。按 Z 撤回一步，或者按 R 从头再来。'; dian(k); dian('死');
     prev = st; heardNow = false; draw(true); return;
   }
