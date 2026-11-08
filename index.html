@@ -567,6 +567,8 @@ function act(k) {
   if (r !== 'bad') hist.push(snap);
   if (r === 'bad') {
     msg.textContent = k[0] === 'X' ? '吐不出来：肚子里没有虫，或者脚下已经有一只。' : (st.lz && (() => { const d = S.DIRS[k]; return eq([st.pl[0] + d[0], st.pl[1] + d[1]], st.lz.pos); })() ? '走不过去，蜥蜴占着那一格。' : '走不过去，那边是墙。');
+    // 第二个·页11 21:39 页34撞：网4"按了几次才发现没走"，那句字在右上角，眼睛在格子上看不见。走不过去时整块格子往那边顶一下再弹回来。
+    if (k[0] !== 'X' && S.DIRS[k]) { const d = S.DIRS[k], cv = document.getElementById('board'); if (cv.animate) cv.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${d[0] * 9}px,${d[1] * 9}px)` }, { transform: 'translate(0,0)' }], { duration: 160, easing: 'ease-out' }); }
     return;
   }
   n += 1; msg.textContent = '';
