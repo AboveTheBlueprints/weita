@@ -265,6 +265,10 @@ function frame(cv, m, info, t) {
   const jump = spotted && prev && t < 1 ? 1 + 0.18 * Math.sin(Math.PI * seg(t, 0.55, 0.85)) : 1;
   const eyes = dead ? null : (m.V.has('饱不理') && (lz.hun || 0) >= 5) ? '眯' : (prev && m.V.has('日子') && (prev.lz.hun || 0) >= 5 && (lz.hun || 0) < 5 && lz.mode !== '吃') ? '睁' : null;
   drawLizA(g, lx, ly, ang, 1, jump, eyes, m.V.has('日子') ? (lz.hun || 0) : null);
+  if (m.V.has('记恩') && (lz.fed || 0) > 0 && !dead) {   // 第二个 第 15 天 05:51 页53记恩：吃过你吐的几只，身子底下就有几个小绿点（追丢你一回就没了）。不写字
+    g.fillStyle = '#8fd16a'; g.strokeStyle = '#1d1f1a'; g.lineWidth = 1.5;
+    for (let i = 0; i < Math.min(lz.fed, 3); i++) { g.beginPath(); g.arc(lx - 7 + i * 7, ly + C * 0.38, 3.4, 0, Math.PI * 2); g.fill(); g.stroke(); }
+  }
   if (st.lzB) drawB(g, m, info, t, tMove);
   // 盯上你那一下：从它到你一道红线闪两下
   if (spotted && lz.tgt === '你') {
@@ -327,6 +331,10 @@ function drawB(g, m, info, t, tMove) {
     const spotted = !dead && (b.mode === '停' || b.mode === '赶') && (!prev || !prev.lzB || prev.lzB.mode !== b.mode);
     const jump = spotted && prev && t < 1 ? 1 + 0.18 * Math.sin(Math.PI * seg(t, 0.55, 0.85)) : 1;
     drawLizA(g, x, y, ang, 1, jump, eyes, m.V.has('日子') ? (b.hun || 0) : null);
+    if (m.V.has('记恩') && (b.fed || 0) > 0 && !dead) {   // 第二个 07:09 页55：青吃过你吐的，身子底下也有小绿点
+      g.fillStyle = '#8fd16a'; g.strokeStyle = '#1d1f1a'; g.lineWidth = 1.5;
+      for (let i = 0; i < Math.min(b.fed, 3); i++) { g.beginPath(); g.arc(x - 7 + i * 7, y + C * 0.38, 3.4, 0, Math.PI * 2); g.fill(); g.stroke(); }
+    }
     if (!dead && (!prev || t >= 0.6)) {
       const mk = { '停': ['!', b.tgt === '你' ? '#ff7a5c' : '#c8e88a'], '追': ['!!', b.tgt === '你' ? '#ff7a5c' : '#c8e88a'], '找': ['?', '#e0c070'], '吃': ['嚼', '#c8e88a'], '扒': ['扒', '#e0c070'], '赶': ['!', '#ffb040'], '逃': ['…', '#cccccc'] }[b.mode];
       if (mk) bubble(g, x, y, mk[0], mk[1]);
