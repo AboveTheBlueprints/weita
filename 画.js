@@ -192,7 +192,9 @@ function frame(cv, m, info, t) {
   const tMove = ease(seg(t, moved && turned ? 0.15 : 0.05, 0.5)), tSight = seg(t, 0.5, 0.8), tPop = seg(t, 0.6, 0.85);
   // 旧的视线先淡掉，新的再伸出来
   if (prev && t < 1 && !dead && (turned || moved)) drawSightCells(g, m, lz0.pos, lz0.face, 99, 1 - seg(t, 0, 0.2));
-  if (!dead) drawSightCells(g, m, lz.pos, lz.face, (prev && (turned || moved)) ? Math.ceil(tSight * 12) : 99, 1);
+  // 第二个·页11 19:24（第一个查的：岔网1、2 都问"它朝着我、我也在黄格里，却只转头没扑"）：听见脚步刚转过来的那一回合它还没看，新黄线画淡，你下一步走完还站在里面才实
+  const fresh = !dead && info.heard && turned && !moved;
+  if (!dead) drawSightCells(g, m, lz.pos, lz.face, (prev && (turned || moved)) ? Math.ceil(tSight * 12) : 99, fresh ? 0.38 : 1);
   if (!prev || (!turned && !moved)) {} // 视线没变就一直亮着
   // 声音：你走一步、虫跑一步、虫落地，都有一圈
   if (prev && t < 1) {
