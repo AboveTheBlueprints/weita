@@ -59,11 +59,12 @@
 const LEVELS = [
   { name: '窝边', text: `
 #############
-#N.P.B..#...#
+#N.P....#...#
 #.###.###.B.#
 #.....#..L..#
 #####...B...#
-#############`, face: 'L', need: 1, carry: 0, hun0: 2, V: ['一件事', '不转回', '窝安全', '吐朝', '听', '馋', '撞', '只扑盯着的', '背逃', '日子', '饱不理'] },
+#############`, face: 'L', need: 1, carry: 0, hun0: 8,   // 第一个 18:35 页22窝边：拿掉你身边那只，它开局吃饱，看它过一天（窝1、窝2：'各忙各的'）
+    V: ['一件事', '不转回', '窝安全', '吐朝', '听', '馋', '撞', '只扑盯着的', '背逃', '日子', '饱不理'] },
   { name: '长廊', text: `
 #############
 #N.P.......B#
@@ -92,12 +93,20 @@ const LEVELS = [
 ####.##.#####
 ####....#####
 #############`, face: 'L', need: 2, carry: 0, hun0: 5, V: ['吐', '吐向它', '一件事', '不转回', '窝安全', '吐朝', '吐选', '听', '馋', '撞', '只扑盯着的', '背逃', '日子', '饱不理'] },   // 第二个·页11 17:15：岔巷那条死巷换成一圈；17:32 改成肚子里不带虫、地上只有两只：喂一口就凑不够，得拿自己当诱饵拉它进圈：能骗它冲过头，也能拉着它绕圈
+  { name: '石缝', text: `
+###################
+#.c.#.k.#.k.#.c.###
+#.#.#.#.#.#.#.#.###
+#NP...............#
+#.#.#.#.#.#.#.#.#.#
+#.k.#.c.#.k.#.k.#L#
+###################`, face: 'U', need: 2, carry: 0, hun0: 2, limit: 50, V: ['吐', '吐向它', '一件事', '不转回', '窝安全', '吐朝', '吐选', '听', '馋', '撞', '只扑盯着的', '背逃', '日子', '饱不理', '扒'] },   // 第二个·页11 18:05：第一个的'扒'（页21扒，法布尔第十八章"先读错"）。地上一只明虫都没有，八道石缝三道有虫；它饿了只去扒有虫的那几道（闻得到），扒不出来留爪印。每道缝在一个两头开口的小弯里（第一个说死胡同一个口太狠）
   { name: '天快黑了', text: `
 ###############
-#N..L.....B..P#
-####.##.###.###
-####....###B###
-###############`, face: 'L', need: 3, carry: 1, hun0: 6, V: ['吐', '吐向它', '一件事', '不转回', '窝安全', '吐朝', '吐选', '听', '馋', '撞', '只扑盯着的', '背逃', '日子', '饱不理'] },   // 第二个·页11 17:15：最后一张，要三只：圈、岔口、它饿了都用得上
+#NP....L...BBB#
+####.##.##.####
+####....##B####
+###############`, face: 'L', need: 3, carry: 1, hun0: 6, limit: 50, V: ['吐', '吐向它', '一件事', '不转回', '窝安全', '吐朝', '吐选', '听', '馋', '撞', '只扑盯着的', '背逃', '日子', '饱不理', '学'] },   // 第二个·页11 18:03（18:20 多放一只虫：末1、末2 七局没过，卡在虫不够分、它占着窄路，不在'学'）：最后一张，去和回都得从它眼前过；只这一张开第一个的'学'（溜掉两回它就不停直冲，"记仇"），前面一直靠它停那一拍溜，到这里它不上当了
 ];
 const LIMIT = 40;
 const lim = () => LEVELS[li].limit || LIMIT;   // 第二个·页11 17:39：一张图可以自己定天黑前几步（'天快黑了'）
@@ -112,7 +121,7 @@ function events(k, a, b) {
   const la = a.lz, lb = b.lz;
   if (k === '.') out.push('你没动。');
   if (k[0] === 'X') out.push(eq(lastDrop, a.pl) ? '你吐出了一只虫，落在你脚下。' : '你吐出了一只虫。');
-  if (b.ate > a.ate) out.push('你吃到了一只虫！');
+  if (b.ate > a.ate && !S.dugOut) out.push('你吃到了一只虫！');
   a.bugs.forEach((x, i) => {
     const y = b.bugs[i];
     if (x && y && !eq(x, y)) out.push('一只虫往' + (y[0] > x[0] ? '右' : y[0] < x[0] ? '左' : y[1] > x[1] ? '下' : '上') + '逃了一格。');
@@ -126,19 +135,26 @@ function events(k, a, b) {
   });
   if (!eq(la.pos, lb.pos)) {
     const dx = lb.pos[0] - la.pos[0], dy = lb.pos[1] - la.pos[1], nn = Math.abs(dx) + Math.abs(dy);
-    if (['追', '找', '停'].includes(la.mode) || ['追', '找'].includes(lb.mode) || nn > 1) out.push(`蜥蜴冲了 ${nn} 格。`);
+    // 第二个·页11 18:20：第一个线上真点，三句字骗人。①找完放弃往回走那一步以前也写"冲了"
+    if (la.mode === '找' && !['追', '找'].includes(lb.mode) && nn === 1) out.push(`蜥蜴没找着，不找了，走了 1 格，脸朝${FACE[lb.face]}。`);
+    else if (['追', '找', '停'].includes(la.mode) || ['追', '找'].includes(lb.mode) || nn > 1) out.push(`蜥蜴冲了 ${nn} 格。`);
     else if (m.V.has('日子') && lb.mode === '吃') {}
-    else if (m.V.has('日子') && !(la.hun > 0)) out.push(`蜥蜴饿了，自己往有虫的地方走了 1 格，脸朝${FACE[lb.face]}。`);
+    else if (m.V.has('日子') && !(la.hun > 0)) out.push((b.bugs.some(x => x) || (m._smell || []).length) ? `蜥蜴饿了，自己往有虫的地方走了 1 格，脸朝${FACE[lb.face]}。` : `蜥蜴肚子瘪着，地上没虫了，它往石头那边走了 1 格，脸朝${FACE[lb.face]}。`);   // ③ 第二个·页11 18:20：地上没虫时别写'往有虫的地方'（第一个读成它闻着她追）
     else if (eq(lb.pos, m.post)) out.push(m.V.has('日子') ? '蜥蜴回到它的石头上，趴着晒太阳。' : '蜥蜴慢慢走回了它原来站的地方。');
     else out.push(m.V.has('日子') ? `蜥蜴吃饱了，往它的石头走了 1 格，脸朝${FACE[lb.face]}。` : `蜥蜴往回走了 1 格，脸朝${FACE[lb.face]}。`);
     
   } else if (la.face !== lb.face) {
     // 第三个 12:15：转头那一拍写出它听见的是谁（生人："没看懂它到底听到了什么"）
     if (S.heard && S.heardAt) out.push((eq(S.heardAt, b.pl) ? '蜥蜴听见了你的脚步' : '蜥蜴听见一只虫在动') + `，转头朝${FACE[lb.face]}。`);
-    else if (lb.mode === '找') out.push(`蜥蜴转头朝${FACE[lb.face]}。`);
+    else if (lb.mode === '找') out.push(`蜥蜴在原地四下找你，转头朝${FACE[lb.face]}。`);   // ② 第二个·页11 18:20：跟'听见了转头'分开
     else out.push(`蜥蜴转头朝${FACE[lb.face]}。`);
   }
+  if (S.noStop) out.push('你从它眼前溜掉过两回了，蜥蜴这回没停下来盯你，看见你就冲了。');   // 第一个 17:17 '学'
   if (S.ignored) out.push('蜥蜴看见了你，它肚子鼓鼓的，没理你。');   // 第一个 16:57
+  if (lb.mode === '扒' && la.mode !== '扒') out.push('蜥蜴走到一道石缝上，低头扒了起来。石缝底下吱吱叫了两声。');   // 第一个 17:46 '扒'；17:55 加'吱吱'：扒3、扒4 都把它扒缝读成'它有自己的饭要找'，没人把它扒过的缝跟缝里有虫连上
+  else if (lb.mode === '扒') out.push('蜥蜴还在扒那道石缝。');
+  if (S.dug) out.push('蜥蜴扒了半天，扒不出来，走开了。石缝上留下了它的爪印。');
+  if (S.dugOut) out.push('你从石缝里抠出了一只虫！');
   // 第一个 17:02：它闲着站着不动的那一回合，写它在干什么（饱2 连等三下"什么也没看见"，不知道它多久才饿）
   if (m.V.has('日子') && la.mode === '岗' && lb.mode === '岗' && eq(la.pos, lb.pos) && la.face === lb.face && !S.ignored) {
     const h = lb.hun || 0;
@@ -253,12 +269,12 @@ function act(k) {
   const ev = events(k, st, r);   // 09:55 第三个：空着的步把有事的挤下去了，没动静的那步淡淡写一句
   log.unshift(ev.length ? `第 ${n} 步（${KNAME[k]}）：` + ev.join(' ') : `<span style="color:#77735f">第 ${n} 步（${KNAME[k]}）：你走了一格，它没动静。</span>`);
   prev = st; st = r;
-  if (st.ate < m.need && st.bugs.every(b => !b)) { over = true; msg.textContent = `你肚子里只剩 ${st.ate} 只，地上也没有虫了，凑不够 ${m.need} 只，这一局赢不了了。按 R 从头再来。`; }
+  if (st.ate + (st.hid || []).filter(b => b).length < m.need && st.bugs.every(b => !b)) { over = true; msg.textContent = `你肚子里只剩 ${st.ate} 只，地上也没有虫了，凑不够 ${m.need} 只，这一局赢不了了。按 R 从头再来。`; }
   else if (st.ate < m.need && eq(st.pl, m.nest)) { msg.textContent = `到窝了，可肚子里只有 ${st.ate} 只，要带 ${m.need} 只回来。`; }   // 第二个·页11 17:29：七1、七2 带着不够数的虫回窝，屏幕没反应，以为要出去再进来
   else if (st.ate >= m.need && eq(st.pl, m.nest)) {
     over = true; msg.textContent = `回到窝了，过了！一共 ${n} 步。`; dian('过'); PASSED.add(li);
     if (li + 1 < LEVELS.length) document.getElementById('next').style.display = 'inline-block';
-    else msg.textContent += ' 天黑了，它也回石头上趴着了。六张都过完了。';
+    else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';
   } else if (n >= lim()) { over = true; dian('黑'); msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; }
   draw(true);
 }

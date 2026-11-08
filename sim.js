@@ -14,7 +14,7 @@ const idx = (arr, p) => arr.findIndex(b => b !== null && eq(b, p));
 function Map_(text, face, need, carry, variant) {
   const rows = text.replace(/^\n+|\n+$/g, '').split('\n');
   this.h = rows.length; this.w = Math.max(...rows.map(r => r.length));
-  this.wall = new Set(); this.bugs = [];
+  this.wall = new Set(); this.bugs = []; this.cracks = []; this.hid = [];
   rows.forEach((r, y) => {
     const rr = r.padEnd(this.w, '#');
     for (let x = 0; x < this.w; x++) {
@@ -24,6 +24,8 @@ function Map_(text, face, need, carry, variant) {
       else if (c === 'P') this.start = [x, y];
       else if (c === 'B') this.bugs.push([x, y]);
       else if (c === 'L') this.post = [x, y];
+      else if (c === 'c') { this.cracks.push([x, y]); this.hid.push([x, y]); }   // 第一个 17:44 '扒'：石缝，底下藏着一只虫
+      else if (c === 'k') this.cracks.push([x, y]);   // 空石缝
     }
   });
   this.face = face; this.need = need; this.carry = carry || 0;
@@ -157,6 +159,12 @@ function lizardOne(m, lz, player, bugs, sounds) {
   const V = m.V;
   api.why = null;
   const full = V.has('饱不理') && lz.hun >= 5;   // 第一个 16:57 '饱不理'：肚子鼓鼓的时候不看你、不看虫，只回石头
+  if (mode === '扒') {   // 第一个 17:44 '扒'（法布尔第十八章：沙蜂刨几下就走，不是找不到，是虫钻深了它挖不动）：扒两回合，扒不动，走开
+    eat -= 1;
+    if (eat > 0) return [{ pos, face, mode: '扒', tgt: null, mem: null, eat }, false];
+    api.dug = pos;
+    return [{ pos, face, mode: '岗', tgt: null, mem: null, eat: 0 }, false];
+  }
   if (V.has('吐向它') && mode !== '吃' && !full && has(bugs, pos)) {
     bugs[idx(bugs, pos)] = null;
     return [{ pos, face, mode: '吃', tgt: null, mem: null, eat: 2 }, false];
@@ -181,9 +189,13 @@ function lizardOne(m, lz, player, bugs, sounds) {
   }
   if (pick !== null) {
     // 10:13 第一个看到：找的时候看见你直接冲，比站岗少一拍，像"有时停有时不停"。改成：新看见一样东西都先盯一回合
-    if (mode === '岗' || mode === '找' || (mode === '追' && pick[0] !== tgt)) return [{ pos, face, mode: '停', tgt: pick[0], mem: pick[1], eat: 0 }, false];
+    // 第一个 17:17 '学'：被你甩掉两回以后，再看见你不先盯，直接冲（法布尔的蜂上了两三回当就不上了）；第二个·页11 17:59 从页20学 拷来
+    const learned = V.has('学') && (lz.learn || 0) >= 2 && pick[0] === '你' && (mode === '岗' || mode === '找');
+    if (learned) api.noStop = true;
+    else if (mode === '岗' || mode === '找' || (mode === '追' && pick[0] !== tgt)) return [{ pos, face, mode: '停', tgt: pick[0], mem: pick[1], eat: 0 }, false];
     mode = '追'; tgt = pick[0]; mem = pick[1];
   } else if (mode === '追' || mode === '停') {
+    if (V.has('学') && tgt === '你') api.fooled = true;
     mode = '找'; eat = 0;
   } else if (mode === '找' && eq(pos, mem)) {
     if (eat < 3) { api.why = '环顾'; return [{ pos, face: CCW[face], mode: '找', tgt, mem, eat: eat + 1 }, false]; }
@@ -201,7 +213,7 @@ function lizardOne(m, lz, player, bugs, sounds) {
         if (eq(pos, m.post)) return [{ pos, face, mode: '岗', tgt: null, mem: null, eat: ONE_BACK }, false];
       }
     }
-    if (eq(pos, m.post) && !(V.has('日子') && !(lz.hun > 0) && nearBug(m, pos, bugs))) {
+    if (eq(pos, m.post) && !(V.has('日子') && !(lz.hun > 0) && nearBug(m, pos, bugs.concat(m._smell || [])))) {
       if (face !== m.face && !V.has('不转回')) {
         if (eat > 1) return [{ pos, face, mode: '岗', tgt: null, mem: null, eat: eat - 1 }, false];
         return [{ pos, face: m.face, mode: '岗', tgt: null, mem: null, eat: 0 }, false];
@@ -213,7 +225,9 @@ function lizardOne(m, lz, player, bugs, sounds) {
   let goal, steps;
   if (mode === '追' || mode === '找') { goal = mem; steps = 2; } else { goal = m.post; steps = 1; }
   // 第三个 11:59 '日子'：闲着的时候，饿了朝最近的虫走，饱了走回石头（m.post）
-  if (mode === '岗' && V.has('日子') && !(lz.hun > 0)) { const nb = nearBug(m, pos, bugs); if (nb) goal = nb; }
+  if (mode === '岗' && V.has('日子') && !(lz.hun > 0)) { const nb = nearBug(m, pos, bugs.concat(m._smell || [])); if (nb) goal = nb; }
+  const digHere = p => V.has('扒') && mode === '岗' && !(lz.hun > 0) && has(m._smell || [], p);
+  if (digHere(pos)) return [{ pos, face, mode: '扒', tgt: null, mem: null, eat: 2 }, false];
   let dead = false;
   for (let s = 0; s < steps; s++) {
     if (eq(pos, goal)) break;
@@ -225,6 +239,7 @@ function lizardOne(m, lz, player, bugs, sounds) {
     pos = np;
     if (k) face = k;
     if (eq(pos, player)) { dead = true; break; }
+    if (digHere(pos)) return [{ pos, face, mode: '扒', tgt: null, mem: null, eat: 2 }, false];
     const bi = idx(bugs, pos);
     if (bi >= 0 && !full) {
       bugs[bi] = null;
@@ -269,7 +284,7 @@ function bugsTurn(m, bugs, lzpos, player) {
 
 // 局面：{pl, ate, bugs, lz}；一步：'U' 'R' 'D' 'L' '.' 'X'。返回新局面、'bad'（走不了）或 null（死了）
 function step(m, st, k) {
-  api.heard = false; api.ignored = false;
+  api.heard = false; api.ignored = false; api.fooled = false; api.noStop = false;
   let pl = st.pl, ate = st.ate; let bugs = st.bugs.slice(); const lz = st.lz;
   let pf = st.pf || null;   // 你的朝向（'吐朝' 用）
   let drop = [], di = -1;
@@ -346,14 +361,22 @@ function init(m) {
 
 const FULL = 8;   // 第三个 11:59 '日子'：吃到一只，饱 FULL 回合（嚼 2 + 走回去 + 晒），然后又饿
 function step2(m, st, k) {
+  const hid = st.hid || (m.hid || []).map(p => p), marks = st.marks || [];
+  m._smell = hid.filter(p => p && !has(marks, p)); api.dug = null; api.dugOut = false;
   const r = step(m, st, k);
+  if (r && r !== 'bad') {   // 第一个 17:44 '扒'：你走到藏虫的石缝上就抠出来吃了；它扒过的缝留爪印
+    r.hid = hid.slice(); r.marks = api.dug ? marks.concat([api.dug]) : marks.slice();
+    const hi = idx(r.hid, r.pl);
+    if (hi >= 0 && k !== '.' && k[0] !== 'X') { r.hid[hi] = null; r.ate += 1; api.dugOut = true; }
+  }
   if (r && r !== 'bad' && r.lz && m.V.has('日子')) {
     const h0 = st.lz.hun || 0;
     r.lz.hun = (r.lz.mode === '吃' && st.lz.mode !== '吃') ? FULL : Math.max(0, h0 - 1);
   }
+  if (r && r !== 'bad' && r.lz) r.lz.learn = (st.lz.learn || 0) + (api.fooled ? 1 : 0);
   return r;
 }
-function init2(m) { const o = init(m); if (m.V.has('日子')) o.lz.hun = m.hun0 === undefined ? 0 : m.hun0; return o; }
+function init2(m) { const o = init(m); o.hid = (m.hid || []).map(p => p); o.marks = []; if (m.V.has('日子')) o.lz.hun = m.hun0 === undefined ? 0 : m.hun0; return o; }
 // 第三个 12:08：它这会儿要去吃的是哪只虫（给画面标出来）（第一个 14:53 从页2 搬来）
 function wantBug(m, st) {
   const lz = st.lz;

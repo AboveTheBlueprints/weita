@@ -171,6 +171,17 @@ function frame(cv, m, info, t) {
   cv.width = m.w * C; cv.height = m.h * C;
   drawFloor(g, m); drawNest(g, m.nest);
   const { prev, st, dead, drop } = info;
+  (m.cracks || []).forEach(q => {   // 第一个 17:48 '扒'：石缝画成几道深色裂纹；它扒过的缝上加三道爪印
+    const X = q[0] * C, Y = q[1] * C;
+    g.strokeStyle = '#3b3326'; g.lineWidth = 3; g.beginPath();
+    g.moveTo(X + C * 0.2, Y + C * 0.35); g.lineTo(X + C * 0.45, Y + C * 0.55); g.lineTo(X + C * 0.8, Y + C * 0.45);
+    g.moveTo(X + C * 0.45, Y + C * 0.55); g.lineTo(X + C * 0.5, Y + C * 0.8); g.stroke();
+    if ((st.marks || []).some(r => r[0] === q[0] && r[1] === q[1])) {
+      g.strokeStyle = '#c96a4a'; g.lineWidth = 2; g.beginPath();
+      for (let i = 0; i < 3; i++) { g.moveTo(X + C * (0.3 + i * 0.15), Y + C * 0.15); g.lineTo(X + C * (0.22 + i * 0.15), Y + C * 0.35); }
+      g.stroke();
+    }
+  });
   const P = prev || st, pl0 = P.pl, lz0 = P.lz, lz = st.lz;
   const moved = !same(lz0.pos, dead ? dead.at : lz.pos);
   const turned = lz0.face !== lz.face;
@@ -246,6 +257,7 @@ function frame(cv, m, info, t) {
     else if (lz.mode === '追') bubble(g, lx, ly, '!!', lz.tgt === '你' ? '#ff7a5c' : '#c8e88a');
     else if (lz.mode === '找') bubble(g, lx, ly, '??', '#e0c070');   // 11:01 第二个：两个生人分不清听见的 ? 和找你的 ?，照 ! / !! 改成 ? / ??
     else if (lz.mode === '吃') bubble(g, lx, ly, '嚼', '#c8e88a');
+    else if (lz.mode === '扒') bubble(g, lx, ly, '扒', '#e0c070');
     else if (info.heard) bubble(g, lx, ly, '?', '#f0d060');
     g.restore();
   }
