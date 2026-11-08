@@ -214,6 +214,12 @@ function frame(cv, m, info, t) {
     g.globalAlpha = 0.5 * a; g.setLineDash([3, 6]); g.strokeStyle = '#ff7a5c'; g.lineWidth = 2;
     g.beginPath(); g.moveTo(cx(lz.pos[0]), cx(lz.pos[1])); g.lineTo(cx(lz.mem[0]), cx(lz.mem[1])); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
   }
+  // 第一个 21:27 页33记号：被你甩掉过，它丢你的那一格一直留着那个淡淡的你（跟它找你时同一个记号，生人已经认得"它记得你在这儿"），它在石头上时再连一条淡线。不写字说为什么。
+  if (!dead && m.V.has('记仇') && lz.grudge && !((lz.mode === '找' || lz.mode === '追') && lz.tgt === '你')) {
+    ghostMe(g, lz.grudge, 0.55);
+    g.globalAlpha = 0.3; g.setLineDash([3, 6]); g.strokeStyle = '#ff7a5c'; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(cx(lz.pos[0]), cx(lz.pos[1])); g.lineTo(cx(lz.grudge[0]), cx(lz.grudge[1])); g.stroke(); g.setLineDash([]); g.globalAlpha = 1;
+  }
   if (drop && !dead && t >= 1) {   // 按 x 虫会落的那一格（第二个·页11 17:06：吐选瞄准时 drop 是几格，一格一个框）
     for (const d of (Array.isArray(drop[0]) ? drop : [drop])) { g.setLineDash([6, 5]); g.strokeStyle = COL.drop; g.lineWidth = 2.5; g.strokeRect(d[0] * C + 6, d[1] * C + 6, C - 12, C - 12); g.setLineDash([]); }
   }

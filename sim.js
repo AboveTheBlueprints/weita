@@ -244,7 +244,8 @@ function lizardOne(m, lz, player, bugs, sounds) {
       return [{ pos, face: k || face, mode: '停', tgt: '你', mem: player, eat: 0 }, false];
     }
     pos = np;
-    if (k) face = k;
+    if (k) face = (V.has('记仇') && lz.grudge && mode === '岗' && eq(goal, m.post) && !V.has('日子x')) ? ({ U: 'D', D: 'U', L: 'R', R: 'L' })[k] : k;   // 第一个 21:00 页31倒退：被你甩掉过，回石头的路上倒着退，眼睛一直朝你溜走的那边
+    if (k && V.has('记仇') && lz.grudge && mode === '岗' && eq(goal, m.post)) api.backing = true;
     if (eq(pos, player)) { dead = true; break; }
     if (digHere(pos)) return [{ pos, face, mode: '扒', tgt: null, mem: null, eat: 2 }, false];
     const bi = idx(bugs, pos);
@@ -291,7 +292,7 @@ function bugsTurn(m, bugs, lzpos, player) {
 
 // 局面：{pl, ate, bugs, lz}；一步：'U' 'R' 'D' 'L' '.' 'X'。返回新局面、'bad'（走不了）或 null（死了）
 function step(m, st, k) {
-  api.heard = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false;
+  api.heard = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false; api.backing = false;
   let pl = st.pl, ate = st.ate; let bugs = st.bugs.slice(); const lz = st.lz;
   let pf = st.pf || null;   // 你的朝向（'吐朝' 用）
   let drop = [], di = -1;
