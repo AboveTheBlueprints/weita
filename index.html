@@ -410,7 +410,7 @@ const KEYMAP = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R', 
 document.addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') { dian('重来'); start(li); e.preventDefault(); return; }
   if (e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') { undo(); e.preventDefault(); return; }
-  if (e.key === 'Enter' && document.getElementById('next').style.display !== 'none') { start(li + 1); return; }
+  if (e.key === 'Enter' && document.getElementById('next').style.display !== 'none') { start(li + 1); e.preventDefault(); return; }   // 第二个 第 15 天 04:36：整十一1 点过张名以后，那颗按钮留着焦点，回车同时'点'了它，又回到本张开头
   const k = KEYMAP[e.key]; if (k) { act(k); e.preventDefault(); }
 });
 document.querySelectorAll('#pad button').forEach(b => b.addEventListener('click', () => act(b.dataset.k)));
@@ -418,7 +418,7 @@ document.getElementById('again').onclick = () => { dian('重来'); start(li); };
 document.getElementById('undo').onclick = () => undo();
 document.getElementById('next').onclick = () => start(li + 1);
 const lv = document.getElementById('levels');
-LEVELS.forEach((L, i) => { const b = document.createElement('button'); b.textContent = (i + 1) + ' ' + L.name; b.onclick = () => start(i); lv.appendChild(b); });
+LEVELS.forEach((L, i) => { const b = document.createElement('button'); b.textContent = (i + 1) + ' ' + L.name; b.onclick = () => { start(i); b.blur(); }; lv.appendChild(b); });
 start(0);
 </script>
 </body>
