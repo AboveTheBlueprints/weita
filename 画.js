@@ -317,7 +317,7 @@ function animate(cv, m, info, done) {
 function drawB(g, m, info, t, tMove) {
   const { prev, st, dead } = info; const b = st.lzB, b0 = (prev && prev.lzB) || b;
   const keep = [COL.liz, COL.lizBelly, COL.sight, COL.sightEdge];
-  COL.liz = '#3fb8a8'; COL.lizBelly = '#9fe6d8'; COL.sight = 'rgba(240,200,80,0.18)'; COL.sightEdge = 'rgba(240,200,80,0.40)';
+  COL.liz = '#3fb8a8'; COL.lizBelly = '#9fe6d8'; COL.sight = 'rgba(240,200,80,0.18)'; COL.sightEdge = 'rgba(80,215,195,0.95)';   // 第二个 第 15 天 02:40 页48两口：对1 说两条黄线叠在一起分不清谁在看哪。填色照旧黄（黄格＝被看见），青的那条描青边
   try {
     const killed = dead && root.WeiSim && root.WeiSim.killedBy === 'B';
     if (!dead) drawSightCells(g, m, b.pos, b.face, 99, prev && t < 0.6 ? seg(t, 0.3, 0.6) : 1);
