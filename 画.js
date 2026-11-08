@@ -280,7 +280,7 @@ function frame(cv, m, info, t) {
   }
   const showPop = !prev || t >= 1 ? 1 : tPop;
   if (!dead && info.heard && prev && t < 0.62) {   // 先是听见、转头，转过来看见了才是"看见你了"
-    g.save(); g.globalAlpha = seg(t, 0.2, 0.35); bubble(g, lx, ly, '?', '#f0d060'); g.restore();
+    // 第二个 第 15 天 04:38 页51一个问号：听见那一下不再冒 ?（整十一1、2 都分不清头上 ? 和 ??）。听见只靠转头和脚步那圈变亮
   } else if (!dead && showPop > 0) {
     g.save(); g.globalAlpha = showPop;
     // 10:22 梓韬："太直白地写上去，就基本上把所有规则都直接曝光了"，冒字只留记号，让人自己看出来
@@ -288,10 +288,9 @@ function frame(cv, m, info, t) {
     else if (lz.mode === '追') bubble(g, lx, ly, '!!', lz.tgt === '你' ? '#ff7a5c' : '#c8e88a');
     else if (lz.mode === '赶') bubble(g, lx, ly, '!', '#ffb040');   // 第二个 第 15 天 01:53 页45邻居：盯着闯进来的那只
     else if (lz.mode === '逃') bubble(g, lx, ly, '…', '#cccccc');
-    else if (lz.mode === '找') bubble(g, lx, ly, '??', '#e0c070');   // 11:01 第二个：两个生人分不清听见的 ? 和找你的 ?，照 ! / !! 改成 ? / ??
+    else if (lz.mode === '找') bubble(g, lx, ly, '?', '#e0c070');   // 第二个 第 15 天 04:38 页51：找你只冒一个 ?，跟地上那个虚圈 ?（它记着你在那）是一个意思：你在哪   // 11:01 第二个：两个生人分不清听见的 ? 和找你的 ?，照 ! / !! 改成 ? / ??
     else if (lz.mode === '吃') bubble(g, lx, ly, '嚼', '#c8e88a');
     else if (lz.mode === '扒') bubble(g, lx, ly, '扒', '#e0c070');
-    else if (info.heard) bubble(g, lx, ly, '?', '#f0d060');
     g.restore();
   }
   if (dead && t >= 1) {
@@ -329,7 +328,7 @@ function drawB(g, m, info, t, tMove) {
     const jump = spotted && prev && t < 1 ? 1 + 0.18 * Math.sin(Math.PI * seg(t, 0.55, 0.85)) : 1;
     drawLizA(g, x, y, ang, 1, jump, eyes, m.V.has('日子') ? (b.hun || 0) : null);
     if (!dead && (!prev || t >= 0.6)) {
-      const mk = { '停': ['!', b.tgt === '你' ? '#ff7a5c' : '#c8e88a'], '追': ['!!', b.tgt === '你' ? '#ff7a5c' : '#c8e88a'], '找': ['??', '#e0c070'], '吃': ['嚼', '#c8e88a'], '扒': ['扒', '#e0c070'], '赶': ['!', '#ffb040'], '逃': ['…', '#cccccc'] }[b.mode];
+      const mk = { '停': ['!', b.tgt === '你' ? '#ff7a5c' : '#c8e88a'], '追': ['!!', b.tgt === '你' ? '#ff7a5c' : '#c8e88a'], '找': ['?', '#e0c070'], '吃': ['嚼', '#c8e88a'], '扒': ['扒', '#e0c070'], '赶': ['!', '#ffb040'], '逃': ['…', '#cccccc'] }[b.mode];
       if (mk) bubble(g, x, y, mk[0], mk[1]);
     }
   } finally { [COL.liz, COL.lizBelly, COL.sight, COL.sightEdge] = keep; }
