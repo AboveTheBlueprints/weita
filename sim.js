@@ -364,7 +364,7 @@ function dropAt(m, st, dir) {
 }
 
 function init(m) {
-  return withPf(m.V, { pl: m.start, ate: m.carry, bugs: m.bugs.slice(), lz: { pos: m.post, face: m.face, mode: '岗', tgt: null, mem: null, eat: 0 } }, null);
+  return withPf(m.V, { pl: m.start, ate: m.carry, bugs: m.bugs.slice(), lz: { pos: m.post, face: m.grudge0 ? (grudgeFace(m, m.grudge0) || m.face) : m.face, mode: '岗', tgt: null, mem: null, eat: 0, grudge: m.grudge0 || null } }, null);   // 第二个·页11 21:47 页35骗：一张图可以开局就让它记着你（它昨天在哪丢的你）
 }
 
 const FULL = 8;   // 第三个 11:59 '日子'：吃到一只，饱 FULL 回合（嚼 2 + 走回去 + 晒），然后又饿
