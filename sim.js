@@ -24,6 +24,8 @@ function Map_(text, face, need, carry, variant) {
       else if (c === 'P') this.start = [x, y];
       else if (c === 'B') this.bugs.push([x, y]);
       else if (c === 'L') this.post = [x, y];
+      else if (c === 'M') this.postB = [x, y];
+      else if (c === 'o' || c === 'x') { (this._turf = this._turf || { o: [], x: [] })[c].push(K([x, y])); }   // 第二个 01:58 页45邻居：图里直接画两块地（o 红、x 黄），照 ~/碰/之间/ 的画法   // 第二个 第 15 天 01:48 页45邻居：第二只蜥蜴的石头
       else if (c === 'c') { this.cracks.push([x, y]); this.hid.push([x, y]); }   // 第一个 17:44 '扒'：石缝，底下藏着一只虫
       else if (c === 'k') this.cracks.push([x, y]);   // 空石缝
     }
@@ -79,7 +81,42 @@ Map_.prototype.sees = function (lz, face, p) {
 };
 
 // 蜥蜴：{pos, face, mode, tgt, mem, eat}；mode：岗 停 追 找 吃；tgt：'你' 或虫的编号或 null
+// 第二个 第 15 天 01:47 页45邻居：两只同一套脾气的蜥蜴，各有一块地（石头 BFS LAND 格以内）。只多一条关系（~/碰/之间/ 量过的）：
+// 别的蜥蜴站进我的地、我看得见它或它离我 3 格以内，我先管它不管你：盯一拍，再冲两格，冲到它跟前就嘶，它掉头跑回自己石头（跑的时候什么都不看）。
+// 追你的时候不管地界。m._other：另一只（{pos, mode}）；m.land：我的地（Set of K）。
+const faceTo = (a, b) => { const vx = b[0] - a[0], vy = b[1] - a[1]; return Math.abs(vx) >= Math.abs(vy) ? (vx > 0 ? 'R' : 'L') : (vy > 0 ? 'D' : 'U'); };
+const man = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+function territory(m, lz, player) {
+  let { pos, face, mode } = lz; const o = m._other;
+  const keep = x => Object.assign({ pos, face, mode, tgt: null, mem: null, eat: 0 }, x);
+  if (mode === '逃') {   // 被嘶了：一回合两格往自己石头跑，什么都不看
+    for (let i = 0; i < 2; i++) {
+      if (eq(pos, m.post)) break;
+      const [n, k] = m.stepToward(pos, m.post); if (!k || (o && eq(n, o.pos))) break;
+      pos = n; face = k;
+      if (eq(pos, player)) return [keep({ pos, face, mode: '逃' }), true];
+    }
+    return [keep({ pos, face, mode: eq(pos, m.post) ? '岗' : '逃', face: eq(pos, m.post) ? m.face : face }), false];
+  }
+  if (mode === '吃' || mode === '扒') return null;
+  const inMine = o && o.mode !== '逃' && m.land.has(K(o.pos));
+  const seeIt = inMine && m.sees(pos, face, o.pos), smell = inMine && !seeIt && man(pos, o.pos) <= 3;
+  if (inMine && (seeIt || smell || mode === '赶')) {
+    if (mode !== '赶') { api.mgr = smell ? '闻' : '看'; return [keep({ face: faceTo(pos, o.pos), mode: '赶', mem: o.pos.slice() }), false]; }
+    for (let i = 0; i < 2; i++) {
+      if (man(pos, o.pos) <= 1) break;
+      const [n, k] = m.stepToward(pos, o.pos); if (!k || eq(n, o.pos)) break;
+      pos = n; face = k;
+      if (eq(pos, player)) return [keep({ pos, face, mode: '赶' }), true];
+    }
+    if (man(pos, o.pos) <= 1) { api.hiss = true; return [keep({ pos, face: faceTo(pos, o.pos), mode: '岗' }), false]; }
+    return [keep({ pos, face, mode: '赶', mem: o.pos.slice() }), false];
+  }
+  if (mode === '赶') return [keep({ mode: '岗' }), false];   // 它出了我的地，不管了，回石头
+  return null;
+}
 function lizardTurn(m, lz, player, bugs, sounds) {
+  if (m._other) { const t = territory(m, lz, player); if (t) return t; }
   let { pos, face, mode, tgt, mem, eat } = lz;
   const V = m.V;
   if (V.has('一件事')) return lizardOne(m, lz, player, bugs, sounds);
@@ -396,6 +433,50 @@ function wantBug(m, st) {
   if (lz.mode === '岗' && m.V.has('日子') && !(lz.hun > 0)) return nearBug(m, lz.pos, st.bugs);
   return null;
 }
-api = { Map: Map_, step: step2, init: init2, dropAt, DIRS, ORDER, eq, heard: false, wantBug };
+// 第二个 第 15 天 01:49 页45邻居：两只的地。石头 BFS m.landR 格以内；两块挨着的格子归离得近的那只（一样近不归谁）
+function lands(m) {
+  if (m._lands) return m._lands;
+  if (m._turf) return (m._lands = { a: new Set(m._turf.o.concat([K(m.post)])), b: new Set(m._turf.x.concat([K(m.postB)])) });
+  const da = m.distFrom(m.post), db = m.distFrom(m.postB), R = m.landR || 3, a = new Set(), b = new Set();
+  for (const [k, va] of da) { const vb = db.has(k) ? db.get(k) : 1e9; if (va <= R && va < vb) a.add(k); }
+  for (const [k, vb] of db) { const va = da.has(k) ? da.get(k) : 1e9; if (vb <= R && vb < va) b.add(k); }
+  return (m._lands = { a, b });
+}
+const FLAGS = ['heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut'];
+const snap = () => { const o = {}; FLAGS.forEach(f => o[f] = api[f]); return o; };
+function step3(m, st, k) {
+  if (!m.postB || !st.lzB) return step2(m, st, k);
+  const L = lands(m);
+  if (k !== '.' && k[0] !== 'X' && DIRS[k]) { const n = [st.pl[0] + DIRS[k][0], st.pl[1] + DIRS[k][1]]; if (m.free(n) && eq(n, st.lzB.pos)) return 'bad'; }
+  api.mgr = null; api.hiss = false;
+  m._other = { pos: st.lzB.pos, mode: st.lzB.mode }; m.land = L.a;
+  const r = step2(m, st, k);
+  m._other = null; m.land = null;
+  if (!r || r === 'bad') { api.B = null; return r; }
+  if (eq(r.lz.pos, st.lzB.pos)) r.lz = Object.assign({}, r.lz, { pos: st.lz.pos.slice() });   // 第二个 02:08：邻2 看见两只挤在同一格。走不进另一只站着的格子，这一回合就留在原地
+  const fa = snap();
+  if (m.V.has('窝安全') && eq(r.pl, m.nest) && r.ate >= m.need) { r.lzB = st.lzB; api.B = {}; return r; }
+  const mB = Object.create(m); mB.post = m.postB; mB.face = m.faceB || m.face; mB.land = L.b; mB.grudge0 = null;
+  mB._other = { pos: r.lz.pos, mode: r.lz.mode };
+  const lzB = fa.hiss ? Object.assign({}, st.lzB, { mode: '逃' }) : st.lzB;
+  const sounds = (k !== '.' && k[0] !== 'X') ? [['你', r.pl]] : [];
+  let bugs = bugsTurn(m, r.bugs, lzB.pos, r.pl);
+  FLAGS.forEach(f => api[f] = (f === 'hiss' ? false : null));
+  const [nb, dead] = lizardTurn(mB, lzB, r.pl, bugs, sounds);
+  if (eq(nb.pos, r.lz.pos)) nb.pos = lzB.pos.slice();   // 同上
+  const fb = snap();
+  FLAGS.forEach(f => api[f] = fa[f]); api.B = fb;
+  if (dead || eq(r.pl, nb.pos)) { api.killedBy = 'B'; return null; }
+  api.killedBy = null;
+  if (m.V.has('日子')) nb.hun = (nb.mode === '吃' && lzB.mode !== '吃') ? FULL : Math.max(0, (st.lzB.hun || 0) - 1);
+  nb.learn = 0; nb.grudge = null;
+  r.bugs = bugs; r.lzB = nb;
+  if (fb.hiss) r.lz = Object.assign({}, r.lz, { mode: '逃', tgt: null, mem: null });
+  return r;
+}
+const _init2 = init2;
+function init3(m) { const o = _init2(m); if (m.postB) o.lzB = { pos: m.postB, face: m.faceB || m.face, mode: '岗', tgt: null, mem: null, eat: 0, hun: m.hun0B === undefined ? (m.hun0 || 0) : m.hun0B, learn: 0, grudge: null }; return o; }
+api = { Map: Map_, step: step3, lands, init: init2, dropAt, DIRS, ORDER, eq, heard: false, wantBug };
+api.init = init3;
 if (typeof module !== 'undefined') module.exports = api; else root.WeiSim = api;
 })(this);

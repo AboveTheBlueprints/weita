@@ -173,6 +173,12 @@ function frame(cv, m, info, t) {
   cv.width = m.w * C; cv.height = m.h * C;
   drawFloor(g, m); drawNest(g, m.nest);
   const { prev, st, dead, drop } = info;
+  // 第二个 第 15 天 01:52 页45邻居：两只的时候，各自的地淡淡涂一层它的颜色，石头画一块灰石（之间三：地画成跟它同一个记号，人才读出'谁在自家附近谁横'）
+  if (st.lzB && root.WeiSim && root.WeiSim.lands) {
+    const L = root.WeiSim.lands(m);
+    [[L.a, 'rgba(217,84,58,0.16)'], [L.b, 'rgba(63,184,168,0.18)']].forEach(([set, c]) => { g.fillStyle = c; set.forEach(k => { const [x, y] = k.split(',').map(Number); g.fillRect(x * C, y * C, C, C); }); });
+    [m.post, m.postB].forEach(p => { g.fillStyle = '#5a5a50'; g.beginPath(); g.ellipse(cx(p[0]), cx(p[1]) + 6, C * 0.36, C * 0.2, 0, 0, 7); g.fill(); });
+  }
   (m.cracks || []).forEach(q => {   // 第一个 17:48 '扒'：石缝画成几道深色裂纹；它扒过的缝上加三道爪印
     const X = q[0] * C, Y = q[1] * C;
     g.strokeStyle = '#3b3326'; g.lineWidth = 3; g.beginPath();
@@ -259,6 +265,7 @@ function frame(cv, m, info, t) {
   const jump = spotted && prev && t < 1 ? 1 + 0.18 * Math.sin(Math.PI * seg(t, 0.55, 0.85)) : 1;
   const eyes = dead ? null : (m.V.has('饱不理') && (lz.hun || 0) >= 5) ? '眯' : (prev && m.V.has('日子') && (prev.lz.hun || 0) >= 5 && (lz.hun || 0) < 5 && lz.mode !== '吃') ? '睁' : null;
   drawLizA(g, lx, ly, ang, 1, jump, eyes, m.V.has('日子') ? (lz.hun || 0) : null);
+  if (st.lzB) drawB(g, m, info, t, tMove);
   // 盯上你那一下：从它到你一道红线闪两下
   if (spotted && lz.tgt === '你') {
     const a = prev && t < 1 ? Math.abs(Math.sin(Math.PI * 2 * seg(t, 0.55, 1))) : 0.55;
@@ -279,6 +286,8 @@ function frame(cv, m, info, t) {
     // 10:22 梓韬："太直白地写上去，就基本上把所有规则都直接曝光了"，冒字只留记号，让人自己看出来
     if (lz.mode === '停') bubble(g, lx, ly, '!', lz.tgt === '你' ? '#ff7a5c' : '#c8e88a');
     else if (lz.mode === '追') bubble(g, lx, ly, '!!', lz.tgt === '你' ? '#ff7a5c' : '#c8e88a');
+    else if (lz.mode === '赶') bubble(g, lx, ly, '!', '#ffb040');   // 第二个 第 15 天 01:53 页45邻居：盯着闯进来的那只
+    else if (lz.mode === '逃') bubble(g, lx, ly, '…', '#cccccc');
     else if (lz.mode === '找') bubble(g, lx, ly, '??', '#e0c070');   // 11:01 第二个：两个生人分不清听见的 ? 和找你的 ?，照 ! / !! 改成 ? / ??
     else if (lz.mode === '吃') bubble(g, lx, ly, '嚼', '#c8e88a');
     else if (lz.mode === '扒') bubble(g, lx, ly, '扒', '#e0c070');
@@ -303,6 +312,27 @@ function animate(cv, m, info, done) {
     if (t < 1) requestAnimationFrame(tick); else done && done();
   }
   requestAnimationFrame(tick);
+}
+// 第二个 第 15 天 01:52 页45邻居：第二只（黄）。跟红同一个画法，只换颜色；视线淡一点画；头上冒的记号跟红一样
+function drawB(g, m, info, t, tMove) {
+  const { prev, st, dead } = info; const b = st.lzB, b0 = (prev && prev.lzB) || b;
+  const keep = [COL.liz, COL.lizBelly, COL.sight, COL.sightEdge];
+  COL.liz = '#3fb8a8'; COL.lizBelly = '#9fe6d8'; COL.sight = 'rgba(240,200,80,0.18)'; COL.sightEdge = 'rgba(240,200,80,0.40)';
+  try {
+    const killed = dead && root.WeiSim && root.WeiSim.killedBy === 'B';
+    if (!dead) drawSightCells(g, m, b.pos, b.face, 99, prev && t < 0.6 ? seg(t, 0.3, 0.6) : 1);
+    const lp = killed ? dead.at : b.pos;
+    const [x, y] = prev ? at(b0.pos, lp, tMove) : at(lp);
+    const ang = turn(ANG[b0.face], ANG[b.face], prev ? ease(seg(t, 0, 0.3)) : 1);
+    const eyes = (m.V.has('饱不理') && (b.hun || 0) >= 5) ? '眯' : null;
+    const spotted = !dead && (b.mode === '停' || b.mode === '赶') && (!prev || !prev.lzB || prev.lzB.mode !== b.mode);
+    const jump = spotted && prev && t < 1 ? 1 + 0.18 * Math.sin(Math.PI * seg(t, 0.55, 0.85)) : 1;
+    drawLizA(g, x, y, ang, 1, jump, eyes, m.V.has('日子') ? (b.hun || 0) : null);
+    if (!dead && (!prev || t >= 0.6)) {
+      const mk = { '停': ['!', b.tgt === '你' ? '#ff7a5c' : '#c8e88a'], '追': ['!!', b.tgt === '你' ? '#ff7a5c' : '#c8e88a'], '找': ['??', '#e0c070'], '吃': ['嚼', '#c8e88a'], '扒': ['扒', '#e0c070'], '赶': ['!', '#ffb040'], '逃': ['…', '#cccccc'] }[b.mode];
+      if (mk) bubble(g, x, y, mk[0], mk[1]);
+    }
+  } finally { [COL.liz, COL.lizBelly, COL.sight, COL.sightEdge] = keep; }
 }
 function still(cv, m, info) { token++; frame(cv, m, info, 1); }
 

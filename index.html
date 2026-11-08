@@ -171,6 +171,15 @@ const LEVELS = [
 #####...###.###
 #######.....###
 ###############`, face: 'U', need: 1, carry: 0, hun0: 6, grudge0: [5, 1], limit: 52, V: ['一件事', '不转回', '窝安全', '听', '馋', '撞', '只扑盯着的', '背逃', '学', '记仇'] },
+  // 第二个 第 15 天 02:03 页45邻居：两只同一套脾气的蜥蜴，各有一块地（o 红、x 黄，从 ~/碰/之间/ 的 G1 搬来）。只多一条：别的蜥蜴进了我的地，我先管它，不管你。
+  // 解2.js：最短 14，借它们之间的 14、不借的 14，几条都走得通。
+  { name: '邻居', text: `
+###########
+#P.oooo####
+#..oooL####
+#..ooo.####
+#...xxxxxMN
+###########`, face: 'D', faceB: 'L', need: 1, carry: 1, limit: 40, V: ['一件事', '不转回', '窝安全', '听', '馋', '撞', '只扑盯着的', '背逃'] },
 ];
 const LIMIT = 40;
 const lim = () => LEVELS[li].limit || LIMIT;   // 第二个·页11 17:39：一张图可以自己定天黑前几步（'天快黑了'）
@@ -201,14 +210,16 @@ function events(k, a, b) {
   if (!eq(la.pos, lb.pos)) {
     const dx = lb.pos[0] - la.pos[0], dy = lb.pos[1] - la.pos[1], nn = Math.abs(dx) + Math.abs(dy);
     // 第二个·页11 18:20：第一个线上真点，三句字骗人。①找完放弃往回走那一步以前也写"冲了"
-    if (la.mode === '找' && !['追', '找'].includes(lb.mode) && nn === 1) out.push(`蜥蜴没找着，不找了，走了 1 格，脸朝${FACE[lb.face]}。`);
+    if (la.mode === '赶' || lb.mode === '赶') out.push(`蜥蜴朝OTHER冲了 ${nn} 格。`);   // 第二个 第 15 天 01:50 页45邻居
+    else if (la.mode === '逃' || lb.mode === '逃') out.push(`蜥蜴掉头往自己的石头跑了 ${nn} 格。`);
+    else if (la.mode === '找' && !['追', '找'].includes(lb.mode) && nn === 1) out.push(`蜥蜴没找着，不找了，走了 1 格，脸朝${FACE[lb.face]}。`);
     else if (['追', '找', '停'].includes(la.mode) || ['追', '找'].includes(lb.mode) || nn > 1) out.push(`蜥蜴冲了 ${nn} 格。`);
     else if (m.V.has('日子') && lb.mode === '吃') {}
     else if (m.V.has('日子') && !(la.hun > 0)) out.push((b.bugs.some(x => x) || (m._smell || []).length) ? `蜥蜴饿了，自己往有虫的地方走了 1 格，脸朝${FACE[lb.face]}。` : `蜥蜴肚子瘪着，地上没虫了，它往石头那边走了 1 格，脸朝${FACE[lb.face]}。`);   // ③ 第二个·页11 18:20：地上没虫时别写'往有虫的地方'（第一个读成它闻着她追）
     else if (eq(lb.pos, m.post)) out.push(m.V.has('日子') ? '蜥蜴回到它的石头上，趴着晒太阳。' : '蜥蜴慢慢走回了它原来站的地方。');
     else out.push(m.V.has('日子') ? ((lb.hun || 0) >= 5 ? `蜥蜴吃饱了，往它的石头走了 1 格，脸朝${FACE[lb.face]}。` : `蜥蜴往它的石头走了 1 格，脸朝${FACE[lb.face]}。`) : `蜥蜴往回走了 1 格，脸朝${FACE[lb.face]}。`);   // 第一个 18:35：不饱了就不写'吃饱了'
     
-  } else if (la.face !== lb.face) {
+  } else if (la.face !== lb.face && !(lb.mode === '赶' && la.mode !== '赶')) {   // 第二个 02:07 页45邻居：盯上闯进来的那只时，那句已经说了转头
     // 第三个 12:15：转头那一拍写出它听见的是谁（生人："没看懂它到底听到了什么"）
     if (S.heard && S.heardAt) out.push((eq(S.heardAt, b.pl) ? '蜥蜴听见了你的脚步' : '蜥蜴听见一只虫在动') + `，转头朝${FACE[lb.face]}。`);
     else if (lb.mode === '找') out.push(`蜥蜴在原地四下找你，转头朝${FACE[lb.face]}。`);   // ② 第二个·页11 18:20：跟'听见了转头'分开
@@ -239,14 +250,36 @@ function events(k, a, b) {
   if (la.mode === '追' && lb.mode === '追' && lb.tgt === '你') out.push('它还盯着你。');
   if (lb.mode === '停' && la.mode !== '停') out.push('蜥蜴停住了，盯着' + (lb.tgt === '你' ? '你。' : '一只虫。'));
   if (lb.mode === '吃') out.push('蜥蜴在嚼虫。');
+  if (lb.mode === '赶' && la.mode !== '赶') out.push(S.mgr === '闻' ? '蜥蜴闻到了OTHER，转过头盯着它。' : '蜥蜴看见了OTHER，停住盯着它。');   // 第二个 第 15 天 01:50 页45邻居（之间三：'闻'那个字让人读出了规矩）
+  if (S.hiss) out.push('蜥蜴冲OTHER嘶了一声。');
   if (m.V.has('日子') && la.hun > 0 && !(lb.hun > 0)) out.push('蜥蜴饿了。');
   if (m.V.has('日子') && lb.mode === '吃' && la.mode !== '吃') out.push('它吃饱了。');
   return out;
 }
 
+// 第二个 第 15 天 01:51 页45邻居：两只的时候，各写各的；红是原来那只，黄是第二只
+function events2(k, a, b) {
+  if (!b.lzB) return events(k, a, b);
+  const byB0 = new Set(); a.bugs.forEach((x, i) => { if (x && !b.bugs[i] && b.lzB.mode === '吃' && a.lzB.mode !== '吃' && Math.abs(x[0] - b.lzB.pos[0]) + Math.abs(x[1] - b.lzB.pos[1]) <= 1) byB0.add(i); });
+  const A = events(k, a, Object.assign({}, b, { bugs: b.bugs.map((y, i) => byB0.has(i) ? a.bugs[i] : y) })).map(t => t.replace(/蜥蜴/g, '红蜥蜴').replace(/OTHER/g, '青蜥蜴'));
+  const keepM = m, keepF = {}; const FL = ['heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut'];
+  FL.forEach(f => { keepF[f] = S[f]; S[f] = (S.B || {})[f]; });
+  const mB = Object.create(m); mB.post = m.postB; mB.face = m.faceB || m.face;
+  m = mB;
+  let B;
+  // 哪几只虫是黄吃的：这一步不见了、黄刚开始嚼、就在黄脚下或旁边一格
+  const byB = new Set(); a.bugs.forEach((x, i) => { if (x && !b.bugs[i] && b.lzB.mode === '吃' && a.lzB.mode !== '吃' && Math.abs(x[0] - b.lzB.pos[0]) + Math.abs(x[1] - b.lzB.pos[1]) <= 1) byB.add(i); });
+  try { B = events('.', Object.assign({}, a, { lz: a.lzB, pl: b.pl, ate: b.ate, bugs: a.bugs.map((x, i) => byB.has(i) ? x : null) }), Object.assign({}, b, { lz: b.lzB, bugs: a.bugs.map(() => null) })).filter(t => t !== '你没动。' && !t.startsWith('你') && !t.startsWith('这只正是')); }
+  finally { m = keepM; FL.forEach(f => S[f] = keepF[f]); }
+  B = B.map(t => t.replace(/蜥蜴/g, '青蜥蜴').replace(/OTHER/g, '红蜥蜴'));
+  if (b.lz.mode === '逃' && a.lz.mode !== '逃') A.push('红蜥蜴掉头就跑。');
+  if (b.lzB.mode === '逃' && a.lzB.mode !== '逃') B.push('青蜥蜴掉头就跑。');
+  return A.concat(B);
+}
 function goal() {   // 第二个·页11 17:28：照 need/carry 写数，不再写死（七1、七2 第 7 张都被"至少一只"骗了，第一个 15:09 也修过同一处）
   const L = LEVELS[li], CN = ['零', '一', '两', '三', '四', '五'];
   const head = '蓝的“我”是你，紫的是你的窝。';
+  if (L.carry && L.carry >= L.need) return head + `你肚子里已经有${CN[L.carry]}只虫，带着它回到窝里，就过了。`;   // 第二个 第 15 天 02:06 页45邻居：不用再吃的那张别写'再吃零只'
   if (L.carry) return head + `你肚子里已经有${CN[L.carry]}只虫，再吃${CN[L.need - L.carry]}只，带着${CN[L.need]}只回到窝里，就过了。绿的是虫。`;
   return head + `吃到${CN[L.need]}只绿虫，带着回到窝里，就过了。`;
 }
@@ -275,12 +308,12 @@ function start(i) {
   // 为什么：网页上的人第一局挨个踩，记住哪几道有虫，第二局直接去，用不着看它；每局都不变的只剩它的脾气（饿了去扒有虫的缝）。
   const text = (L.layouts && DIAN.ju[i] > 1) ? L.layouts[(DIAN.ju[i] - 2) % L.layouts.length] : L.text;
   m = new S.Map(text, L.face, L.need, L.carry, L.V);
-  if (L.hun0 !== undefined) m.hun0 = L.hun0; if (L.dig0) m.dig0 = true; if (L.grudge0) m.grudge0 = L.grudge0;   // 第二个·页11 21:47 页35骗
+  if (L.hun0 !== undefined) m.hun0 = L.hun0; if (L.dig0) m.dig0 = true; if (L.grudge0) m.grudge0 = L.grudge0; if (L.faceB) m.faceB = L.faceB; if (L.landR) m.landR = L.landR; if (L.hun0B !== undefined) m.hun0B = L.hun0B;   // 第二个 第 15 天 01:50 页45邻居   // 第二个·页11 21:47 页35骗
   st = S.init(m); prev = null; n = 0; over = false; log = []; deadMark = null; heardNow = false; hist = []; aim = false;
   if (m.dig0 && st.lz.mode === '扒') log = ['蜥蜴蹲在一道石缝上，低头扒着。石缝底下吱吱叫了两声。'];   // 第二个 第 15 天 00:17 页40开局扒
-  document.getElementById('intro').textContent = goal();
+  document.getElementById('intro').textContent = goal() + ((DIAN.ju[i] >= 4 && !PASSED.has(i) && i + 1 < LEVELS.length) ? '　（卡住了也可以点上面那排张名，先去玩后面的。）' : '');   // 第二个 第 15 天 02:13：整八2、4 卡在石缝四局，不知道张名能点，后面几张没见到
   const canX = L.V.includes('吐');
-  document.getElementById('keys').innerHTML = '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。涂黄的格子是它脸朝着的那一条，一直到墙：你这一步走完还站在黄格里，它就看见你。淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。`;
+  document.getElementById('keys').innerHTML = (L.faceB ? '这张有两只蜥蜴，一只红的、一只青的，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。涂黄的格子是它们脸朝着的那一条，一直到墙：你这一步走完还站在黄格里，它就看见你。' : '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。涂黄的格子是它脸朝着的那一条，一直到墙：你这一步走完还站在黄格里，它就看见你。') + '淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。`;
   document.getElementById('xbtn').style.visibility = canX ? 'visible' : 'hidden';
   document.getElementById('next').style.display = (PASSED.has(li) && li + 1 < LEVELS.length) ? 'inline-block' : 'none';   // 第一个 17:01：过了的张重来、撤回以后'下一张'还在
   document.getElementById('msg').textContent = '';
@@ -295,7 +328,7 @@ function draw(anim) {
   const info = { prev: anim ? prev : null, st, dead: deadMark, drop: (!over && !deadMark) ? (m.V.has('吐选') ? (aim ? aimDrops() : null) : S.dropAt(m, st)) : null, heard: heardNow, spit: anim && lastDrop && prev ? { from: prev.pl, to: lastDrop } : null };
   const cv = document.getElementById('board');
   if (anim && WeiDraw.animate) WeiDraw.animate(cv, m, info); else (WeiDraw.still || WeiDraw.frame)(cv, m, Object.assign(info, { prev }), 1);
-  document.getElementById('status').textContent = `第 ${li + 1} 张　走了 ${n} 步，还剩 ${lim() - n} 步　肚子里 ${st.ate} 只` + (m.V.has('日子') ? `　蜥蜴的肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '瘪下去一点了' : '瘪了'}` : '');
+  document.getElementById('status').textContent = `第 ${li + 1} 张　走了 ${n} 步，还剩 ${lim() - n} 步　肚子里 ${st.ate} 只` + (m.V.has('日子') ? `　${st.lzB ? '红的' : '蜥蜴的'}肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '瘪下去一点了' : '瘪了'}` + (st.lzB ? `，青的：${st.lzB.hun >= 5 ? '鼓鼓的' : st.lzB.hun >= 1 ? '瘪下去一点了' : '瘪了'}` : '') : '');
   document.getElementById('log').innerHTML = log.map(t => `<div>${t}</div>`).join('');
 }
 
@@ -327,7 +360,7 @@ function act(k) {
   const msg = document.getElementById('msg');
   if (r !== 'bad') hist.push(snap);
   if (r === 'bad') {
-    msg.textContent = k[0] === 'X' ? '吐不出来：肚子里没有虫，或者脚下已经有一只。' : (st.lz && (() => { const d = S.DIRS[k]; return eq([st.pl[0] + d[0], st.pl[1] + d[1]], st.lz.pos); })() ? '走不过去，蜥蜴占着那一格。' : '走不过去，那边是墙。');
+    msg.textContent = k[0] === 'X' ? '吐不出来：肚子里没有虫，或者脚下已经有一只。' : (st.lz && (() => { const d = S.DIRS[k]; const q = [st.pl[0] + d[0], st.pl[1] + d[1]]; return eq(q, st.lz.pos) || (st.lzB && eq(q, st.lzB.pos)); })() ? '走不过去，蜥蜴占着那一格。' : '走不过去，那边是墙。');
     // 第二个·页11 21:39 页34撞：网4"按了几次才发现没走"，那句字在右上角，眼睛在格子上看不见。走不过去时整块格子往那边顶一下再弹回来。
     if (k[0] !== 'X' && S.DIRS[k]) { const d = S.DIRS[k], cv = document.getElementById('board'); if (cv.animate) cv.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${d[0] * 9}px,${d[1] * 9}px)` }, { transform: 'translate(0,0)' }], { duration: 160, easing: 'ease-out' }); }
     return;
@@ -335,13 +368,13 @@ function act(k) {
   n += 1; msg.textContent = '';
   if (r === null) {
     const d = S.DIRS[k] || [0, 0];
-    deadMark = { at: [st.pl[0] + d[0], st.pl[1] + d[1]], from: st.lz.pos };
+    deadMark = { at: [st.pl[0] + d[0], st.pl[1] + d[1]], from: (S.killedBy === 'B' && st.lzB) ? st.lzB.pos : st.lz.pos };
     log.unshift(`第 ${n} 步（${KNAME[k]}）：你走完这一步，蜥蜴扑到了你身上。（红叉是它扑到你的那一格）`);
     over = true; msg.textContent = '你被吃掉了。按 Z 撤回一步，或者按 R 从头再来。'; dian(k); dian('死');
     prev = st; heardNow = false; draw(true); return;
   }
   heardNow = S.heard; dian(k);
-  const ev = events(k, st, r);   // 09:55 第三个：空着的步把有事的挤下去了，没动静的那步淡淡写一句
+  const ev = events2(k, st, r);   // 09:55 第三个：空着的步把有事的挤下去了，没动静的那步淡淡写一句
   log.unshift(ev.length ? `第 ${n} 步（${KNAME[k]}）：` + ev.join(' ') : `<span style="color:#77735f">第 ${n} 步（${KNAME[k]}）：你走了一格，它没动静。</span>`);
   prev = st; st = r;
   if (st.ate + (st.hid || []).filter(b => b).length < m.need && st.bugs.every(b => !b)) { over = true; msg.textContent = `你肚子里只剩 ${st.ate} 只，地上也没有虫了，凑不够 ${m.need} 只，这一局赢不了了。按 R 从头再来。`; }
