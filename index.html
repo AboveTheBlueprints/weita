@@ -186,6 +186,7 @@ function events(k, a, b) {
   if (k === '.') out.push('你没动。');
   if (k[0] === 'X') out.push(eq(lastDrop, a.pl) ? '你吐出了一只虫，落在你脚下。' : '你吐出了一只虫。');
   if (b.ate > a.ate && !S.dugOut) out.push('你吃到了一只虫！');
+  if (b.ate > a.ate && !S.dugOut && eq(S.wantBug(m, a), b.pl)) out.push('这只正是蜥蜴想去吃的。');   // 第二个 第 15 天 01:25 页44认得：竖井那下（你吃了它想吃的，它改去另一只），整八11、12 都走到了，都说成'它饿了自己去竖井底下找虫'，没认出是自己那一口
   a.bugs.forEach((x, i) => {
     const y = b.bugs[i];
     if (x && y && !eq(x, y)) out.push('一只虫往' + (y[0] > x[0] ? '右' : y[0] < x[0] ? '左' : y[1] > x[1] ? '下' : '上') + '逃了一格。');
