@@ -385,7 +385,10 @@ function step2(m, st, k) {
   if (r && r !== 'bad' && r.lz) r.lz.grudge = api.fooled ? api.grudgeAt : (st.lz.grudge || null);   // 第一个 20:40
   return r;
 }
-function init2(m) { const o = init(m); o.hid = (m.hid || []).map(p => p); o.marks = []; if (m.V.has('日子')) o.lz.hun = m.hun0 === undefined ? 0 : m.hun0; return o; }
+function init2(m) { const o = init(m); o.hid = (m.hid || []).map(p => p); o.marks = []; if (m.V.has('日子')) o.lz.hun = m.hun0 === undefined ? 0 : m.hun0;
+  // 第二个 第 15 天 00:16 页40开局扒：开局它已经蹲在离石头最近的那道有虫的缝上，埋头扒（三回合），第一屏就看得见这张该看它什么
+  if (m.dig0 && m.V.has('扒') && o.hid.length) { const d = m.distFrom(m.post); let b = null; o.hid.forEach(q => { if (q && (b === null || (d.get(K(q)) ?? 1e9) < (d.get(K(b)) ?? 1e9))) b = q; }); if (b) { o.lz.pos = b.slice(); o.lz.face = b[1] <= 1 ? 'U' : 'D'; o.lz.mode = '扒'; o.lz.eat = 3; o.lz.hun = 0; } }
+  return o; }
 // 第三个 12:08：它这会儿要去吃的是哪只虫（给画面标出来）（第一个 14:53 从页2 搬来）
 function wantBug(m, st) {
   const lz = st.lz;
