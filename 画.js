@@ -70,13 +70,15 @@ function drawMe(g, X, Y, belly, pf) {
   for (let i = 0; i < belly; i++) drawBug(g, X - 14 + i * 14, Y + C * 0.38, 0.9);  // 肚子里有几只，脚下画几只小虫
 }
 
-function drawLiz(g, X, Y, face, a) {
+function drawLiz(g, X, Y, face, a, eyes) {   // eyes：'眯' 吃饱了眯着眼 / '睁' 饱劲刚过、眼睛一下睁圆（第二个·页11 18:45，第一个'睁眼'要画到格子上）
   const ang = { R: 0, D: Math.PI / 2, L: Math.PI, U: -Math.PI / 2 }[face];
   g.save(); g.translate(X, Y); g.rotate(ang); g.globalAlpha = a == null ? 1 : a;
   g.fillStyle = COL.liz;
   g.beginPath(); g.moveTo(-24, 0); g.lineTo(-10, -9); g.lineTo(8, -10); g.lineTo(24, 0); g.lineTo(8, 10); g.lineTo(-10, 9); g.closePath(); g.fill();   // 身子，尖的一头是脸
   g.fillStyle = COL.lizBelly; g.beginPath(); g.ellipse(-2, 0, 10, 5, 0, 0, 7); g.fill();
-  g.fillStyle = '#111'; g.beginPath(); g.arc(14, -5, 2.6, 0, 7); g.arc(14, 5, 2.6, 0, 7); g.fill();   // 眼睛
+  if (eyes === '眯') { g.strokeStyle = '#111'; g.lineWidth = 2.6; for (const s of [-5, 5]) { g.beginPath(); g.moveTo(10, s); g.lineTo(18, s + (s > 0 ? -1.5 : 1.5)); g.stroke(); } }   // 眯成两道缝
+  else if (eyes === '睁') { g.fillStyle = '#fff4b0'; g.beginPath(); g.arc(14, -5, 5, 0, 7); g.arc(14, 5, 5, 0, 7); g.fill(); g.fillStyle = '#111'; g.beginPath(); g.arc(14, -5, 2.8, 0, 7); g.arc(14, 5, 2.8, 0, 7); g.fill(); }
+  else { g.fillStyle = '#111'; g.beginPath(); g.arc(14, -5, 2.6, 0, 7); g.arc(14, 5, 2.6, 0, 7); g.fill(); }   // 眼睛
   g.strokeStyle = COL.liz; g.lineWidth = 3;
   for (const s of [-1, 1]) { g.beginPath(); g.moveTo(4, s * 8); g.lineTo(10, s * 17); g.stroke(); g.beginPath(); g.moveTo(-10, s * 8); g.lineTo(-16, s * 17); g.stroke(); }
   g.beginPath(); g.moveTo(-24, 0); g.quadraticCurveTo(-32, 8, -26, 14); g.stroke();   // 尾巴
@@ -156,13 +158,13 @@ function ghostMe(g, p, a) {   // 它记得你在这儿
   g.globalAlpha = 1;
 }
 
-function drawLizA(g, X, Y, ang, a, sc) {   // drawLiz 按角度画，sc 是放大（盯上你那一下跳一下）
+function drawLizA(g, X, Y, ang, a, sc, eyes) {   // drawLiz 按角度画，sc 是放大（盯上你那一下跳一下）
   g.save(); g.translate(X, Y); g.scale(sc || 1, sc || 1);
   g.translate(-X, -Y);
   const f = 'R'; const save = drawLiz;
   // 借 drawLiz 的样子：先转到 ang 再按朝右画
   g.translate(X, Y); g.rotate(ang); g.translate(-X, -Y);
-  save(g, X, Y, f, a);
+  save(g, X, Y, f, a, eyes);
   g.restore();
 }
 
@@ -234,7 +236,8 @@ function frame(cv, m, info, t) {
   const ang = turn(ANG[lz0.face], ANG[dead ? lz0.face : lz.face], prev ? tTurn : 1);
   const spotted = !dead && lz.mode === '停' && (!prev || prev.lz.mode !== '停');
   const jump = spotted && prev && t < 1 ? 1 + 0.18 * Math.sin(Math.PI * seg(t, 0.55, 0.85)) : 1;
-  drawLizA(g, lx, ly, ang, 1, jump);
+  const eyes = dead ? null : (m.V.has('饱不理') && (lz.hun || 0) >= 5) ? '眯' : (prev && m.V.has('日子') && (prev.lz.hun || 0) >= 5 && (lz.hun || 0) < 5 && lz.mode !== '吃') ? '睁' : null;
+  drawLizA(g, lx, ly, ang, 1, jump, eyes);
   // 盯上你那一下：从它到你一道红线闪两下
   if (spotted && lz.tgt === '你') {
     const a = prev && t < 1 ? Math.abs(Math.sin(Math.PI * 2 * seg(t, 0.55, 1))) : 0.55;
