@@ -154,6 +154,7 @@ function lizardTurn(m, lz, player, bugs, sounds) {
 // 先用现在的脸看，再只做一件事：走（回岗一格 / 追、找两格）、转一次头、站着。找到那格以后逆时针转三次头再回岗。
 const CCW = { U: 'L', L: 'D', D: 'R', R: 'U' };
 const ONE_BACK = 3;
+function grudgeFace(m, g) { if (!g || eq(g, m.post)) return null; const r = m.stepToward(m.post, g); return r[1]; }   // 第一个 20:45：从石头往丢你那格走，头一步朝哪
 function lizardOne(m, lz, player, bugs, sounds) {
   let { pos, face, mode, tgt, mem, eat } = lz;
   const V = m.V;
@@ -190,12 +191,14 @@ function lizardOne(m, lz, player, bugs, sounds) {
   if (pick !== null) {
     // 10:13 第一个看到：找的时候看见你直接冲，比站岗少一拍，像"有时停有时不停"。改成：新看见一样东西都先盯一回合
     // 第一个 17:17 '学'：被你甩掉两回以后，再看见你不先盯，直接冲（法布尔的蜂上了两三回当就不上了）；第二个·页11 17:59 从页20学 拷来
-    const learned = V.has('学') && (lz.learn || 0) >= 2 && pick[0] === '你' && (mode === '岗' || mode === '找');
+    const learned = V.has('记仇')   // 第一个 20:45：记仇时'学'不数回数了：它在石头上、脸正朝着上回丢你的那条路，看见你就不停（转身那一下就是它学乖了，人事前看得见）
+      ? (pick[0] === '你' && mode === '岗' && lz.grudge && eq(pos, m.post) && face === grudgeFace(m, lz.grudge))
+      : (V.has('学') && (lz.learn || 0) >= 2 && pick[0] === '你' && (mode === '岗' || mode === '找'));
     if (learned) api.noStop = true;
     else if (mode === '岗' || mode === '找' || (mode === '追' && pick[0] !== tgt)) return [{ pos, face, mode: '停', tgt: pick[0], mem: pick[1], eat: 0 }, false];
     mode = '追'; tgt = pick[0]; mem = pick[1];
   } else if (mode === '追' || mode === '停') {
-    if (V.has('学') && tgt === '你') api.fooled = true;
+    if (V.has('学') && tgt === '你') { api.fooled = true; api.grudgeAt = mem; }   // 第一个 20:40 页30记仇：记下在哪丢的你
     mode = '找'; eat = 0;
   } else if (mode === '找' && eq(pos, mem)) {
     if (eat < 3) { api.why = '环顾'; return [{ pos, face: CCW[face], mode: '找', tgt, mem, eat: eat + 1 }, false]; }
@@ -214,6 +217,10 @@ function lizardOne(m, lz, player, bugs, sounds) {
       }
     }
     if (eq(pos, m.post) && !(V.has('日子') && !(lz.hun > 0) && nearBug(m, pos, bugs.concat(m._smell || [])))) {
+      if (V.has('记仇') && lz.grudge) {   // 第一个 20:40 页30记仇：被你甩掉过，回到石头先转过身，脸朝你上回溜走的那格（砂泥蜂被骗过，第二天出门前那一圈飞得大）
+        const gf = grudgeFace(m, lz.grudge);
+        if (gf && face !== gf) { api.turnGrudge = true; return [{ pos, face: gf, mode: '岗', tgt: null, mem: null, eat: 0 }, false]; }
+      }
       if (face !== m.face && !V.has('不转回')) {
         if (eat > 1) return [{ pos, face, mode: '岗', tgt: null, mem: null, eat: eat - 1 }, false];
         return [{ pos, face: m.face, mode: '岗', tgt: null, mem: null, eat: 0 }, false];
@@ -284,7 +291,7 @@ function bugsTurn(m, bugs, lzpos, player) {
 
 // 局面：{pl, ate, bugs, lz}；一步：'U' 'R' 'D' 'L' '.' 'X'。返回新局面、'bad'（走不了）或 null（死了）
 function step(m, st, k) {
-  api.heard = false; api.ignored = false; api.fooled = false; api.noStop = false;
+  api.heard = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false;
   let pl = st.pl, ate = st.ate; let bugs = st.bugs.slice(); const lz = st.lz;
   let pf = st.pf || null;   // 你的朝向（'吐朝' 用）
   let drop = [], di = -1;
@@ -374,6 +381,7 @@ function step2(m, st, k) {
     r.lz.hun = (r.lz.mode === '吃' && st.lz.mode !== '吃') ? FULL : Math.max(0, h0 - 1);
   }
   if (r && r !== 'bad' && r.lz) r.lz.learn = (st.lz.learn || 0) + (api.fooled ? 1 : 0);
+  if (r && r !== 'bad' && r.lz) r.lz.grudge = api.fooled ? api.grudgeAt : (st.lz.grudge || null);   // 第一个 20:40
   return r;
 }
 function init2(m) { const o = init(m); o.hid = (m.hid || []).map(p => p); o.marks = []; if (m.V.has('日子')) o.lz.hun = m.hun0 === undefined ? 0 : m.hun0; return o; }
