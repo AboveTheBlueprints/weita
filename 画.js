@@ -183,6 +183,19 @@ function frame(cv, m, info, t) {
       for (let i = 0; i < 3; i++) { g.moveTo(X + C * (0.3 + i * 0.15), Y + C * 0.15); g.lineTo(X + C * (0.22 + i * 0.15), Y + C * 0.35); }
       g.stroke();
     }
+    // 第二个·页11 22:26 页37缝：整八2 把爪印读成"它挠了没挠出来＝空的"，四局没过第 6 张。它扒的是有虫的缝（闻得到），画出它注意到的东西：
+    // 它正在扒的那一回合、和扒过以后虫还在里头的缝，缝里露一个绿脑袋带两根触角。缝网1、2 都读成'里面有虫，它够不着，我能拿'，照着拿到了。
+    const inHid = (st.hid || []).some(r => r && r[0] === q[0] && r[1] === q[1]);
+    if (inHid && (st.marks || []).some(r => r[0] === q[0] && r[1] === q[1]) || (inHid && st.lz && st.lz.mode === '扒' && st.lz.pos[0] === q[0] && st.lz.pos[1] === q[1])) {
+      // 缝里卡着一只：露出绿脑袋和两根触角（它扒的时候、扒过以后都看得见）
+      const hx = X + C * 0.5, hy = Y + C * 0.62;
+      g.strokeStyle = '#7fd36a'; g.lineWidth = 2.2; g.beginPath();
+      g.moveTo(hx - 3, hy - 4); g.quadraticCurveTo(hx - 9, hy - 14, hx - 15, hy - 17);
+      g.moveTo(hx + 3, hy - 4); g.quadraticCurveTo(hx + 9, hy - 14, hx + 15, hy - 17);
+      g.stroke();
+      g.fillStyle = COL.bug; g.beginPath(); g.ellipse(hx, hy + 3, 8, 6, 0, Math.PI, 0); g.fill();
+      g.fillStyle = '#2e4d1f'; g.beginPath(); g.arc(hx, hy - 2, 4.5, 0, 7); g.fill();
+    }
   });
   const P = prev || st, pl0 = P.pl, lz0 = P.lz, lz = st.lz;
   const moved = !same(lz0.pos, dead ? dead.at : lz.pos);
