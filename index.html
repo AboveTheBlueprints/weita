@@ -388,7 +388,8 @@ function draw(anim) {
   const info = { prev: anim ? prev : null, st, dead: deadMark, drop: (!over && !deadMark) ? (m.V.has('吐选') ? (aim ? aimDrops() : null) : S.dropAt(m, st)) : null, heard: heardNow, spit: anim && lastDrop && prev ? { from: prev.pl, to: lastDrop } : null };
   const cv = document.getElementById('board');
   if (anim && WeiDraw.animate) WeiDraw.animate(cv, m, info); else (WeiDraw.still || WeiDraw.frame)(cv, m, Object.assign(info, { prev }), 1);
-  document.getElementById('status').textContent = `第 ${li + 1} 张　走了 ${n} 步，还剩 ${lim() - n} 步　肚子里 ${st.ate} 只` + (m.V.has('日子') ? `　${st.lzB ? '红的' : '蜥蜴的'}肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '瘪下去一点了' : '瘪了'}` + (st.lzB ? `，青的：${st.lzB.hun >= 5 ? '鼓鼓的' : st.lzB.hun >= 1 ? '瘪下去一点了' : '瘪了'}` : '') : '');
+  document.getElementById('status').textContent = `第 ${li + 1} 张　走了 ${n} 步，还剩 ${lim() - n} 步　肚子里 ${st.ate} 只，要带 ${m.need} 只回窝` +   // 第二个 第 15 天 08:30 页57带几只：整十五1、2 都把要带几只弄错过（第 4、5、6、14 张），开头那句看过就忘
+ (m.V.has('日子') ? `　${st.lzB ? '红的' : '蜥蜴的'}肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '瘪下去一点了' : '瘪了'}` + (st.lzB ? `，青的：${st.lzB.hun >= 5 ? '鼓鼓的' : st.lzB.hun >= 1 ? '瘪下去一点了' : '瘪了'}` : '') : '');
   document.getElementById('log').innerHTML = log.map(t => `<div>${t}</div>`).join('');
 }
 
