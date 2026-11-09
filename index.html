@@ -170,7 +170,7 @@ const LEVELS = [
 #.....#####.###
 #####...###.###
 #######.....###
-###############`, face: 'U', need: 1, carry: 0, hun0: 6, grudge0: [5, 1], limit: 52, V: ['一件事', '不转回', '窝安全', '听', '馋', '撞', '只扑盯着的', '背逃', '学', '记仇'] },
+###############`, face: 'U', need: 1, carry: 0, hun0: 6, grudge0: [5, 1], limit: 52, from: 7, gmap: g => g[1] <= 3 ? [5, 1] : [5, 8], V: ['一件事', '不转回', '窝安全', '听', '馋', '撞', '只扑盯着的', '背逃', '学', '记仇'] },
   // 第二个 第 15 天 02:03 页45邻居：两只同一套脾气的蜥蜴，各有一块地（o 红、x 黄，从 ~/碰/之间/ 的 G1 搬来）。只多一条：别的蜥蜴进了我的地，我先管它，不管你。
   // 解2.js：最短 14，借它们之间的 14、不借的 14，几条都走得通。
   { name: '邻居', text: `
@@ -370,12 +370,12 @@ function start(i) {
   const text = (L.layouts && DIAN.ju[i] > 1) ? L.layouts[(DIAN.ju[i] - 2) % L.layouts.length] : L.text;
   m = new S.Map(text, L.face, L.need, L.carry, L.V);
   if (L.hun0 !== undefined) m.hun0 = L.hun0; if (L.dig0) m.dig0 = true; if (L.grudge0) m.grudge0 = L.grudge0; if (L.faceB) m.faceB = L.faceB; if (L.landR) m.landR = L.landR; if (L.hun0B !== undefined) m.hun0B = L.hun0B;
-  const CY = L.from ? CARRY[L.from - 1] : null; if (CY) { m.fed0 = CY.a; m.fed0B = CY.b; if (CY.g && L.V.includes('记仇')) m.grudge0 = CY.g; }   // 第二个 08:58 页60隔天：'又一天'开局记着你昨天（第 from 张最后过关那局）喂过它几只   // 第二个 第 15 天 01:50 页45邻居   // 第二个·页11 21:47 页35骗
+  const CY = L.from ? CARRY[L.from - 1] : null; if (CY) { m.fed0 = CY.a; m.fed0B = CY.b; if (L.V.includes('记仇')) m.grudge0 = CY.g ? (L.gmap ? L.gmap(CY.g) : CY.g) : null; }   // 第二个 09:36 页62：第 8 张'第二天'也照第 7 张真丢你的地方，不再用写死的；第 7 张没甩掉过它，第 8 张开局就什么都不记   // 第二个 08:58 页60隔天：'又一天'开局记着你昨天（第 from 张最后过关那局）喂过它几只   // 第二个 第 15 天 01:50 页45邻居   // 第二个·页11 21:47 页35骗
   st = S.init(m); prev = null; n = 0; over = false; log = []; deadMark = null; heardNow = false; hist = []; aim = false;
   if (m.dig0 && st.lz.mode === '扒') log = ['蜥蜴蹲在一道石缝上，低头扒着。石缝底下吱吱叫了两声。'];   // 第二个 第 15 天 00:17 页40开局扒
   const CY2 = L.from ? CARRY[L.from - 1] : null;   // 第二个 08:59 页60隔天：只说它是昨天那只、身子底下有几个点，不说为什么
   const DOT = n => ['', '一', '两', '三'][Math.min(n, 3)];
-  const yday = !CY2 ? '' : (L.faceB ? '　还是昨天那两只。' + (CY2.a ? `红的身子底下有${DOT(CY2.a)}个绿点。` : '') + (CY2.b ? `青的身子底下有${DOT(CY2.b)}个绿点。` : '') : '　还是昨天那只蜥蜴。' + (CY2.a ? `它身子底下有${DOT(CY2.a)}个绿点。` : ''));
+  const yday = !CY2 ? '' : (L.faceB ? '　还是昨天那两只。' + (CY2.a ? `红的身子底下有${DOT(CY2.a)}个绿点。` : '') + (CY2.b ? `青的身子底下有${DOT(CY2.b)}个绿点。` : '') : '　还是昨天那只蜥蜴。' + (CY2.a && L.V.includes('记恩') ? `它身子底下有${DOT(CY2.a)}个绿点。` : ''));
   document.getElementById('intro').textContent = goal() + yday + ((DIAN.ju[i] >= 4 && !PASSED.has(i) && i + 1 < LEVELS.length) ? '　（卡住了也可以点上面那排张名，先去玩后面的。）' : '');   // 第二个 第 15 天 02:13：整八2、4 卡在石缝四局，不知道张名能点，后面几张没见到
   const canX = L.V.includes('吐');
   document.getElementById('keys').innerHTML = (L.faceB ? '这张有两只蜥蜴，一只红的、一只青的，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。涂黄的格子是它们脸朝着的那一条（青的那条描着青边），一直到墙：你这一步走完还站在黄格里，它就看见你。' : '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。涂黄的格子是它脸朝着的那一条，一直到墙：你这一步走完还站在黄格里，它就看见你。') + '淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。`;
