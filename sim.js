@@ -436,9 +436,13 @@ function step2(m, st, k) {
     // 第二个 第 15 天 05:50 页53记恩：哪几只虫是你吐的（这一步凭空多出来的那只），它吃了你吐的就数一只；追丢你一回清零
     const mine0 = st.mine || [], mine = mine0.slice(); let fedNow = false;
     r.bugs.forEach((b, i) => { if (b !== null && (st.bugs[i] === undefined || st.bugs[i] === null)) mine[i] = true; });
-    st.bugs.forEach((b, i) => { if (b !== null && mine0[i] && r.bugs[i] === null) { if (r.lz.mode === '吃' && st.lz.mode !== '吃') fedNow = true; mine[i] = false; } });
+    // 第二个 第 15 天 17:59 页77几天：几1、几2 都碰上'蜥蜴吃了你吐的虫'而它吃的是别的：同一步你把自己吐的那只捡回来、它在别处开吃。
+    //   你吐的那只没了，离你近就算你捡回去的，离它近才算它吃的。
+    const dd = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]);
+    st.bugs.forEach((b, i) => { if (b !== null && mine0[i] && r.bugs[i] === null) { if (r.lz.mode === '吃' && st.lz.mode !== '吃' && !(r.ate > st.ate && dd(r.pl, b) <= dd(r.lz.pos, b))) fedNow = true; mine[i] = false; } });
     r.mine = mine;
-    if (k[0] === 'X' && r.lz.mode === '吃' && st.lz.mode !== '吃') fedNow = true;   // 吐进它嘴里那一下，虫当场没了
+    const spawned = r.bugs.some((b, i) => b !== null && (st.bugs[i] === undefined || st.bugs[i] === null));   // 第二个 17:59 页77几天：吐出去的那只还在地上，它这一步吃的就是别的（几1 第 2 天第 11 步：它冲去吃了另一只，字说'吃了你吐的虫'）
+    if (k[0] === 'X' && !spawned && r.lz.mode === '吃' && st.lz.mode !== '吃') fedNow = true;   // 吐进它嘴里那一下，虫当场没了
     const f0 = st.lz.fed || 0;
     r.lz.fed = api.lost ? 0 : f0 + (fedNow ? 1 : 0);
     api.fedNow = fedNow; api.unfed = api.lost && f0 > 0;
