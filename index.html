@@ -370,7 +370,7 @@ function start(i) {
   const text = (L.layouts && DIAN.ju[i] > 1) ? L.layouts[(DIAN.ju[i] - 2) % L.layouts.length] : L.text;
   m = new S.Map(text, L.face, L.need, L.carry, L.V);
   if (L.hun0 !== undefined) m.hun0 = L.hun0; if (L.dig0) m.dig0 = true; if (L.grudge0) m.grudge0 = L.grudge0; if (L.faceB) m.faceB = L.faceB; if (L.landR) m.landR = L.landR; if (L.hun0B !== undefined) m.hun0B = L.hun0B;
-  const CY = L.from ? CARRY[L.from - 1] : null; if (CY) { m.fed0 = CY.a; m.fed0B = CY.b; }   // 第二个 08:58 页60隔天：'又一天'开局记着你昨天（第 from 张最后过关那局）喂过它几只   // 第二个 第 15 天 01:50 页45邻居   // 第二个·页11 21:47 页35骗
+  const CY = L.from ? CARRY[L.from - 1] : null; if (CY) { m.fed0 = CY.a; m.fed0B = CY.b; if (CY.g && L.V.includes('记仇')) m.grudge0 = CY.g; }   // 第二个 08:58 页60隔天：'又一天'开局记着你昨天（第 from 张最后过关那局）喂过它几只   // 第二个 第 15 天 01:50 页45邻居   // 第二个·页11 21:47 页35骗
   st = S.init(m); prev = null; n = 0; over = false; log = []; deadMark = null; heardNow = false; hist = []; aim = false;
   if (m.dig0 && st.lz.mode === '扒') log = ['蜥蜴蹲在一道石缝上，低头扒着。石缝底下吱吱叫了两声。'];   // 第二个 第 15 天 00:17 页40开局扒
   const CY2 = L.from ? CARRY[L.from - 1] : null;   // 第二个 08:59 页60隔天：只说它是昨天那只、身子底下有几个点，不说为什么
@@ -447,7 +447,7 @@ function act(k) {
   if (st.ate + (st.hid || []).filter(b => b).length < m.need && st.bugs.every(b => !b)) { over = true; msg.textContent = `你肚子里只剩 ${st.ate} 只，地上也没有虫了，凑不够 ${m.need} 只，这一局赢不了了。按 R 从头再来。`; }
   else if (st.ate < m.need && eq(st.pl, m.nest)) { msg.textContent = `到窝了，可肚子里只有 ${st.ate} 只，要带 ${m.need} 只回来。`; }   // 第二个·页11 17:29：七1、七2 带着不够数的虫回窝，屏幕没反应，以为要出去再进来
   else if (st.ate >= m.need && eq(st.pl, m.nest)) {
-    over = true; msg.textContent = `回到窝了，过了！一共 ${n} 步。`; dian('过'); PASSED.add(li); CARRY[li] = { a: st.lz.fed || 0, b: st.lzB ? (st.lzB.fed || 0) : 0 };
+    over = true; msg.textContent = `回到窝了，过了！一共 ${n} 步。`; dian('过'); PASSED.add(li); CARRY[li] = { a: st.lz.fed || 0, b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };   // 第二个 09:17 页61记仇隔天：也记着它最后在哪丢的你
     if (li + 1 < LEVELS.length) document.getElementById('next').style.display = 'inline-block';
     else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';
   } else if (n >= lim()) { over = true; dian('黑'); msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; }
