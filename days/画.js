@@ -47,8 +47,9 @@ function drawSight(g, m, lz) {
   }
 }
 
-function drawBug(g, X, Y, a) {
+function drawBug(g, X, Y, a, mine) {
   g.globalAlpha = a == null ? 1 : a;
+  if (mine) { g.strokeStyle = COL.me; g.lineWidth = 3; g.beginPath(); g.arc(X, Y, 17, 0, 7); g.stroke(); }   // 第二个 第 16 天 01:46 页92你吐的：你吐出去的虫带一圈你的颜色，一直到被谁吃掉（多7b：'分不清吃掉的是我吐的还是原先那只'）
   g.strokeStyle = '#4d7a33'; g.lineWidth = 2;
   for (const s of [-1, 1]) for (const k of [-6, 0, 6]) { g.beginPath(); g.moveTo(X, Y + k); g.lineTo(X + s * 13, Y + k + (k ? Math.sign(k) * 3 : 0)); g.stroke(); }
   g.fillStyle = COL.bug; g.beginPath(); g.ellipse(X, Y, 8, 11, 0, 0, 7); g.fill();
@@ -248,6 +249,13 @@ function frame(cv, m, info, t) {
     prev.bugs.forEach((b, i) => { if (b && st.bugs[i]) arrowTrail(g, b, st.bugs[i]); });
     if (moved) drawLiz(g, cx(prev.lz.pos[0]), cx(prev.lz.pos[1]), prev.lz.face, 0.22);
   }
+  // 第一个 第 15 天 19:55 页81老地方：它上回吃到虫的那格留一点虫渣（几粒褐色碎点），它记得这儿。不写字说为什么。
+  if (m.V.has('老地方') && st.lz && st.lz.haunt && !(st.bugs || []).some(b => b && b[0] === st.lz.haunt[0] && b[1] === st.lz.haunt[1])) {
+    const X = st.lz.haunt[0] * C, Y = st.lz.haunt[1] * C;
+    g.fillStyle = 'rgba(140,110,60,0.8)';   // 褐色：绿点已经是记恩
+    [[0.3, 0.35], [0.55, 0.3], [0.45, 0.55], [0.7, 0.6], [0.35, 0.7]].forEach(([a, b]) => { g.beginPath(); g.arc(X + C * a, Y + C * b, C * 0.06, 0, 7); g.fill(); });
+    g.strokeStyle = 'rgba(110,85,45,0.75)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(X + C * 0.6, Y + C * 0.42); g.lineTo(X + C * 0.75, Y + C * 0.35); g.moveTo(X + C * 0.5, Y + C * 0.65); g.lineTo(X + C * 0.6, Y + C * 0.78); g.stroke();
+  }
   // 它去找你：你刚才被看见的那格画一个淡淡的你，还有它要去的那条线
   if (!dead && (lz.mode === '找' || lz.mode === '追') && lz.tgt === '你' && lz.mem && !same(lz.mem, st.pl)) {
     const a = prev && t < 1 ? tPop : 1;
@@ -268,9 +276,9 @@ function frame(cv, m, info, t) {
     if (!b) return;
     const pb = prev && prev.bugs[i];
     const [X, Y] = pb ? at(pb, b, tMove) : at(b);
-    drawBug(g, X, Y);
+    drawBug(g, X, Y, null, !!(st.mine && st.mine[i]));
   });
-  if (prev && t < 1) prev.bugs.forEach((b, i) => { if (b && !st.bugs[i]) drawBug(g, cx(b[0]), cx(b[1]), 1 - seg(t, 0.3, 0.6)); });
+  if (prev && t < 1) prev.bugs.forEach((b, i) => { if (b && !st.bugs[i]) drawBug(g, cx(b[0]), cx(b[1]), 1 - seg(t, 0.3, 0.6), !!(prev.mine && prev.mine[i])); });
   if (info.spit && t < 1) {
     const [sx, sy] = at(info.spit.from, info.spit.to, Math.min(1, t * 1.6));
     drawBug(g, sx, sy, t < 0.7 ? 1 : (1 - t) / 0.3);

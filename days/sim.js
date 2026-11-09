@@ -166,7 +166,7 @@ function lizardTurn(m, lz, player, bugs, sounds) {
   let goal, steps;
   if (mode === '追' || mode === '找') { goal = mem; steps = 2; } else { goal = m.post; steps = 1; }
   // 第三个 11:59 '日子'：闲着的时候，饿了朝最近的虫走，饱了走回石头（m.post）
-  if (mode === '岗' && V.has('日子') && !(lz.hun > 0)) { const nb = nearBug(m, pos, bugs); if (nb) goal = nb; }
+  if (mode === '岗' && V.has('日子') && !(lz.hun > 0)) { const nb = hungryGoal(m, lz, pos, bugs); if (nb) goal = nb; }
   let dead = false;
   for (let s = 0; s < steps; s++) {
     if (eq(pos, goal)) break;
@@ -277,7 +277,7 @@ function lizardOne(m, lz, player, bugs, sounds) {
   let goal, steps;
   if (mode === '追' || mode === '找') { goal = mem; steps = 2; } else { goal = m.post; steps = 1; }
   // 第三个 11:59 '日子'：闲着的时候，饿了朝最近的虫走，饱了走回石头（m.post）
-  if (mode === '岗' && V.has('日子') && !(lz.hun > 0)) { const nb = nearBug(m, pos, bugs.concat(m._smell || [])); if (nb) goal = nb; }
+  if (mode === '岗' && V.has('日子') && !(lz.hun > 0)) { const nb = hungryGoal(m, lz, pos, bugs.concat(m._smell || [])); if (nb) goal = nb; }
   const digHere = p => V.has('扒') && mode === '岗' && !(lz.hun > 0) && has(m._smell || [], p);
   if (digHere(pos)) return [{ pos, face, mode: '扒', tgt: null, mem: null, eat: 2 }, false];
   let dead = false;
@@ -309,10 +309,11 @@ function nearBug(m, pos, bugs) {
   for (const b of bugs) if (b !== null && d.has(K(b)) && d.get(K(b)) < bd) { bd = d.get(K(b)); best = b; }
   return best;
 }
-function bugsTurn(m, bugs, lzpos, player) {
+function bugsTurn(m, bugs, lzpos, player, mine) {   // 第二个 第 16 天 02:05 页93软了：你吐出来的虫软了，不逃（你7b：'放它前面就算留饭，结果饭自己跑了'）
   const out = bugs.slice();
   bugs.forEach((b, i) => {
     if (b === null) return;
+    if (mine && mine[i]) return;
     if (Math.abs(b[0] - lzpos[0]) + Math.abs(b[1] - lzpos[1]) > 3) return;
     if (m.V.has('背逃')) {
       const ox = b[0] - lzpos[0], oy = b[1] - lzpos[1];
@@ -373,7 +374,7 @@ function step(m, st, k) {
   if (eq(pl, lz.pos)) return null;
   bugs.forEach((b, i) => { if (b !== null && eq(b, pl) && k !== '.' && k[0] !== 'X') { bugs[i] = null; ate += 1; } });
   if (V.has('窝安全') && eq(pl, m.nest) && ate >= m.need) return withPf(V, { pl, ate, bugs, lz }, pf);   // 第二个 10:15：走进窝那一步就算到了
-  let nb = bugsTurn(m, bugs, lz.pos, pl);
+  let nb = bugsTurn(m, bugs, lz.pos, pl, st.mine);
   if (drop.length && V.has('吐向它')) {
     nb[di] = bugs[di];
     if (eq(bugs[di], lz.pos) && lz.mode !== '吃') {
@@ -421,7 +422,7 @@ function init(m) {
 const FULL = 8;   // 第三个 11:59 '日子'：吃到一只，饱 FULL 回合（嚼 2 + 走回去 + 晒），然后又饿
 function step2(m, st, k) {
   const hid = st.hid || (m.hid || []).map(p => p), marks = st.marks || [];
-  m._smell = hid.filter(p => p && !has(marks, p)); api.dug = null; api.dugOut = false;
+  m._smell = hid.filter(p => p && !has(marks, p)); api.dug = null; api.dugOut = false; api.toHaunt = false;
   const r = step(m, st, k);
   if (r && r !== 'bad') {   // 第一个 17:44 '扒'：你走到藏虫的石缝上就抠出来吃了；它扒过的缝留爪印
     r.hid = hid.slice(); r.marks = api.dug ? marks.concat([api.dug]) : marks.slice();
@@ -447,12 +448,25 @@ function step2(m, st, k) {
     r.lz.fed = api.lost ? 0 : f0 + (fedNow ? 1 : 0);
     api.fedNow = fedNow; api.unfed = api.lost && f0 > 0;
   }
+  if (r && r !== 'bad' && r.lz && m.V.has('老地方')) {   // 第一个 页81老地方
+    let h = st.lz.haunt || null, hv = !!st.lz.hv;
+    if (r.lz.mode === '吃' && st.lz.mode !== '吃' && api.fedNow) { h = r.lz.pos.slice(); hv = true; }   // 第一个 第 16 天 00:46 页88：只有吃了你喂的那口才记成老地方（页87 五天量出：自己猎的也算，人挑另一边就永远碰不上，四个人没一个喂过它）
+    else if (h && eq(r.lz.pos, h)) hv = true;
+    if ((st.lz.hun || 0) > 0 && !(r.lz.hun > 0)) hv = !!(h && eq(r.lz.pos, h));   // 刚饿：要先去老地方看一眼
+    r.lz.haunt = h; r.lz.hv = hv;
+  }
   if (r && r !== 'bad' && r.lz) r.lz.learn = (st.lz.learn || 0) + (api.fooled ? 1 : 0);
   if (r && r !== 'bad' && r.lz) r.lz.grudge = api.fooled ? api.grudgeAt : (st.lz.grudge || null);   // 第一个 20:40
   return r;
 }
+// 第一个 第 15 天 19:52 页81老地方（第 16 天 00:11 搬到 页86，拷自恩淡那版 页77几天）：它记得上回在哪吃到的虫。饿了先去那格看一眼（路上看见虫照旧停、冲），到了那儿再找最近的虫。隔天也记得。
+function hungryGoal(m, lz, pos, bugs) {
+  if (m.V.has('老地方') && lz.haunt && !lz.hv && !eq(pos, lz.haunt)) { api.toHaunt = true; return lz.haunt; }
+  return nearBug(m, pos, bugs);
+}
 function init2(m) { const o = init(m); o.hid = (m.hid || []).map(p => p); o.marks = []; if (m.fed0) o.lz.fed = m.fed0;   // 第二个 08:58 页60隔天：开局就记着昨天吃过你几只
   if (m.V.has('日子')) o.lz.hun = m.hun0 === undefined ? 0 : m.hun0;
+  if (m.haunt0 && m.V.has('老地方')) { o.lz.haunt = m.haunt0.slice(); o.lz.hv = false; }   // 第一个 页81老地方
   // 第二个 第 15 天 00:16 页40开局扒：开局它已经蹲在离石头最近的那道有虫的缝上，埋头扒（三回合），第一屏就看得见这张该看它什么
   if (m.dig0 && m.V.has('扒') && o.hid.length) { const d = m.distFrom(m.post); let b = null; o.hid.forEach(q => { if (q && (b === null || (d.get(K(q)) ?? 1e9) < (d.get(K(b)) ?? 1e9))) b = q; }); if (b) { o.lz.pos = b.slice(); o.lz.face = b[1] <= 1 ? 'U' : 'D'; o.lz.mode = '扒'; o.lz.eat = 3; o.lz.hun = 0; } }
   return o; }
@@ -460,7 +474,7 @@ function init2(m) { const o = init(m); o.hid = (m.hid || []).map(p => p); o.mark
 function wantBug(m, st) {
   const lz = st.lz;
   if ((lz.mode === '停' || lz.mode === '追') && lz.tgt !== null && lz.tgt !== '你') return st.bugs[lz.tgt] || null;
-  if (lz.mode === '岗' && m.V.has('日子') && !(lz.hun > 0)) return nearBug(m, lz.pos, st.bugs);
+  if (lz.mode === '岗' && m.V.has('日子') && !(lz.hun > 0)) { if (m.V.has('老地方') && lz.haunt && !lz.hv && !eq(lz.pos, lz.haunt)) return null; return nearBug(m, lz.pos, st.bugs); }
   return null;
 }
 // 第二个 第 15 天 01:49 页45邻居：两只的地。石头 BFS m.landR 格以内；两块挨着的格子归离得近的那只（一样近不归谁）
@@ -493,7 +507,7 @@ function step3(m, st, k) {
   mB._other = { pos: r.lz.pos, mode: r.lz.mode };
   const lzB = fa.hiss ? Object.assign({}, st.lzB, { mode: '逃' }) : st.lzB;
   const sounds = (k !== '.' && k[0] !== 'X') ? [['你', r.pl]] : [];
-  let bugs = bugsTurn(m, r.bugs, lzB.pos, r.pl);
+  let bugs = bugsTurn(m, r.bugs, lzB.pos, r.pl, r.mine);
   FLAGS.forEach(f => api[f] = (f === 'hiss' ? false : null));
   const bugs0 = bugs.slice();
   const [nb, dead] = lizardTurn(mB, lzB, r.pl, bugs, sounds);
