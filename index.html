@@ -392,12 +392,21 @@ function aimDrops() { return ['U', 'R', 'D', 'L'].map(d => S.dropAt(m, st, d)).f
 function draw(anim) {
   const info = { prev: anim ? prev : null, st, dead: deadMark, drop: (!over && !deadMark) ? (m.V.has('吐选') ? (aim ? aimDrops() : null) : S.dropAt(m, st)) : null, heard: heardNow, spit: anim && lastDrop && prev ? { from: prev.pl, to: lastDrop } : null };
   const cv = document.getElementById('board');
-  if (anim && WeiDraw.animate) WeiDraw.animate(cv, m, info); else (WeiDraw.still || WeiDraw.frame)(cv, m, Object.assign(info, { prev }), 1);
+  const showR = over && WeiDraw.replay ? () => { WeiDraw.replay(cv, m, replayPath()); const mg = document.getElementById('msg'); if (!mg.textContent.includes('白线')) mg.textContent += `　棋盘上：白线是你这一局走的，${st.lzB ? '红线、青线是它俩' : '红线是它'}这一局走的，绿圈是你吐虫的地方，数字是第几步。`; } : null;   // 第二个 12:05 页70回看
+  if (anim && WeiDraw.animate) WeiDraw.animate(cv, m, info, showR ? () => setTimeout(showR, 500) : null); else { (WeiDraw.still || WeiDraw.frame)(cv, m, Object.assign(info, { prev }), 1); showR && showR(); }
   document.getElementById('status').textContent = `第 ${li + 1} 张　走了 ${n} 步，还剩 ${lim() - n} 步　肚子里 ${st.ate} 只，要带 ${m.need} 只回窝` +   // 第二个 第 15 天 08:30 页57带几只：整十五1、2 都把要带几只弄错过（第 4、5、6、14 张），开头那句看过就忘
  (m.V.has('日子') ? `　${st.lzB ? '红的' : '蜥蜴的'}肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '瘪下去一点了' : '瘪了'}` + (st.lzB ? `，青的：${st.lzB.hun >= 5 ? '鼓鼓的' : st.lzB.hun >= 1 ? '瘪下去一点了' : '瘪了'}` : '') : '');
   document.getElementById('log').innerHTML = log.map(t => `<div>${t}</div>`).join('');
 }
 
+// 第二个 第 15 天 12:05 页70回看：这一局每一步你和它在哪，从撤回用的 hist 里取（撤回了，线也跟着退）
+function replayPath() {
+  const pts = hist.map(h => h.st).concat([st]);
+  const R = { me: pts.map(p => p.pl), a: pts.map(p => p.lz.pos), b: st.lzB ? pts.map(p => p.lzB ? p.lzB.pos : null).filter(Boolean) : null,
+    drops: hist.slice(1).map(h => h.lastDrop).concat([lastDrop]).filter(Boolean) };
+  if (deadMark) { R.me.push(deadMark.at); if (S.killedBy === 'B' && R.b) R.b.push(deadMark.at); else R.a.push(deadMark.at); }
+  return R;
+}
 // 10:25 第一个看了 Bunburrows：它能撤一步，人才敢去捅它、看它怎么反应。加 Z 撤一步（被吃了也能撤），规矩一条不动。
 let hist = [];
 const PASSED = new Set();

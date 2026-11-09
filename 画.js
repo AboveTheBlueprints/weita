@@ -345,5 +345,47 @@ function drawB(g, m, info, t, tMove) {
 }
 function still(cv, m, info) { token++; frame(cv, m, info, 1); }
 
-root.WeiDraw = { frame, animate, still, drawLiz, drawBug, drawMe, drawNest, C };
+
+// 第二个 第 15 天 12:05 页70回看（从"园"搬来）：一局结束，把这一局你走的（白）和它走的（它的颜色）叠着画，吐虫的格子画绿圈。
+// R = { me:[[x,y]...], a:[[x,y]...], b:[[x,y]...]|null, drops:[[x,y]...] }
+function replay(cv, m, R) {
+  const g = cv.getContext('2d');
+  g.fillStyle = 'rgba(10,10,8,0.55)'; g.fillRect(0, 0, cv.width, cv.height);
+  function line(pts, color, off) {
+    if (!pts || pts.length < 1) return;
+    const P = pts.map(q => [cx(q[0]) + off, cx(q[1]) + off]);
+    g.strokeStyle = color; g.lineWidth = 4; g.lineJoin = 'round'; g.lineCap = 'round'; g.globalAlpha = 0.9;
+    g.beginPath(); P.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke();
+    // 站着没动的：在那一格画一个点，旁边写停了几步（一段一段算，停得久才写）
+    g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    const runs = [];
+    for (let i = 1, k = 0; i <= pts.length; i++) {
+      if (i < pts.length && pts[i][0] === pts[i - 1][0] && pts[i][1] === pts[i - 1][1]) continue;
+      if (i - 1 - k >= 1) runs.push({ at: pts[k], len: i - 1 - k, from: k });
+      k = i;
+    }
+    g.lineWidth = 3; g.beginPath(); g.arc(P[0][0], P[0][1], 8, 0, 7); g.stroke();   // 开头空心圈
+    g.fillStyle = color; g.beginPath(); g.arc(P[P.length - 1][0], P[P.length - 1][1], 6, 0, 7); g.fill();   // 结尾实心
+    const used = new Set();
+    runs.forEach(r => {
+      const X = cx(r.at[0]) + off, Y = cx(r.at[1]) + off;
+      g.fillStyle = color; g.beginPath(); g.arc(X, Y, 4 + Math.min(5, r.len / 2), 0, 7); g.fill();
+      if (r.len >= 3) { const t = `停${r.len}步`; const w = g.measureText(t).width + 8; g.fillStyle = 'rgba(17,17,17,0.85)'; g.fillRect(X + 8, Y - 18 + (off > 4 ? 14 : 0), w, 15); g.fillStyle = color; g.fillText(t, X + 8 + w / 2, Y - 10 + (off > 4 ? 14 : 0)); }
+      for (let i = r.from; i <= r.from + r.len; i++) used.add(i);
+    });
+    // 走着的时候每 5 步写一个步数，好对上"那时候它在哪"；停着的那几步不写（上面写了停几步）
+    for (let i = 5; i < P.length; i += 5) {
+      if (used.has(i)) continue;
+      g.fillStyle = '#111'; g.beginPath(); g.arc(P[i][0], P[i][1], 8, 0, 7); g.fill();
+      g.fillStyle = color; g.fillText(String(i), P[i][0], P[i][1]);
+    }
+    g.globalAlpha = 1;
+  }
+  (R.drops || []).forEach(q => { g.strokeStyle = COL.bug; g.lineWidth = 3; g.beginPath(); g.arc(cx(q[0]), cx(q[1]), C * 0.38, 0, 7); g.stroke(); });
+  if (R.b) line(R.b, '#3fb8a8', 13);
+  line(R.a, '#e0603f', 6);
+  line(R.me, '#f2f2ea', -8);
+}
+
+root.WeiDraw = { frame, animate, still, replay, drawLiz, drawBug, drawMe, drawNest, C };
 })(this);
