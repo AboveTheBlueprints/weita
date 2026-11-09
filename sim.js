@@ -427,7 +427,8 @@ function step2(m, st, k) {
     const h0 = st.lz.hun || 0;
     r.lz.hun = (r.lz.mode === '吃' && st.lz.mode !== '吃') ? FULL : Math.max(0, h0 - 1);
   }
-  if (r && r !== 'bad' && r.lz && m.V.has('记恩')) {   // 第二个 第 15 天 05:50 页53记恩：哪几只虫是你吐的（这一步凭空多出来的那只），它吃了你吐的就数一只；追丢你一回清零
+  if (r && r !== 'bad' && r.lz && (m.V.has('记恩') || m.V.has('记数'))) {   // 第二个 08:58 页60隔天：'记数'＝只数它吃过你几只、不改它的脾气（第 4、7、9 张），过关时带到'又一天'那张
+    // 第二个 第 15 天 05:50 页53记恩：哪几只虫是你吐的（这一步凭空多出来的那只），它吃了你吐的就数一只；追丢你一回清零
     const mine0 = st.mine || [], mine = mine0.slice(); let fedNow = false;
     r.bugs.forEach((b, i) => { if (b !== null && (st.bugs[i] === undefined || st.bugs[i] === null)) mine[i] = true; });
     st.bugs.forEach((b, i) => { if (b !== null && mine0[i] && r.bugs[i] === null) { if (r.lz.mode === '吃' && st.lz.mode !== '吃') fedNow = true; mine[i] = false; } });
@@ -441,7 +442,8 @@ function step2(m, st, k) {
   if (r && r !== 'bad' && r.lz) r.lz.grudge = api.fooled ? api.grudgeAt : (st.lz.grudge || null);   // 第一个 20:40
   return r;
 }
-function init2(m) { const o = init(m); o.hid = (m.hid || []).map(p => p); o.marks = []; if (m.V.has('日子')) o.lz.hun = m.hun0 === undefined ? 0 : m.hun0;
+function init2(m) { const o = init(m); o.hid = (m.hid || []).map(p => p); o.marks = []; if (m.fed0) o.lz.fed = m.fed0;   // 第二个 08:58 页60隔天：开局就记着昨天吃过你几只
+  if (m.V.has('日子')) o.lz.hun = m.hun0 === undefined ? 0 : m.hun0;
   // 第二个 第 15 天 00:16 页40开局扒：开局它已经蹲在离石头最近的那道有虫的缝上，埋头扒（三回合），第一屏就看得见这张该看它什么
   if (m.dig0 && m.V.has('扒') && o.hid.length) { const d = m.distFrom(m.post); let b = null; o.hid.forEach(q => { if (q && (b === null || (d.get(K(q)) ?? 1e9) < (d.get(K(b)) ?? 1e9))) b = q; }); if (b) { o.lz.pos = b.slice(); o.lz.face = b[1] <= 1 ? 'U' : 'D'; o.lz.mode = '扒'; o.lz.eat = 3; o.lz.hun = 0; } }
   return o; }
@@ -486,7 +488,7 @@ function step3(m, st, k) {
   FLAGS.forEach(f => api[f] = (f === 'hiss' ? false : null));
   const bugs0 = bugs.slice();
   const [nb, dead] = lizardTurn(mB, lzB, r.pl, bugs, sounds);
-  if (m.V.has('记恩')) {   // 第二个 07:08 页55：青也记恩：它吃了你吐的那只就数一只，追丢你一回清零
+  if (m.V.has('记恩') || m.V.has('记数')) {   // 第二个 07:08 页55：青也记恩：它吃了你吐的那只就数一只，追丢你一回清零
     let fedB = false; const mine = r.mine || [];
     bugs0.forEach((b, i) => { if (b && mine[i] && (bugs[i] === null || bugs[i] === undefined) && nb.mode === '吃' && lzB.mode !== '吃') { fedB = true; mine[i] = false; } });
     const f0 = st.lzB.fed || 0;
@@ -506,7 +508,7 @@ function step3(m, st, k) {
   return r;
 }
 const _init2 = init2;
-function init3(m) { const o = _init2(m); if (m.postB) o.lzB = { pos: m.postB, face: m.faceB || m.face, mode: '岗', tgt: null, mem: null, eat: 0, hun: m.hun0B === undefined ? (m.hun0 || 0) : m.hun0B, learn: 0, grudge: null }; return o; }
+function init3(m) { const o = _init2(m); if (m.postB) o.lzB = { pos: m.postB, face: m.faceB || m.face, mode: '岗', tgt: null, mem: null, eat: 0, hun: m.hun0B === undefined ? (m.hun0 || 0) : m.hun0B, learn: 0, grudge: null, fed: m.fed0B || 0 }; return o; }   // 第二个 08:58 页60隔天
 api = { Map: Map_, step: step3, lands, init: init2, dropAt, DIRS, ORDER, eq, heard: false, wantBug };
 api.init = init3;
 if (typeof module !== 'undefined') module.exports = api; else root.WeiSim = api;
