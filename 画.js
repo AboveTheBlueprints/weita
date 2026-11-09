@@ -258,8 +258,7 @@ function frame(cv, m, info, t) {
   // 第一个 21:27 页33记号：被你甩掉过，它丢你的那一格一直留着那个淡淡的你（跟它找你时同一个记号，生人已经认得"它记得你在这儿"），它在石头上时再连一条淡线。不写字说为什么。
   if (!dead && m.V.has('记仇') && lz.grudge && !((lz.mode === '找' || lz.mode === '追') && lz.tgt === '你')) {
     ghostMe(g, lz.grudge, 0.55);
-    g.globalAlpha = 0.3; g.setLineDash([3, 6]); g.strokeStyle = '#ff7a5c'; g.lineWidth = 2;
-    g.beginPath(); g.moveTo(cx(lz.pos[0]), cx(lz.pos[1])); { let q = lz.pos; for (let i = 0; i < 40 && !(q[0] === lz.grudge[0] && q[1] === lz.grudge[1]); i++) { const r = m.stepToward(q, lz.grudge); if (!r || !r[1]) break; q = r[0]; g.lineTo(cx(q[0]), cx(q[1])); } } g.stroke();   // 第二个 09:51：顺着它会走的路连，不再斜穿墙（仇4：'橙色点线还会斜着穿墙，显然不是它真走的路线'） g.setLineDash([]); g.globalAlpha = 1;
+    // 第二个 第 15 天 17:09 页76无线：拿掉它到问号那条虚线（八个生人七个说没懂，常读成'它打算走的路'）
   }
   if (drop && !dead && t >= 1) {   // 按 x 虫会落的那一格（第二个·页11 17:06：吐选瞄准时 drop 是几格，一格一个框）
     for (const d of (Array.isArray(drop[0]) ? drop : [drop])) { g.setLineDash([6, 5]); g.strokeStyle = COL.drop; g.lineWidth = 2.5; g.strokeRect(d[0] * C + 6, d[1] * C + 6, C - 12, C - 12); g.setLineDash([]); }
