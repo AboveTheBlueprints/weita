@@ -277,7 +277,7 @@ function dayText(d, nBugs) {   // 第二个 第 16 天 04:45 页98虫过夜：�
 function dayPlan(d) {   // 第 d 天开局几只虫、它肚子多少
   if (d === 1) return { n: 3, hun: 3 };
   const y = DAYINFO[d - 2]; if (!y) return { n: 3, hun: 3 };
-  return { n: Math.min(5, 2 + y.left), hun: y.ate >= 2 ? 6 : y.ate === 1 ? 3 : 0 };
+  return { n: Math.min(5, 2 + y.left), hun: y.ate >= 2 ? 8 : y.ate === 1 ? 3 : 0 };   /* 第四个 第 16 天 07:52 页105早上懒：昨天吃够两只，今天开局真饱（8，原来 6），'鼓鼓的'从骗人变成真话 */
 }
 LEVELS.length = 0;
 for (let d = 1; d <= 5; d++) LEVELS.push({ name: `第 ${d} 天`, day: d, text: null, face: 'U', need: 1, carry: 0, limit: 50, from: d > 1 ? d - 1 : undefined, V: DAYV });
