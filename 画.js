@@ -177,8 +177,8 @@ function frame(cv, m, info, t) {
   if (st.lzB && root.WeiSim && root.WeiSim.lands) {
     const L = root.WeiSim.lands(m);
     [[L.a, 'rgba(217,84,58,0.16)'], [L.b, 'rgba(63,184,168,0.18)']].forEach(([set, c]) => { g.fillStyle = c; set.forEach(k => { const [x, y] = k.split(',').map(Number); g.fillRect(x * C, y * C, C, C); }); });
-    [m.post, m.postB].forEach(p => { g.fillStyle = '#5a5a50'; g.beginPath(); g.ellipse(cx(p[0]), cx(p[1]) + 6, C * 0.36, C * 0.2, 0, 0, 7); g.fill(); });
   }
+  [m.post, m.postB].forEach(p => { if (!p) return; g.fillStyle = '#77776a'; g.beginPath(); g.ellipse(cx(p[0]), cx(p[1]) + 4, C * 0.44, C * 0.32, 0, 0, 7); g.fill(); g.fillStyle = '#93938a'; g.beginPath(); g.ellipse(cx(p[0]) - 4, cx(p[1]) - 1, C * 0.3, C * 0.18, 0, 0, 7); g.fill(); });   // 第二个 第 15 天 09:50：一只的张也画石头（以前只有两只的张画），大一点、亮一点，它蹲着也露一圈边。仇1、仇3、仇4 都说'石头认不出来，靠字才知道它回石头了'
   (m.cracks || []).forEach(q => {   // 第一个 17:48 '扒'：石缝画成几道深色裂纹；它扒过的缝上加三道爪印
     const X = q[0] * C, Y = q[1] * C;
     g.strokeStyle = '#3b3326'; g.lineWidth = 3; g.beginPath();
