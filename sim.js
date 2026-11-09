@@ -77,6 +77,7 @@ Map_.prototype.sees = function (lz, face, p) {
   const fwd = vx * fx + vy * fy, lat = Math.abs(vx * fy - vy * fx);
   if (fwd < 1 || fwd > SIGHT) return false;
   if (lat > 0) return false;   // 一条线：只看脸朝的那一排
+  if (this._other) { const o = this._other.pos; const ox = o[0] - lz[0], oy = o[1] - lz[1]; const of = ox * fx + oy * fy; if (ox * fy - oy * fx === 0 && of >= 1 && of < fwd) return false; }   // 第二个 第 15 天 11:26 页69穿身：另一只的身子挡眼（第一个玩第 12 张：青隔着红'停住盯着你'）
   return this.los(lz, p);
 };
 
@@ -169,6 +170,7 @@ function lizardTurn(m, lz, player, bugs, sounds) {
   for (let s = 0; s < steps; s++) {
     if (eq(pos, goal)) break;
     const [np, k] = m.stepToward(pos, goal);
+    if (m._other && eq(np, m._other.pos)) { if (k) face = k; break; }   // 第二个 11:26 页69穿身：冲的时候撞上另一只就停在它跟前（第一个：青从红身上穿过去）
     if (V.has('记恩') && (lz.fed || 0) >= 1 && eq(np, player)) { if (k) face = k; break; }   // 第二个 06:20 页53记恩：认得你的挡路也不扑，停在你跟前等（又2 第三局：喂过它，站在它回家路上，它'看见你没动'又'停住盯着你'下一步就扑，规矩自己打架）
     if (V.has('只扑盯着的') && eq(np, player) && tgt !== '你') {
       return [{ pos, face: k || face, mode: '停', tgt: '你', mem: player, eat: 0 }, false];
@@ -280,6 +282,7 @@ function lizardOne(m, lz, player, bugs, sounds) {
   for (let s = 0; s < steps; s++) {
     if (eq(pos, goal)) break;
     const [np, k] = m.stepToward(pos, goal);
+    if (m._other && eq(np, m._other.pos)) { if (k) face = k; break; }   // 第二个 11:26 页69穿身：冲的时候撞上另一只就停在它跟前（第一个：青从红身上穿过去）
     if (full && eq(np, player)) { if (k) face = k; break; }
     if (V.has('记恩') && (lz.fed || 0) >= 1 && eq(np, player)) { if (k) face = k; break; }   // 第二个 06:20 页53记恩：认得你的挡路也不扑，停在你跟前等（又2 第三局：喂过它，站在它回家路上，它'看见你没动'又'停住盯着你'下一步就扑，规矩自己打架）
     if (V.has('只扑盯着的') && eq(np, player) && tgt !== '你') {

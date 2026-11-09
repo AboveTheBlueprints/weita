@@ -113,13 +113,14 @@ function seg(t, a, b) { return cl((t - a) / (b - a)); }
 function turn(a, b, k) { let d = b - a; while (d > Math.PI + 1e-6) d -= 2 * Math.PI; while (d < -Math.PI + 1e-6) d += 2 * Math.PI; return a + d * k; }
 const same = (a, b) => a && b && a[0] === b[0] && a[1] === b[1];
 
-function drawSightCells(g, m, pos, face, upto, alpha) {   // upto：画到第几格（动画里一格一格往外伸）
+function drawSightCells(g, m, pos, face, upto, alpha, block) {   // upto：画到第几格（动画里一格一格往外伸）；block：另一只站的格子，视线画到它身上就停（第二个 11:27 页69穿身）
   const [dx, dy] = DV[face]; let x = pos[0] + dx, y = pos[1] + dy, k = 0;
   g.globalAlpha = alpha;
   while (x >= 0 && y >= 0 && x < m.w && y < m.h && !m.wall.has(x + ',' + y)) {
     if (k >= upto) { g.globalAlpha = 1; return; }
     g.fillStyle = COL.sight; g.fillRect(x * C + 1, y * C + 1, C - 2, C - 2);
     g.strokeStyle = COL.sightEdge; g.lineWidth = 1; g.strokeRect(x * C + 1.5, y * C + 1.5, C - 3, C - 3);
+    if (block && x === block[0] && y === block[1]) { g.globalAlpha = 1; return; }
     x += dx; y += dy; k++;
   }
   if (x >= 0 && y >= 0 && x < m.w && y < m.h) {
@@ -210,10 +211,11 @@ function frame(cv, m, info, t) {
   const tSound = t, tTurn = info.heard && !moved ? ease(seg(t, 0.3, 0.6)) : ease(seg(t, 0, 0.2));
   const tMove = ease(seg(t, moved && turned ? 0.15 : 0.05, 0.5)), tSight = seg(t, 0.5, 0.8), tPop = seg(t, 0.6, 0.85);
   // 旧的视线先淡掉，新的再伸出来
-  if (prev && t < 1 && !dead && (turned || moved)) drawSightCells(g, m, lz0.pos, lz0.face, 99, 1 - seg(t, 0, 0.2));
+  const blkA = st.lzB ? st.lzB.pos : null;
+  if (prev && t < 1 && !dead && (turned || moved)) drawSightCells(g, m, lz0.pos, lz0.face, 99, 1 - seg(t, 0, 0.2), prev.lzB ? prev.lzB.pos : null);
   // 第二个·页11 19:24（第一个查的：岔网1、2 都问"它朝着我、我也在黄格里，却只转头没扑"）：听见脚步刚转过来的那一回合它还没看，新黄线画淡，你下一步走完还站在里面才实
   const fresh = !dead && info.heard && turned && !moved;
-  if (!dead) drawSightCells(g, m, lz.pos, lz.face, (prev && (turned || moved)) ? Math.ceil(tSight * 12) : 99, fresh ? 0.38 : 1);
+  if (!dead) drawSightCells(g, m, lz.pos, lz.face, (prev && (turned || moved)) ? Math.ceil(tSight * 12) : 99, fresh ? 0.38 : 1, blkA);
   if (!prev || (!turned && !moved)) {} // 视线没变就一直亮着
   // 声音：你走一步、虫跑一步、虫落地，都有一圈
   if (prev && t < 1) {
@@ -323,7 +325,7 @@ function drawB(g, m, info, t, tMove) {
   COL.liz = '#3fb8a8'; COL.lizBelly = '#9fe6d8'; COL.sight = 'rgba(240,200,80,0.18)'; COL.sightEdge = 'rgba(80,215,195,0.95)';   // 第二个 第 15 天 02:40 页48两口：对1 说两条黄线叠在一起分不清谁在看哪。填色照旧黄（黄格＝被看见），青的那条描青边
   try {
     const killed = dead && root.WeiSim && root.WeiSim.killedBy === 'B';
-    if (!dead) drawSightCells(g, m, b.pos, b.face, 99, prev && t < 0.6 ? seg(t, 0.3, 0.6) : 1);
+    if (!dead) drawSightCells(g, m, b.pos, b.face, 99, prev && t < 0.6 ? seg(t, 0.3, 0.6) : 1, st.lz.pos);
     const lp = killed ? dead.at : b.pos;
     const [x, y] = prev ? at(b0.pos, lp, tMove) : at(lp);
     const ang = turn(ANG[b0.face], ANG[b.face], prev ? ease(seg(t, 0, 0.3)) : 1);
