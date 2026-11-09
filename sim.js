@@ -130,6 +130,7 @@ function lizardTurn(m, lz, player, bugs, sounds) {
       const q = near[0][2];
       const vx = q[0] - pos[0], vy = q[1] - pos[1];
       const nf = Math.abs(vx) >= Math.abs(vy) ? (vx > 0 ? 'R' : 'L') : (vy > 0 ? 'D' : 'U');
+      api.ear = q;   // 第二个 13:03 页72耳朵：它这一回合听见了谁（不管转没转头），画面上它身上亮一圈
       if (nf !== face) api.heard = true;   // 给画面那句'听见了动静'用
       face = nf;
     }
@@ -255,6 +256,7 @@ function lizardOne(m, lz, player, bugs, sounds) {
         const q = near[0][2];
         const vx = q[0] - pos[0], vy = q[1] - pos[1];
         const nf = Math.abs(vx) >= Math.abs(vy) ? (vx > 0 ? 'R' : 'L') : (vy > 0 ? 'D' : 'U');
+        api.ear = q;   // 第二个 13:03 页72耳朵
         if (nf !== face) { api.heard = true; api.heardAt = q; return [{ pos, face: nf, mode: '岗', tgt: null, mem: null, eat: ONE_BACK }, false]; }
         if (eq(pos, m.post)) return [{ pos, face, mode: '岗', tgt: null, mem: null, eat: ONE_BACK }, false];
       }
@@ -338,7 +340,7 @@ function bugsTurn(m, bugs, lzpos, player) {
 // 局面：{pl, ate, bugs, lz}；一步：'U' 'R' 'D' 'L' '.' 'X'。返回新局面、'bad'（走不了）或 null（死了）
 function step(m, st, k) {
   api.friend = false; api.lost = false; api.fedNow = false; api.unfed = false; api.swapped = false;
-  api.heard = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false; api.backing = false;
+  api.ear = null; api.heard = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false; api.backing = false;
   let pl = st.pl, ate = st.ate; let bugs = st.bugs.slice(); let lz = st.lz;
   let pf = st.pf || null;   // 你的朝向（'吐朝' 用）
   let drop = [], di = -1;
@@ -466,7 +468,7 @@ function lands(m) {
   for (const [k, vb] of db) { const va = da.has(k) ? da.get(k) : 1e9; if (vb <= R && vb < va) b.add(k); }
   return (m._lands = { a, b });
 }
-const FLAGS = ['heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped'];   // 第二个 07:08 页55：记恩那几样也各记各的
+const FLAGS = ['ear', 'heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped'];   // 第二个 07:08 页55：记恩那几样也各记各的
 const snap = () => { const o = {}; FLAGS.forEach(f => o[f] = api[f]); return o; };
 function step3(m, st, k) {
   if (!m.postB || !st.lzB) return step2(m, st, k);

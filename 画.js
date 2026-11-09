@@ -150,6 +150,15 @@ function drawSound(g, m, q, t, color) {
   g.globalAlpha = 1;
 }
 
+function drawEar(g, p, t, color, k = 1) {   // 第二个 13:05 页72耳朵：它听见了，身上亮一圈
+  const a = k * Math.sin(Math.PI * t); if (a <= 0) return;
+  g.save(); g.globalAlpha = 0.9 * a; g.strokeStyle = color; g.lineWidth = 4;
+  g.beginPath(); g.arc(cx(p[0]), cx(p[1]), C * (0.5 + 0.12 * t), 0, 7); g.stroke();
+  g.lineWidth = 2; g.globalAlpha = 0.5 * a;
+  g.beginPath(); g.arc(cx(p[0]), cx(p[1]), C * (0.66 + 0.12 * t), 0, 7); g.stroke();
+  g.restore();
+}
+
 function ghostMe(g, p, a) {   // 它记得你在这儿
   const X = cx(p[0]), Y = cx(p[1]);
   g.globalAlpha = a * 0.45; g.fillStyle = COL.me; g.beginPath(); g.arc(X, Y, C * 0.3, 0, 7); g.fill();
@@ -222,6 +231,17 @@ function frame(cv, m, info, t) {
     if (!same(prev.pl, st.pl) && !dead) drawSound(g, m, st.pl, tSound, info.heard ? '#7cc8ff' : 'rgba(124,200,255,0.75)');
     prev.bugs.forEach((b, i) => { if (b && st.bugs[i] && !same(b, st.bugs[i])) drawSound(g, m, st.bugs[i], tSound, 'rgba(160,220,120,0.8)'); });
     if (info.spit) drawSound(g, m, info.spit.to, seg(t, 0.25, 1), 'rgba(160,220,120,0.8)');
+  }
+  // 第二个 13:05 页72耳朵：回1、日1、日2 都说不懂它多远听得见、什么时候只是听见。声音那一圈传到它身上、它这一回合真听见了（不管转没转头），它身上亮一圈，跟声音同色；在嚼、在找、在冲的它不听，不亮
+  if (prev && !dead && info.ear) {   // 动画里随声音亮一下；停下来以后留一圈淡的，到下一步才没（截图的生人只看得到停下来那一帧）
+    [[info.ear[0], prev.lz], [info.ear[1], prev.lzB]].forEach(([q, L]) => {
+      if (!q || !L) return;
+      const d = Math.abs(q[0] - L.pos[0]) + Math.abs(q[1] - L.pos[1]);
+      const col = same(q, st.pl) ? '#7cc8ff' : 'rgb(160,220,120)';
+      const L1 = (L === prev.lz ? st.lz : st.lzB) || L;
+      if (t < 1) drawEar(g, L.pos, seg(t, (d - 1) * 0.1 + 0.1, (d - 1) * 0.1 + 0.6), col);
+      else drawEar(g, L1.pos, 0.5, col, 0.6);
+    });
   }
   if (prev && t >= 1) {   // 这一回合的拖影：谁从哪来
     arrowTrail(g, prev.lz.pos, st.lz.pos);
