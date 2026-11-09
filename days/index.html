@@ -411,7 +411,7 @@ function start(i) {
   const dayLine = !L.day ? '' : (L.day === 1 ? `第 1 天。地上有${CN7[DP.n]}只虫。` : (DAYINFO[L.day - 2] ? `第 ${L.day} 天。昨天你回窝的时候，地上还剩${CN7[DAYINFO[L.day - 2].left]}只虫；今天地上有${CN7[DP.n]}只。` : `第 ${L.day} 天。地上有${CN7[DP.n]}只虫。`));   // 第二个 17:42 页77几天：只写数，不写为什么
   document.getElementById('intro').textContent = dayLine + goal() + yday + ((DIAN.ju[i] >= 4 && !PASSED.has(i) && i + 1 < LEVELS.length) ? '　（卡住了也可以点上面那排张名，先去玩后面的。）' : '');   // 第二个 第 15 天 02:13：整八2、4 卡在石缝四局，不知道张名能点，后面几张没见到
   const canX = L.V.includes('吐');
-  document.getElementById('keys').innerHTML = (L.faceB ? '这张有两只蜥蜴，一只红的、一只青的，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。涂黄的格子是它们脸朝着的那一条（青的那条描着青边），一直到墙：你这一步走完还站在黄格里，它就看见你。' : '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。涂黄的格子是它脸朝着的那一条，一直到墙：你这一步走完还站在黄格里，它就看见你。') + '淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。`;
+  document.getElementById('keys').innerHTML = (L.faceB ? '这张有两只蜥蜴，一只红的、一只青的，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。涂黄的格子是它们脸朝着的那一条（青的那条描着青边），一直到墙：你这一步走完还站在黄格里，它就看见你。' : '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。' /* 第二个 第 16 天 00:23：黄格那句拿掉，让它停一拍再冲自己教（首分钟/预期.md 末尾四个人） */) + '淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。`;
   document.getElementById('xbtn').style.visibility = canX ? 'visible' : 'hidden';
   document.getElementById('next').style.display = (PASSED.has(li) && li + 1 < LEVELS.length) ? 'inline-block' : 'none';   // 第一个 17:01：过了的张重来、撤回以后'下一张'还在
   document.getElementById('msg').textContent = '';
