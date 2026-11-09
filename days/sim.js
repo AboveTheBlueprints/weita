@@ -235,7 +235,7 @@ function lizardOne(m, lz, player, bugs, sounds) {
     // 10:13 第一个看到：找的时候看见你直接冲，比站岗少一拍，像"有时停有时不停"。改成：新看见一样东西都先盯一回合
     // 第一个 17:17 '学'：被你甩掉两回以后，再看见你不先盯，直接冲（法布尔的蜂上了两三回当就不上了）；第二个·页11 17:59 从页20学 拷来
     const learned = V.has('记仇')   // 第一个 20:45：记仇时'学'不数回数了：它在石头上、脸正朝着上回丢你的那条路，看见你就不停（转身那一下就是它学乖了，人事前看得见）
-      ? (pick[0] === '你' && mode === '岗' && lz.grudge && eq(pos, m.post) && face === grudgeFace(m, lz.grudge))
+      ? (pick[0] === '你' && mode === '岗' && lz.grudge && eq(pos, m.post) && face === grudgeFace(m, lz.grudge) && Math.max(Math.abs(pick[1][0] - lz.grudge[0]), Math.abs(pick[1][1] - lz.grudge[1])) <= 2)
       : (V.has('学') && (lz.learn || 0) >= 2 && pick[0] === '你' && (mode === '岗' || mode === '找'));
     if (learned) api.noStop = true;
     else if (mode === '岗' || mode === '找' || (mode === '追' && pick[0] !== tgt)) return [{ pos, face, mode: '停', tgt: pick[0], mem: pick[1], eat: 0 }, false];
