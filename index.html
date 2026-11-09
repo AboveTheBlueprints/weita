@@ -374,7 +374,7 @@ function start(i) {
   const yday = !CY2 ? '' : (L.faceB ? '　还是昨天那两只。' + (CY2.a ? `红的身子底下有${DOT(CY2.a)}个绿点。` : '') + (CY2.b ? `青的身子底下有${DOT(CY2.b)}个绿点。` : '') : '　还是昨天那只蜥蜴。' + (CY2.a && L.V.includes('记恩') ? `它身子底下有${DOT(CY2.a)}个绿点。` : ''));
   document.getElementById('intro').textContent = goal() + yday + ((DIAN.ju[i] >= 4 && !PASSED.has(i) && i + 1 < LEVELS.length) ? '　（卡住了也可以点上面那排张名，先去玩后面的。）' : '');   // 第二个 第 15 天 02:13：整八2、4 卡在石缝四局，不知道张名能点，后面几张没见到
   const canX = L.V.includes('吐');
-  document.getElementById('keys').innerHTML = (L.faceB ? '这张有两只蜥蜴，一只红的、一只青的，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。涂黄的格子是它们脸朝着的那一条（青的那条描着青边），一直到墙：你这一步走完还站在黄格里，它就看见你。' : '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。涂黄的格子是它脸朝着的那一条，一直到墙：你这一步走完还站在黄格里，它就看见你。') + '淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。`;
+  document.getElementById('keys').innerHTML = (L.faceB ? '这张有两只蜥蜴，一只红的、一只青的，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。涂黄的格子是它们脸朝着的那一条（青的那条描着青边），一直到墙：你这一步走完还站在黄格里，它就看见你。' : '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。涂黄的格子是它脸朝着的那一条，一直到墙：你这一步走完还站在黄格里，它就看见你。') + '淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。${canX ? '' : (i < 3 ? '这一张还不能吐虫，第 4 张起能吐。' : '这一张不能吐虫。')}`;
   document.getElementById('xbtn').style.visibility = canX ? 'visible' : 'hidden';
   document.getElementById('next').style.display = (PASSED.has(li) && li + 1 < LEVELS.length) ? 'inline-block' : 'none';   // 第一个 17:01：过了的张重来、撤回以后'下一张'还在
   document.getElementById('msg').textContent = '';
@@ -454,7 +454,7 @@ function act(k) {
   }
   if (aim) { aim = false; if ('URDL'.includes(k) && k.length === 1) k = 'X' + k; else { document.getElementById('msg').textContent = ''; draw(); return; } }
   const L = LEVELS[li];
-  if (k[0] === 'X' && !L.V.includes('吐')) { document.getElementById('msg').textContent = '这一张不能吐虫。'; return; }
+  if (k[0] === 'X' && !L.V.includes('吐')) { document.getElementById('msg').textContent = li < 3 ? '这一张还不能吐虫，第 4 张起能吐。' : '这一张不能吐虫。'; return; }   // 第二个 第 15 天 18:21：第一个量首分钟，首1、首2 都被名字领着想吐，首2 第 2 张拿它当救命办法被拒，'要是早能看出来'。说明里写上、拒的时候说哪张起能吐
   const snap = { st, prev, n, over, deadMark, lastDrop, heardNow, earNow, log: log.slice() };
   lastDrop = k[0] === 'X' ? S.dropAt(m, st, k[1]) : null;
   const r = S.step(m, st, k);
