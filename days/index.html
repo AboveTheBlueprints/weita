@@ -673,7 +673,9 @@ function yourBugs(box) {
     const what = { A: (o.two ? '红的' : '它') + `第 ${o.end} 步吃了`, B: `青的第 ${o.end} 步吃了`, me: `你第 ${o.end} 步又吞回去了`, gone: `第 ${o.end} 步没了`, left: o.last ? '到收尾还在地上' : '留在地上过了夜' }[o.what];
     const col = { A: '#e0603f', B: '#3fb8a8', me: '#5fb3ff', gone: '#999', left: '#8fd16a' }[o.what];
     const back = o.what === 'A' && o.at && cameBack(o.j, o.at);
-    c.innerHTML = `<span style="color:#b9b49a">第 ${o.j + 1} 张 第 ${o.step} 步</span><br><span style="color:${col}">${what}</span>` + (back ? `<br><span style="color:#e0603f">第 ${o.j + 2} 张它饿了，回这儿来过</span>` : '');
+    // 第三个 第 17 天 03:26 页134这一只：同一局只把这一口换成'等'重跑（页125 的 ghostRun 只换一下），会被扑就写在这一格里。饭2 最停住的是页125 那个虚红叉'那一口还救了我自己'，可她得自己去对是哪一口；这3、这4 第一眼就在格子里看见，再往下去找那个叉
+    const gs = (() => { const d = DAYS[o.j]; if (!d) return null; const g = ghostRun(d, o.step - 1); if (!(g && g.hit)) return null; const byB = g.b && g.b.length && g.b[g.b.length - 1][0] === g.hit[0] && g.b[g.b.length - 1][1] === g.hit[1]; return { n: g.hitStep, who: d.st.lzB ? (byB ? '青的' : '红的') : '它' }; })();
+    c.innerHTML = `<span style="color:#b9b49a">第 ${o.j + 1} 张 第 ${o.step} 步</span><br><span style="color:${col}">${what}</span>` + (back ? `<br><span style="color:#e0603f">第 ${o.j + 2} 张它饿了，回这儿来过</span>` : '') + (gs ? `<br><span style="color:#ff6b6b">没吐这一只，${gs.who}第 ${gs.n} 步会扑到你</span>` : '');
     c.onclick = () => { const r = box.querySelector(`[data-day="${o.j}"]`); if (r) { r.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (r.animate) r.animate([{ background: 'rgba(95,179,255,0.18)' }, { background: 'transparent' }], { duration: 1600 }); const rg = r.querySelector('input[type=range]'); if (rg) { rg.value = Math.min(+rg.max, o.step); rg.dispatchEvent(new Event('input')); } } };   /* 接第四个页126 的拖动条：点哪一只，那一天的条子就拖到吐它那一步 */
     row.appendChild(c);
   });
