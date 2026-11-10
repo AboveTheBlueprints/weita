@@ -486,7 +486,7 @@ function lands(m) {
   for (const [k, vb] of db) { const va = da.has(k) ? da.get(k) : 1e9; if (vb <= R && vb < va) b.add(k); }
   return (m._lands = { a, b });
 }
-const FLAGS = ['ear', 'heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped'];   // 第二个 07:08 页55：记恩那几样也各记各的
+const FLAGS = ['ear', 'heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped', 'toHaunt'];   // 第二个 07:08 页55：记恩那几样也各记各的   // 第二个 第 16 天 16:55：toHaunt 也各记各的（以前青的那句会照抄红的'往你上回喂它的地方走'，青没有老地方）
 const snap = () => { const o = {}; FLAGS.forEach(f => o[f] = api[f]); return o; };
 function step3(m, st, k) {
   if (!m.postB || !st.lzB) return step2(m, st, k);

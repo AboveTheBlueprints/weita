@@ -382,7 +382,7 @@ function events2(k, a, b) {
   if (!b.lzB) return events(k, a, b);
   const byB0 = new Set(); a.bugs.forEach((x, i) => { if (x && !b.bugs[i] && b.lzB.mode === '吃' && a.lzB.mode !== '吃' && Math.abs(x[0] - b.lzB.pos[0]) + Math.abs(x[1] - b.lzB.pos[1]) <= 1) byB0.add(i); });
   const A = events(k, a, Object.assign({}, b, { bugs: b.bugs.map((y, i) => byB0.has(i) ? a.bugs[i] : y) })).map(t => t.replace(/蜥蜴/g, '红蜥蜴').replace(/OTHER/g, '青蜥蜴'));
-  const keepM = m, keepF = {}; const FL = ['ear', 'heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped'];   // 第二个 07:09 页55
+  const keepM = m, keepF = {}; const FL = ['ear', 'heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped', 'toHaunt'];   // 第二个 07:09 页55   // 第二个 第 16 天 16:55：加 toHaunt，青不再照抄红的'往你上回喂它的地方'
   FL.forEach(f => { keepF[f] = S[f]; S[f] = (S.B || {})[f]; });
   const mB = Object.create(m); mB.post = m.postB; mB.face = m.faceB || m.face;
   m = mB;
