@@ -468,6 +468,7 @@ function draw(anim) {
 // 第二个 第 15 天 12:31 页71它的日子：它从这一天带到下一天的记性，玩的时候看不见是哪一下留下的。过完最后一张，把每一对
 // "前一天你过关那一局（叠着线）"和"后一天开局"并排画出来。只写事实（吃了你吐的几只、在哪丢了你），不写"所以它记得"。
 const DAYS = {};
+const LOST = {};   // 第四个 第 17 天 03:55 页134：每张最后一回被扑那一局（没过的那天回看画它）
 // 第一个 第 17 天 00:20 页125本来会走（第四个 00:17 递来的：鸻那里'开着''关掉'两条一比原因才露出来）：
 // 那一局你吐过虫，就用同一个开局、同一串键，只把每一下吐换成'等'，重跑一遍，把它本来会走的线淡淡画在旁边。
 // 不写字。两条线分开的地方就是你那一口。你走的路照旧，要是照旧走下去会被扑，就停在那一格画一个淡红叉。
@@ -590,7 +591,7 @@ function evOf(d) {
   const keepM = m, keepD = lastDrop;
   try {
     m = d.m;
-    for (const k of K) { lastDrop = k[0] === 'X' ? S.dropAt(d.m, s, k[1]) : null; const r = S.step(d.m, s, k); if (!r || r === 'bad') break; let e = []; try { e = events2(k, s, r); } catch (x) { e = []; } EV.push(e.filter(t => t)); s = r; }
+    for (const k of K) { lastDrop = k[0] === 'X' ? S.dropAt(d.m, s, k[1]) : null; const r = S.step(d.m, s, k); if (r === null && d.lost) { EV.push([`你走完这一步，${s.lzB ? (S.killedBy === 'B' ? '青蜥蜴' : '红蜥蜴') : '蜥蜴'}扑到了你身上。`]); break; } if (!r || r === 'bad') break; let e = []; try { e = events2(k, s, r); } catch (x) { e = []; } EV.push(e.filter(t => t)); s = r; }
   } finally { m = keepM; lastDrop = keepD; }
   d._EV = EV; return EV;
 }
@@ -695,12 +696,28 @@ function showDays() {
   };
   // 第四个 第 16 天 23:34：标题里写这一天开了几局（七天1：只画过关那局，线一天比一天短，'差点觉得自己越玩越顺'，重来和被吃都看不见）
   const juOf = (i) => (DIAN.ju[i] || 1) > 1 ? `，这一天你一共开了 ${DIAN.ju[i]} 局` : '';
+  // 第四个 第 17 天 03:55 页134：只画一张（最后一天、过了可后一天没过、没过的那天最后输的那一局），条子照旧能拖
+  const single = (row, d, isLost) => {
+    const c1 = document.createElement('canvas');
+    const fin = () => { WeiDraw.frame(c1, d.m, { prev: null, st: d.st, dead: isLost ? d.dead : null, drop: null }, 1); WeiDraw.replay(c1, d.m, d.R);
+      if (isLost && d.dead) { const g = c1.getContext('2d'), C = WeiDraw.C, x = d.dead.at[0] * C + C / 2, y = d.dead.at[1] * C + C / 2, r = C * 0.3; g.save(); g.strokeStyle = '#ff3b3b'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - r, y - r); g.lineTo(x + r, y + r); g.moveTo(x + r, y - r); g.lineTo(x - r, y + r); g.stroke(); g.restore(); } };   /* 第四个 04:08：刻2'红叉在蓝红叠圈左边一格，我得回头读扑到了你身上才敢认'——他当成叉的是蜥蜴扑之前站的那格；在被扑那格上画一个大红叉 */
+    fin(); const g = isLost ? null : ghost(c1, d);
+    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1);
+    addScrub(row, c1, d, (t) => { const SS = realStates(d); if (t >= SS.length - 1 && (isLost || t >= d.R.me.length - 1)) { if (isLost && t < d.R.me.length - 1) { WeiDraw.frame(c1, d.m, { prev: null, st: SS[SS.length - 1], dead: null, drop: null }, 1); faintReplay(c1, d.m, d.R); return; } fin(); if (!isLost) ghost(c1, d, t); return; } WeiDraw.frame(c1, d.m, { prev: null, st: SS[Math.min(t, SS.length - 1)], dead: null, drop: null }, 1); faintReplay(c1, d.m, d.R); if (!isLost) ghost(c1, d, t); }, g && g.mo ? g.mo.t : undefined);
+    return g;
+  };
   let any = false;
   LEVELS.forEach((L, j) => {
     if (!L.from) return; const a = DAYS[L.from - 1], b = DAYS[j];
     const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = L.from - 1;
     const cap = document.createElement('div'); row.appendChild(cap);
-    if (!a || !b) { cap.textContent = `第 ${L.from} 张${LEVELS[L.from - 1].name} → 第 ${j + 1} 张${L.name}：${!a ? `第 ${L.from} 张那天你没过` : `第 ${L.from} 张那天你过了，可第 ${j + 1} 张那天你没过，后一天开局没得画`}，这一对没画。`   /* 第四个 第 17 天 03:37 页132：刻2 把'这一张你没过'读成第 1 天没过（他第 1 天过了，没画是因为第 2 天没过） */; box.appendChild(row); return; }
+    if (!a || !b) {
+      const lo = !a ? LOST[L.from - 1] : null, nm = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>`;
+      if (a) { cap.innerHTML = `${nm}（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　第 ${j + 1} 张${L.name}那天你没过，后一天开局没画` + factsOf(a); const g = single(row, a, false); if (g && g.drew) cap.innerHTML += ghostLine(g); any = true; }
+      else if (lo) { cap.innerHTML = `${nm}（这一天你没过，画的是你最后输的那一局${juOf(L.from - 1)}，红叉是它扑到你的那一格）`; single(row, lo, true); any = true; }
+      else cap.textContent = `第 ${L.from} 张${LEVELS[L.from - 1].name} → 第 ${j + 1} 张${L.name}：第 ${L.from} 张那天你没玩到，这一对没画。`;
+      box.appendChild(row); return;
+    }   /* 第四个 第 17 天 03:55 页134：刻2 第 2、5 天四局没过跳了，最想看的正是第 5 天输的那局（'它明明往回退，脸却还朝着我，我怎么又走进了它的下一扑'），时4 也要过 */
     any = true;
     cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + factsOf(a);
     const pair = document.createElement('div'); pair.style.display = 'flex'; pair.style.gap = '16px'; pair.style.alignItems = 'flex-start'; pair.style.flexWrap = 'wrap';
@@ -714,6 +731,7 @@ function showDays() {
   });
   // 第四个 第 16 天 23:47：最后一天没有后一天，单画它那一局（七天2：'没画第七天那条安静回家的路线，我还稍微有点没看够'）
   const zi = LEVELS.length - 1, z = DAYS[zi];
+  if (!z && LOST[zi]) { const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi; const cap = document.createElement('div'); row.appendChild(cap); cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（这一天你没过，画的是你最后输的那一局${juOf(zi)}，红叉是它扑到你的那一格）　→　没有下一天了`; single(row, LOST[zi], true); box.appendChild(row); any = true; }   // 第四个 页134
   if (z && any) {
     const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi;
     const cap = document.createElement('div'); row.appendChild(cap);
@@ -790,6 +808,7 @@ function act(k) {
   if (r === null) {
     const d = S.DIRS[k] || [0, 0];
     deadMark = { at: [st.pl[0] + d[0], st.pl[1] + d[1]], from: (S.killedBy === 'B' && st.lzB) ? st.lzB.pos : st.lz.pos };
+    { const R = replayPath(), K = hist.length; ['me', 'a', 'b'].forEach(w => { if (R[w] && R[w].length > K) R[w].splice(K, 1); }); LOST[li] = { m, st0: hist.length ? hist[0].st : st, st, R, dead: deadMark, lost: true }; }   // 第四个 04:07：replayPath 末尾那格（被扑前站的）跟 hist 最后一格重了一回，刻2 拖到第 30 步'画面没变'，去掉   // 第四个 页134：时4、刻2 想看输的那局
     log.unshift(`第 ${n} 步（${KNAME[k]}）：你走完这一步，${st.lzB ? (S.killedBy === 'B' ? '青蜥蜴' : '红蜥蜴') : '蜥蜴'}扑到了你身上。（红叉是它扑到你的那一格）`);   // 第二个 07:50：两只的时候写是哪只（第三个：分不清是谁压的）
     over = true; msg.textContent = '你被吃掉了。按 Z 撤回一步，或者按 R 从头再来。'; dian(k); dian('死');
     prev = st; heardNow = false; earNow = null; draw(true); return;
