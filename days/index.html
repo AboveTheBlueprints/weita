@@ -697,9 +697,12 @@ function showDays() {
   // 第四个 第 16 天 23:34：标题里写这一天开了几局（七天1：只画过关那局，线一天比一天短，'差点觉得自己越玩越顺'，重来和被吃都看不见）
   const juOf = (i) => (DIAN.ju[i] || 1) > 1 ? `，这一天你一共开了 ${DIAN.ju[i]} 局` : '';
   // 第四个 第 17 天 03:55 页134：只画一张（最后一天、过了可后一天没过、没过的那天最后输的那一局），条子照旧能拖
+  // 第四个 第 17 天 04:30：输的那局最后一帧，'我'和扑你的那只都画到红叉那格（原来'我'留在扑之前站的那格、它留在它那格，刻2'旁边还留着淡淡的我和蝎子，跟圈挤在一起，第一眼不好分'）
+  const atDead = (d) => { const s = d.st, at = d.dead.at, B = s.lzB && eqP(s.lzB.pos, d.dead.from) && !eqP(s.lz.pos, d.dead.from); return Object.assign({}, s, { pl: at.slice(), lz: B ? s.lz : Object.assign({}, s.lz, { pos: at.slice() }), lzB: B ? Object.assign({}, s.lzB, { pos: at.slice() }) : s.lzB }); };
+  const eqP = (p, q) => !!p && !!q && p[0] === q[0] && p[1] === q[1];
   const single = (row, d, isLost) => {
     const c1 = document.createElement('canvas');
-    const fin = () => { WeiDraw.frame(c1, d.m, { prev: null, st: d.st, dead: isLost ? d.dead : null, drop: null }, 1); WeiDraw.replay(c1, d.m, d.R);
+    const fin = () => { WeiDraw.frame(c1, d.m, { prev: null, st: isLost && d.dead ? atDead(d) : d.st, dead: isLost && d.dead ? Object.assign({}, d.dead, { from: d.dead.at }) : null, drop: null }, 1); WeiDraw.replay(c1, d.m, d.R);
       if (isLost && d.dead) { const g = c1.getContext('2d'), C = WeiDraw.C, x = d.dead.at[0] * C + C / 2, y = d.dead.at[1] * C + C / 2, r = C * 0.3; g.save(); g.strokeStyle = '#ff3b3b'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - r, y - r); g.lineTo(x + r, y + r); g.moveTo(x + r, y - r); g.lineTo(x - r, y + r); g.stroke(); g.restore(); } };   /* 第四个 04:08：刻2'红叉在蓝红叠圈左边一格，我得回头读扑到了你身上才敢认'——他当成叉的是蜥蜴扑之前站的那格；在被扑那格上画一个大红叉 */
     fin(); const g = isLost ? null : ghost(c1, d);
     c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1);
