@@ -358,7 +358,7 @@ function events(k, a, b) {
   if (m.V.has('日子') && la.mode === '岗' && lb.mode === '岗' && eq(la.pos, lb.pos) && la.face === lb.face && !S.ignored) {
     const h = lb.hun || 0;
     if ((la.hun || 0) >= 5 && h < 5) {} else   // 第一个 18:35：睁眼那一回合不再写晒太阳
-    out.push(h >= 5 ? '蜥蜴趴着，肚子鼓鼓的，舒服得拿尾巴在石头上啪啪拍了两下。' : h >= 3 ? '蜥蜴趴着晒太阳。' : h >= 1 ? '蜥蜴肚子有点空了，抬起头闻了闻。' : '');   // 拍尾巴：第一个 页23尾巴   // 第二个 13:51 页72：'抬起头，闻了闻'控1、控2、耳3 都读成可能是在听自己（'它抬头闻一闻也不一定是在听我'），写明是肚子空了
+    out.push(h >= 5 ? (eq(lb.pos, m.post) ? '蜥蜴趴着，肚子鼓鼓的，舒服得拿尾巴在石头上啪啪拍了两下。' : '蜥蜴趴着，肚子鼓鼓的，舒服得拿尾巴在地上啪啪拍了两下。') :   /* 第四个 第 17 天 06:05 页142：少1 '远离石头却写在石头上拍尾巴'，不在石头上就不写石头 */ h >= 3 ? '蜥蜴趴着晒太阳。' : h >= 1 ? '蜥蜴肚子有点空了，抬起头闻了闻。' : '');   // 拍尾巴：第一个 页23尾巴   // 第二个 13:51 页72：'抬起头，闻了闻'控1、控2、耳3 都读成可能是在听自己（'它抬头闻一闻也不一定是在听我'），写明是肚子空了
     if (!out[out.length - 1]) out.pop();
   }
   if (la.tgt === '你' && lb.mode === '追' && lb.tgt !== null && lb.tgt !== '你') out.push('蜥蜴盯上了一只虫。');
@@ -574,8 +574,9 @@ function wdistOf(m) {   // 走过去要几步（绕墙）
 }
 // 第四个 01:52：时1 拖着看'小人还画在收尾的位置，拖出来的圈才是那一步的位置，眼睛会先去找小人'。照同一串键从开局重放一遍，拿到每一步的整个样子，拖到哪一步就把那一步整张画出来（它、虫、你都在那一步的地方）。
 // 第四个 01:57：时1 第二回拖'小人到了圈和路线数字中间，身子有些被压住'。拖的时候线和暗底先画在一张空画布上，再淡一半贴上去，那一步的它、你、虫透得出来。
-function faintReplay(cv, m, R) {
+function faintReplay(cv, m, R, o, t) {   // 第四个 第 17 天 06:05 页142跟着拖：t 是拖到第几步。少2 拖到'还没吐的第6步也留着绿色圈，我第一眼差点当成已经喂了'；绿圈只画到这一步为止吐过的
   const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height;
+  if (typeof t === 'number' && R.K && R.drops) { const nX = R.K.slice(0, t).filter(k => k && k[0] === 'X').length; R = Object.assign({}, R, { drops: R.drops.slice(0, nX) }); }
   WeiDraw.replay(off, m, R, { noNum: true });   // 页138少字：只回看用它
   const g = cv.getContext('2d'); g.save(); g.globalAlpha = 0.5; g.drawImage(off, 0, 0); g.restore();
 }
@@ -711,7 +712,7 @@ function showDays() {
       if (isLost && d.dead) { const g = c1.getContext('2d'), C = WeiDraw.C, x = d.dead.at[0] * C + C / 2, y = d.dead.at[1] * C + C / 2, r = C * 0.3; g.save(); g.strokeStyle = '#ff3b3b'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - r, y - r); g.lineTo(x + r, y + r); g.moveTo(x + r, y - r); g.lineTo(x - r, y + r); g.stroke(); g.restore(); } };   /* 第四个 04:08：刻2'红叉在蓝红叠圈左边一格，我得回头读扑到了你身上才敢认'——他当成叉的是蜥蜴扑之前站的那格；在被扑那格上画一个大红叉 */
     fin(); const g = isLost ? null : ghost(c1, d);
     c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1);
-    addScrub(row, c1, d, (t) => { const SS = realStates(d); if (t >= SS.length - 1 && (isLost || t >= d.R.me.length - 1)) { if (isLost && t < d.R.me.length - 1) { WeiDraw.frame(c1, d.m, { prev: null, st: SS[SS.length - 1], dead: null, drop: null }, 1); faintReplay(c1, d.m, d.R, NONUM); return; } fin(); if (!isLost) ghost(c1, d, t); return; } WeiDraw.frame(c1, d.m, { prev: null, st: SS[Math.min(t, SS.length - 1)], dead: null, drop: null }, 1); faintReplay(c1, d.m, d.R, NONUM); if (!isLost) ghost(c1, d, t); }, g && g.mo ? g.mo.t : undefined);
+    addScrub(row, c1, d, (t) => { const SS = realStates(d); if (t >= SS.length - 1 && (isLost || t >= d.R.me.length - 1)) { if (isLost && t < d.R.me.length - 1) { WeiDraw.frame(c1, d.m, { prev: null, st: SS[SS.length - 1], dead: null, drop: null }, 1); faintReplay(c1, d.m, d.R, NONUM, t); return; } fin(); if (!isLost) ghost(c1, d, t); return; } WeiDraw.frame(c1, d.m, { prev: null, st: SS[Math.min(t, SS.length - 1)], dead: null, drop: null }, 1); faintReplay(c1, d.m, d.R, NONUM, t); if (!isLost) ghost(c1, d, t); }, g && g.mo ? g.mo.t : undefined);
     return g;
   };
   let any = false;
@@ -731,7 +732,7 @@ function showDays() {
     const pair = document.createElement('div'); pair.style.display = 'flex'; pair.style.gap = '16px'; pair.style.alignItems = 'flex-start'; pair.style.flexWrap = 'wrap';
     const c1 = document.createElement('canvas'), c2 = document.createElement('canvas');
     WeiDraw.frame(c1, a.m, { prev: null, st: a.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, a.m, a.R, NONUM); const gh1 = ghost(c1, a); if (gh1 && gh1.drew) cap.innerHTML += ghostLine(gh1);
-    const draw1 = (t) => { const SSa = realStates(a); WeiDraw.frame(c1, a.m, { prev: null, st: SSa[Math.min(t, SSa.length - 1)], dead: null, drop: null }, 1); (t < SSa.length - 1 ? faintReplay : WeiDraw.replay)(c1, a.m, a.R, NONUM);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, a, t); };
+    const draw1 = (t) => { const SSa = realStates(a); WeiDraw.frame(c1, a.m, { prev: null, st: SSa[Math.min(t, SSa.length - 1)], dead: null, drop: null }, 1); (t < SSa.length - 1 ? faintReplay : WeiDraw.replay)(c1, a.m, a.R, NONUM, t);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, a, t); };
     WeiDraw.frame(c2, b.m, { prev: null, st: b.st0, dead: null, drop: null }, 1);
     { const gn = ghostNextDraw(c2, L.from - 1, b); if (gn && (gn.diff || gn.dots !== gn.dots1)) { const P = []; if (gn.nb) P.push('绿虚圈那几格会有虫'); if (gn.gone) P.push('灰虚圈套着的那几只不会在那儿'); if (gn.nh) P.push('它的老地方会在虚框那格'); if (gn.dots !== gn.dots1) P.push(`它身子底下${gn.dots ? '是' + ['', '一', '两', '三'][Math.min(3, gn.dots)] + '个' : '没有'}绿点`); cap.innerHTML += `<br><span style="color:#b9b49a">下边虚的：要是没吐，今天开局${P.join('，')}。</span>`; } }
     [c1, c2].forEach(c => { c.style.width = (c.width * 0.85) + 'px'; pair.appendChild(c); });
@@ -746,7 +747,7 @@ function showDays() {
     cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
     const c1 = document.createElement('canvas');
     WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R, NONUM); const ghz = ghost(c1, z); if (ghz && ghz.drew) cap.innerHTML += ghostLine(ghz);
-    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); addScrub(row, c1, z, (t) => { const SSz = realStates(z); WeiDraw.frame(c1, z.m, { prev: null, st: SSz[Math.min(t, SSz.length - 1)], dead: null, drop: null }, 1); (t < SSz.length - 1 ? faintReplay : WeiDraw.replay)(c1, z.m, z.R, NONUM);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, z, t); }, ghz && ghz.mo ? ghz.mo.t : undefined); box.appendChild(row);
+    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); addScrub(row, c1, z, (t) => { const SSz = realStates(z); WeiDraw.frame(c1, z.m, { prev: null, st: SSz[Math.min(t, SSz.length - 1)], dead: null, drop: null }, 1); (t < SSz.length - 1 ? faintReplay : WeiDraw.replay)(c1, z.m, z.R, NONUM, t);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, z, t); }, ghz && ghz.mo ? ghz.mo.t : undefined); box.appendChild(row);
   }
   // 第四个 第 17 天 05:30 页140挑局：每一张底下列这一天你开过的每一局，点哪局就在底下画哪局（能拖）。少2 要第 7 天第 2 局（拿到虫死在回程），少1 要'把自己等死'那局，刻2 要第 5 天输的那局
   [...box.querySelectorAll('div[data-day]')].forEach(row => {
