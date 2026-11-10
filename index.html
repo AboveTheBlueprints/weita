@@ -483,7 +483,7 @@ function act(k) {
   else if (st.ate >= m.need && eq(st.pl, m.nest)) {
     over = true; msg.textContent = `回到窝了，过了！一共 ${n} 步。`; dian('过'); PASSED.add(li); DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath() }; CARRY[li] = { a: st.lz.fed || 0, b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };   // 第二个 09:17 页61记仇隔天：也记着它最后在哪丢的你
     if (li + 1 < LEVELS.length) document.getElementById('next').style.display = 'inline-block';
-    else msg.innerHTML += ' 天黑了，它也回石头上趴着了。这几张都过完了。　<a href="days/" style="color:#d9b44a">接着跟它连过五天 →</a>';   // 第二个 第 15 天 18:17 页77几天：几1–几4 都想再来、想试'养'
+    else msg.innerHTML += ' 天黑了，它也回石头上趴着了。这几张都过完了。　<a href="days/" style="color:#d9b44a">接着跟它连过七天 →</a>';   // 第二个 第 15 天 18:17 页77几天：几1–几4 都想再来、想试'养'
     if (li + 1 >= LEVELS.length) document.getElementById('days').style.display = 'inline-block';   // 第二个 12:31 页71它的日子
   } else if (n >= lim()) { over = true; dian('黑'); msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; }
   draw(true);
