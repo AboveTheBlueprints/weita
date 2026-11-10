@@ -293,7 +293,7 @@ function dayPlan0(d) {
   return { n: Math.min(5, 2 + y.left), hun: y.ate >= 2 ? 8 : y.ate === 1 ? 3 : 0 };   /* 第四个 第 16 天 07:52 页105早上懒：昨天吃够两只，今天开局真饱（8，原来 6），'鼓鼓的'从骗人变成真话 */
 }
 LEVELS.length = 0;
-for (let d = 1; d <= 7; d++) LEVELS.push(Object.assign({ name: `第 ${d} 天`, day: d, text: null, face: 'U', need: 1, carry: 0, limit: 50, from: d > 1 ? d - 1 : undefined, V: DAYV }, d >= 6 ? { faceB: 'L', hun0B: 3 } : {}));   // 第二个 页113：第 6、7 天多一只青的
+for (let d = 1; d <= 7; d++) LEVELS.push(Object.assign({ name: `第 ${d} 天`, day: d, text: null, face: 'U', need: 1, carry: 0, limit: 50, from: d > 1 ? d - 1 : undefined, V: DAYV }, d >= 6 ? { faceB: 'L', hun0B: 3 } : {}, d === 1 ? { carry: 1, need: 2 } : {}));   // 第一个 页124、第三个 第 17 天：第 1 天开局肚子里就有一只、要带两只（'喂'要早、明显；12 个人第 1、2 天没一个按过吐，这版 8 个生人第 1 天按吐 5 个）。见 ~/碰/读它/抢/日子/页124第一天蹲门/预期.md。   // 第二个 页113：第 6、7 天多一只青的
 const LIMIT = 40;
 const lim = () => LEVELS[li].limit || LIMIT;   // 第二个·页11 17:39：一张图可以自己定天黑前几步（'天快黑了'）
 const FACE = { U: '上', R: '右', D: '下', L: '左' };
