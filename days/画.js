@@ -378,7 +378,7 @@ function still(cv, m, info) { token++; frame(cv, m, info, 1); }
 
 // 第二个 第 15 天 12:05 页70回看（从"园"搬来）：一局结束，把这一局你走的（白）和它走的（它的颜色）叠着画，吐虫的格子画绿圈。
 // R = { me:[[x,y]...], a:[[x,y]...], b:[[x,y]...]|null, drops:[[x,y]...] }
-function replay(cv, m, R) {
+function replay(cv, m, R, o) {   // o.noNum：不写每 5 步的步数（页138少字，回看里有拖动条了）
   const g = cv.getContext('2d');
   g.fillStyle = 'rgba(10,10,8,0.55)'; g.fillRect(0, 0, cv.width, cv.height);
   function line(pts, color, off) {
@@ -410,7 +410,7 @@ function replay(cv, m, R) {
       for (let i = r.from; i <= r.from + r.len; i++) used.add(i);
     });
     // 走着的时候每 5 步写一个步数，好对上"那时候它在哪"；停着的那几步不写（上面写了停几步）
-    for (let i = 5; i < P.length; i += 5) {
+    for (let i = 5; i < P.length && !(o && o.noNum); i += 5) {
       if (used.has(i)) continue;
       g.fillStyle = '#111'; g.beginPath(); g.arc(P[i][0], P[i][1], 8, 0, 7); g.fill();
       g.fillStyle = color; g.fillText(String(i), P[i][0], P[i][1]);
