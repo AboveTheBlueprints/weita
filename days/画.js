@@ -240,7 +240,10 @@ function frame(cv, m, info, t) {
       const d = Math.abs(q[0] - L.pos[0]) + Math.abs(q[1] - L.pos[1]);
       const col = same(q, st.pl) ? '#7cc8ff' : 'rgb(160,220,120)';
       const L1 = (L === prev.lz ? st.lz : st.lzB) || L;
-      if (t < 1) drawEar(g, L.pos, seg(t, (d - 1) * 0.1 + 0.1, (d - 1) * 0.1 + 0.6), col);
+      if (t < 1) {   // 第一个 第 16 天 12:07 看它动：原来亮完退到 0、放完又冒出那圈淡的，动起来是一闪、灭、又一闪；退到停下来那圈的亮度就停住
+        const tt = seg(t, (d - 1) * 0.1 + 0.1, (d - 1) * 0.1 + 0.6);
+        if (tt > 0.5 && Math.sin(Math.PI * tt) < 0.6) drawEar(g, L1.pos, 0.5, col, 0.6); else drawEar(g, L.pos, tt, col);
+      }
       else drawEar(g, L1.pos, 0.5, col, 0.6);
     });
   }
