@@ -686,7 +686,7 @@ function yourBugs(box) {
 }
 function showDays() {
   const box = document.getElementById('daysBox'); box.innerHTML = ''; box.style.display = 'block';
-  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。左边是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），右边是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box);
+  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。每一对上边那张是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），下边那张是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box);
   // 第四个 第 16 天 23:47：那一局新出的事、开了几局，挪成两个小函数，成对的和最后一天共用
   const factsOf = (a) => {
     const A = a.st, fa = [];
