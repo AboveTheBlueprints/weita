@@ -385,7 +385,13 @@ function replay(cv, m, R) {
     if (!pts || pts.length < 1) return;
     const P = pts.map(q => [cx(q[0]) + off, cx(q[1]) + off]);
     g.strokeStyle = color; g.lineWidth = 4; g.lineJoin = 'round'; g.lineCap = 'round'; g.globalAlpha = 0.9;
-    g.beginPath(); P.forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke();
+    // 第四个 第 16 天 23:46：一步挪了两格还拐弯（冲、换位），直线连会从墙上斜穿（七天2 回看第 6 张）。只在画线时沿走得通的格子补中间那格；P、步数、停几步都照旧
+    const W = [];
+    pts.forEach((q, i) => {
+      if (i && m && m.stepToward) { let p = W[W.length - 1], n = 0; while (Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) > 1 && n++ < 8) { const r = m.stepToward(p, q); if (!r[1]) break; W.push(r[0]); p = r[0]; } }
+      W.push(q);
+    });
+    g.beginPath(); W.map(q => [cx(q[0]) + off, cx(q[1]) + off]).forEach((q, i) => i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1])); g.stroke();
     // 站着没动的：在那一格画一个点，旁边写停了几步（一段一段算，停得久才写）
     g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     const runs = [];
