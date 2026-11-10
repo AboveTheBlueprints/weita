@@ -351,9 +351,9 @@ function step(m, st, k) {
     let at = pl;
     if (V.has('吐向它')) {
       let t;   // 第一个 10:21 '吐朝'：吐在你脸前一格（你最后走的那一步的方向；墙/已有虫就落在脚下）
-      if (V.has('吐选')) t = farDrop(m, pl, k[1] || pf, bugs, lz.pos);
+      if (V.has('吐选')) t = farDrop(m, pl, k[1] || pf, bugs, lz.pos, m._other && m._other.pos);
       else if (V.has('吐后')) t = pf ? [pl[0] - DIRS[pf][0], pl[1] - DIRS[pf][1]] : pl;   // 第二个 16:30 '吐后'：落在你身后一格（逃的时候就落在你和它之间）
-      else if (V.has('吐远')) t = farDrop(m, pl, pf, bugs, lz.pos);   // 第二个 16:26 '吐远'：往脸朝的方向扔，最远 3 格，碰到墙、虫、蜥蜴前停
+      else if (V.has('吐远')) t = farDrop(m, pl, pf, bugs, lz.pos, m._other && m._other.pos);   // 第二个 16:26 '吐远'：往脸朝的方向扔，最远 3 格，碰到墙、虫、蜥蜴前停
       else if (V.has('吐朝')) t = pf ? [pl[0] + DIRS[pf][0], pl[1] + DIRS[pf][1]] : pl;
       else [t] = m.stepToward(pl, lz.pos);
       if (!eq(t, pl) && m.free(t) && !has(bugs, t)) at = t;
@@ -389,13 +389,14 @@ function step(m, st, k) {
   if (dead || eq(pl, lz2.pos)) return null;
   return withPf(V, { pl, ate, bugs, lz: lz2 }, pf);
 }
-function farDrop(m, pl, pf, bugs, lzp) {
+function farDrop(m, pl, pf, bugs, lzp, lzp2) {   // 第四个 第 16 天 18:50：lzp2 是另一只（第 6、7 天的青）。以前只挡红，虫从青身上飞过去（种子 54 第 6 天贴着青往它那边吐，落在它身后两格）
   if (!pf) return pl;
   let t = pl;
+  const isLz = n => eq(n, lzp) || (lzp2 ? eq(n, lzp2) : false);
   for (let i = 0; i < 3; i++) {   // 最远 3 格（16:33 另一处改过 2，16:35 改回 3，跟说明对上）
     const n = [t[0] + DIRS[pf][0], t[1] + DIRS[pf][1]];
-    if (i === 0 && eq(n, lzp)) { t = n; break; }   // 第二个·页11 17:30：紧挨着它往它那边扔，落进它嘴里（第一个：学4、闻1 都以为会落到它那，结果落在自己脚下）
-    if (!m.free(n) || has(bugs, n) || eq(n, lzp)) break;
+    if (i === 0 && isLz(n)) { t = n; break; }   // 第二个·页11 17:30：紧挨着它往它那边扔，落进它嘴里（第一个：学4、闻1 都以为会落到它那，结果落在自己脚下）
+    if (!m.free(n) || has(bugs, n) || isLz(n)) break;
     t = n;
   }
   return t;
@@ -407,9 +408,9 @@ function dropAt(m, st, dir) {
   if (!m.V.has('吐') || st.ate < 1 || has(st.bugs, st.pl)) return null;
   if (!m.V.has('吐向它')) return st.pl;
   let t;
-  if (m.V.has('吐选')) t = farDrop(m, st.pl, dir || st.pf, st.bugs, st.lz.pos);
+  if (m.V.has('吐选')) t = farDrop(m, st.pl, dir || st.pf, st.bugs, st.lz.pos, st.lzB && st.lzB.pos);
   else if (m.V.has('吐后')) t = st.pf ? [st.pl[0] - DIRS[st.pf][0], st.pl[1] - DIRS[st.pf][1]] : st.pl;
-  else if (m.V.has('吐远')) t = farDrop(m, st.pl, st.pf, st.bugs, st.lz.pos);
+  else if (m.V.has('吐远')) t = farDrop(m, st.pl, st.pf, st.bugs, st.lz.pos, st.lzB && st.lzB.pos);
   else if (m.V.has('吐朝')) t = st.pf ? [st.pl[0] + DIRS[st.pf][0], st.pl[1] + DIRS[st.pf][1]] : st.pl;
   else [t] = m.stepToward(st.pl, st.lz.pos);
   return (!eq(t, st.pl) && m.free(t) && !has(st.bugs, t)) ? t : st.pl;
