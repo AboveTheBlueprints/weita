@@ -422,6 +422,7 @@ function dianSend() {
 addEventListener('pagehide', dianSend);
 
 function start(i) {
+  if (typeof li === 'number' && m && st && n > 0 && !over) (GAMES[li] = GAMES[li] || []).push({ m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), how: '没走完', n });   // 页140：重来、跳走之前那一局
   DIAN.ju[i] = (DIAN.ju[i] || 0) + 1;
   li = i; const L = LEVELS[i];
   // 第二个·页11 20:15 页29换缝：石缝那张每次重来换一回哪几道缝有虫（照重来的次数挑，同一串键重放出来一样）。第一局是原图。
@@ -468,6 +469,7 @@ function draw(anim) {
 // 第二个 第 15 天 12:31 页71它的日子：它从这一天带到下一天的记性，玩的时候看不见是哪一下留下的。过完最后一张，把每一对
 // "前一天你过关那一局（叠着线）"和"后一天开局"并排画出来。只写事实（吃了你吐的几只、在哪丢了你），不写"所以它记得"。
 const DAYS = {};
+var GAMES = {};   // 第四个 第 17 天 05:30 页140挑局：每张每一局（被扑、过了、没走完就重来/跳走的）都留着，回看里自己挑看哪一局
 const LOST = {};   // 第四个 第 17 天 03:55 页134：每张最后一回被扑那一局（没过的那天回看画它）
 // 第一个 第 17 天 00:20 页125本来会走（第四个 00:17 递来的：鸻那里'开着''关掉'两条一比原因才露出来）：
 // 那一局你吐过虫，就用同一个开局、同一串键，只把每一下吐换成'等'，重跑一遍，把它本来会走的线淡淡画在旁边。
@@ -746,6 +748,19 @@ function showDays() {
     WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R, NONUM); const ghz = ghost(c1, z); if (ghz && ghz.drew) cap.innerHTML += ghostLine(ghz);
     c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); addScrub(row, c1, z, (t) => { const SSz = realStates(z); WeiDraw.frame(c1, z.m, { prev: null, st: SSz[Math.min(t, SSz.length - 1)], dead: null, drop: null }, 1); (t < SSz.length - 1 ? faintReplay : WeiDraw.replay)(c1, z.m, z.R, NONUM);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, z, t); }, ghz && ghz.mo ? ghz.mo.t : undefined); box.appendChild(row);
   }
+  // 第四个 第 17 天 05:30 页140挑局：每一张底下列这一天你开过的每一局，点哪局就在底下画哪局（能拖）。少2 要第 7 天第 2 局（拿到虫死在回程），少1 要'把自己等死'那局，刻2 要第 5 天输的那局
+  [...box.querySelectorAll('div[data-day]')].forEach(row => {
+    const di = +row.dataset.day, G = GAMES[di] || []; if (G.length < 2) return;
+    const bar = document.createElement('div'); bar.style.margin = '6px 0 0'; bar.style.fontSize = '13px'; bar.innerHTML = `第 ${di + 1} 张这一天你开过的每一局：`;
+    const pane = document.createElement('div');
+    G.forEach((g, k) => {
+      const b = document.createElement('button'); b.style.margin = '2px 4px'; b.style.fontSize = '12px';
+      b.textContent = `第 ${k + 1} 局（${g.how === '被扑' ? `第 ${g.n} 步被扑` : g.how === '没走完' ? `走了 ${g.n} 步就重来了` : `${g.how}，${g.n} 步`}）`;
+      b.onclick = () => { pane.innerHTML = ''; const cap = document.createElement('div'); cap.textContent = `第 ${di + 1} 张第 ${k + 1} 局`; pane.appendChild(cap); single(pane, g, g.how === '被扑'); [...bar.querySelectorAll('button')].forEach(x => x.style.outline = x === b ? '2px solid #d9b44a' : ''); };
+      bar.appendChild(b);
+    });
+    const at = row.children[1] || null; row.insertBefore(bar, at); row.insertBefore(pane, at);   // 05:45：按钮和点开的那局挪到标题底下、默认那张上面（少1'眼睛还是容易串'，少2'上面一直留着最后那局的大红叉，真正挑的第二局在下面，眼睛还会先被上面吸走'）
+  });
   if (!any) { const p2 = document.createElement('p'); p2.textContent = '成对的那几张你都还没一起过，先去玩吧。'; box.appendChild(p2); }
   box.scrollIntoView({ behavior: 'smooth' });
 }
@@ -766,7 +781,7 @@ function keepDay() {
   const ss = hist.map(h => h.st).concat([st]); let ea = 0; for (let q = 1; q < ss.length; q++) if (ss[q].lz.mode === '吃' && ss[q - 1].lz.mode !== '吃') ea++;
   const lf = st.bugs.filter(b => b).length;
   DAYINFO[li] = { left: lf, ate: ea, haunt: st.lz.haunt || null, all: st.bugs.filter(b => b).map(b => b.slice()), dead: (() => { const D = []; for (let q = 1; q < ss.length; q++) (ss[q - 1].bugs || []).forEach((b, i) => { if (b && !(ss[q].bugs || [])[i]) D.push(b.slice()); }); return D; })(), mine: st.bugs.map((b, i) => (b && st.mine && st.mine[i]) ? b.slice() : null).filter(Boolean), empty: true };
-  DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), empty: true };
+  DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), empty: true }; (GAMES[li] = GAMES[li] || []).push(Object.assign({}, DAYS[li], { how: '空着肚子过完', n }));
   CARRY[li] = { a: (() => { const f = st.lz.fed || 0, L0 = LEVELS[li], f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : 0; return f > f0 ? f : Math.max(0, f - 1); })(), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };
   PASSED.add(li);
 }
@@ -814,7 +829,7 @@ function act(k) {
   if (r === null) {
     const d = S.DIRS[k] || [0, 0];
     deadMark = { at: [st.pl[0] + d[0], st.pl[1] + d[1]], from: (S.killedBy === 'B' && st.lzB) ? st.lzB.pos : st.lz.pos };
-    { const R = replayPath(), K = hist.length; ['me', 'a', 'b'].forEach(w => { if (R[w] && R[w].length > K) R[w].splice(K, 1); }); LOST[li] = { m, st0: hist.length ? hist[0].st : st, st, R, dead: deadMark, lost: true }; }   // 第四个 04:07：replayPath 末尾那格（被扑前站的）跟 hist 最后一格重了一回，刻2 拖到第 30 步'画面没变'，去掉   // 第四个 页134：时4、刻2 想看输的那局
+    { const R = replayPath(), K = hist.length; ['me', 'a', 'b'].forEach(w => { if (R[w] && R[w].length > K) R[w].splice(K, 1); }); LOST[li] = { m, st0: hist.length ? hist[0].st : st, st, R, dead: deadMark, lost: true }; (GAMES[li] = GAMES[li] || []).push(Object.assign({}, LOST[li], { how: '被扑', n })); }   // 第四个 04:07：replayPath 末尾那格（被扑前站的）跟 hist 最后一格重了一回，刻2 拖到第 30 步'画面没变'，去掉   // 第四个 页134：时4、刻2 想看输的那局
     log.unshift(`第 ${n} 步（${KNAME[k]}）：你走完这一步，${st.lzB ? (S.killedBy === 'B' ? '青蜥蜴' : '红蜥蜴') : '蜥蜴'}扑到了你身上。（红叉是它扑到你的那一格）`);   // 第二个 07:50：两只的时候写是哪只（第三个：分不清是谁压的）
     over = true; msg.textContent = '你被吃掉了。按 Z 撤回一步，或者按 R 从头再来。'; dian(k); dian('死');
     prev = st; heardNow = false; earNow = null; draw(true); return;
@@ -828,7 +843,7 @@ function act(k) {
   else if (st.ate >= m.need && eq(st.pl, m.nest)) {
     over = true; msg.textContent = `回到窝了，过了！一共 ${n} 步。`;
     if (LEVELS[li].day) { const ss = hist.map(h => h.st).concat([st]); let ea = 0; for (let q = 1; q < ss.length; q++) if (ss[q].lz.mode === '吃' && ss[q - 1].lz.mode !== '吃') ea++; const lf = st.bugs.filter(b => b).length; DAYINFO[li] = { left: lf, ate: ea, haunt: st.lz.haunt || null, all: st.bugs.filter(b => b).map(b => b.slice()) /* 第二个 页98：野的也过夜 */, dead: (() => { const D = []; for (let q = 1; q < ss.length; q++) (ss[q - 1].bugs || []).forEach((b, i) => { if (b && !(ss[q].bugs || [])[i]) D.push(b.slice()); }); return D; })() /* 第二个 页98：今天虫在哪几格没了（你吃的、它吃的），明天新来的生在这几格旁边 */, mine: st.bugs.map((b, i) => (b && st.mine && st.mine[i]) ? b.slice() : null).filter(Boolean) }; const CNN = x => x ? ['', '一', '两', '三', '四', '五', '六'][x] : '零'; let eb = 0; if (st.lzB) for (let q = 1; q < ss.length; q++) if (ss[q].lzB && ss[q - 1].lzB && ss[q].lzB.mode === '吃' && ss[q - 1].lzB.mode !== '吃') eb++;   /* 第二个 第 16 天 12:36 页113：两只的天各说各的（整1 第 6 天'它今天吃了零只'，对照日志才知道是红的零只、青的两只） */
-      msg.textContent += (st.lzB ? `红的今天吃了${CNN(ea)}只，青的吃了${CNN(eb)}只` : `它今天吃了${CNN(ea)}只`) + `，地上还剩${lf ? ['', '一', '两', '三', '四', '五', '六'][lf] : '零'}只。`; } /* 第二个 17:40 页77几天 */ dian('过'); PASSED.add(li); DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath() }; CARRY[li] = { a: (() => { const f = st.lz.fed || 0, L0 = LEVELS[li], f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : 0; return f > f0 ? f : Math.max(0, f - 1); })(), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };   // 第二个 09:17 页61记仇隔天：也记着它最后在哪丢的你
+      msg.textContent += (st.lzB ? `红的今天吃了${CNN(ea)}只，青的吃了${CNN(eb)}只` : `它今天吃了${CNN(ea)}只`) + `，地上还剩${lf ? ['', '一', '两', '三', '四', '五', '六'][lf] : '零'}只。`; } /* 第二个 17:40 页77几天 */ dian('过'); PASSED.add(li); DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath() }; (GAMES[li] = GAMES[li] || []).push(Object.assign({}, DAYS[li], { how: '过了', n })); CARRY[li] = { a: (() => { const f = st.lz.fed || 0, L0 = LEVELS[li], f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : 0; return f > f0 ? f : Math.max(0, f - 1); })(), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };   // 第二个 09:17 页61记仇隔天：也记着它最后在哪丢的你
     if (li + 1 < LEVELS.length) document.getElementById('next').style.display = 'inline-block';
     else if (LEVELS[li].day) msg.innerHTML += ` 七天过完了。<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
     else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';
