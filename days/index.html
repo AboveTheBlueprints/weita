@@ -582,6 +582,19 @@ function realStates(d) {
   for (const k of K) { const r = S.step(d.m, s, k); if (!r || r === 'bad') break; s = r; SS.push(s); }
   d._SS = SS; return SS;
 }
+// 第四个 第 17 天 02:50 页132刻度：时3 拖第 6 张找'侧身让路'那一下，"只找到了两只挨得很近的圈"。让路、嘶、吃了你吐的都是一下子的事，圈画不出来。
+// 照同一串键重放时，把每一步当时左边记下的那几句也重算一遍：有事的那几步在条子底下画一道小竖线，拖到哪一步，底下多写这一步当时的那句。
+function evOf(d) {
+  if (d._EV) return d._EV;
+  const K = (d.R && d.R.K) || [], EV = [[]]; let s = d.st0;
+  const keepM = m, keepD = lastDrop;
+  try {
+    m = d.m;
+    for (const k of K) { lastDrop = k[0] === 'X' ? S.dropAt(d.m, s, k[1]) : null; const r = S.step(d.m, s, k); if (!r || r === 'bad') break; let e = []; try { e = events2(k, s, r); } catch (x) { e = []; } EV.push(e.filter(t => t)); s = r; }
+  } finally { m = keepM; lastDrop = keepD; }
+  d._EV = EV; return EV;
+}
+const TICK = [[/让你过去/, '#8fd16a', '让你过去'], [/吃了你吐的/, '#6ab8ff', '吃了你吐的'], [/嘶了一声/, '#ff9a4a', '嘶'], [/看见你就冲|还盯着你|盯着你。|朝你冲/, '#ff4a4a', '盯着你、冲你'], [/看见了你/, '#d9b44a', '看见了你']];
 function scrubDraw(cv, d, t) {
   const g = cv.getContext('2d'), C = WeiDraw.C, X = v => v * C + C / 2, R = d.R, G = ghostRun(d), W = wdistOf(d.m);
   const at = (P) => P && P.length ? P[Math.min(t, P.length - 1)] : null;
@@ -605,9 +618,18 @@ function addScrub(row, c1, d, draw0, t0) {   // t0：一开始停在哪一步（
   const box = document.createElement('div'); box.style.margin = '4px 0 0'; box.style.fontSize = '13px'; box.style.color = '#b9b49a';
   const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = n; r.style.width = c1.style.width; r.style.display = 'block';
   const lab = document.createElement('div');
-  const show = () => { const t = +r.value; draw0(t); const s = scrubDraw(c1, d, t); lab.textContent = `拖这条看每一步：第 ${t} 步，蓝圈是你，实圈是它们在的格${ghostRun(d) ? '，虚圈是没吐的话它那时在的格' : ''}。${s ? s + '。' : ''}`; };
+  const EV = evOf(d);
+  const ticks = document.createElement('div'); ticks.style.position = 'relative'; ticks.style.height = '12px'; ticks.style.width = c1.style.width;
+  const TH = 8;   // 条子两头那颗圆钮占的地方，竖线对准钮心
+  EV.forEach((e, t) => { if (!t || !e.length) return; const j = e.join(''); const hit = TICK.find(([re]) => re.test(j)); if (!hit) return; const pj = (EV[t - 1] || []).join(''); if (t > 1 && hit[0].test(pj)) return;   /* 连着几步同一样事（'看见了你，没动'一连八步）只画头一步 */
+    const k = document.createElement('span'); k.style.cssText = `position:absolute;top:0;width:4px;height:12px;border-radius:1px;cursor:pointer;background:${hit[1]};left:calc(${TH}px + (100% - ${2 * TH}px) * ${t / n} - 1px)`; k.title = `第 ${t} 步：` + e.join(''); k.addEventListener('click', () => { r.value = t; show(); }); ticks.appendChild(k); });
+  const used = TICK.filter(([re]) => EV.some((e, t) => t && re.test(e.join(''))));   /* 第四个 03:38：刻1'条子下红黄的小短线各是什么意思，我没完全看明白'，只写这一行里有的那几种颜色 */
+  const leg = document.createElement('div'); leg.style.fontSize = '12px'; leg.style.color = '#8f8a78';
+  if (used.length) leg.innerHTML = '条子底下的小竖线是那一步出了事：' + used.map(([, c, w]) => `<span style="color:${c}">▍</span>${w}`).join('　') + '。点一下跳过去。';
+  const evl = document.createElement('div'); evl.style.color = '#ddd8c8'; evl.style.minHeight = '18px';
+  const show = () => { const t = +r.value; draw0(t); const s = scrubDraw(c1, d, t); lab.textContent = `拖这条看每一步：第 ${t} 步，蓝圈是你，实圈是它们在的格${ghostRun(d) ? '，虚圈是没吐的话它那时在的格' : ''}。${s ? s + '。' : ''}`; evl.textContent = t && EV[t] && EV[t].length ? `第 ${t} 步那时：` + EV[t].join('') : ''; };
   r.addEventListener('input', show);
-  r.value = t0 === undefined ? n : t0; box.appendChild(r); box.appendChild(lab);
+  r.value = t0 === undefined ? n : t0; box.appendChild(r); box.appendChild(ticks); box.appendChild(leg); box.appendChild(evl); box.appendChild(lab);
   const host = document.createElement('div'); c1.parentNode.insertBefore(host, c1); host.appendChild(c1); host.appendChild(box); show();   // 条子贴在左图底下，不跑到右图底下
 }
 // 第三个 第 17 天 02:40 页131你的饭：从上往下问了一回'七天带走的是什么'，生人留下的话多是'我跟它分过饭'。回看屏原来主角是它的路线；这里最上面加一排你吐出去的每一只，一只一格，写后来谁吃了。点一格跳到那一天。
@@ -678,7 +700,7 @@ function showDays() {
     if (!L.from) return; const a = DAYS[L.from - 1], b = DAYS[j];
     const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = L.from - 1;
     const cap = document.createElement('div'); row.appendChild(cap);
-    if (!a || !b) { cap.textContent = `第 ${L.from} 张${LEVELS[L.from - 1].name} → 第 ${j + 1} 张${L.name}：${!a ? '前一张' : '这一张'}你没过，没画。`; box.appendChild(row); return; }
+    if (!a || !b) { cap.textContent = `第 ${L.from} 张${LEVELS[L.from - 1].name} → 第 ${j + 1} 张${L.name}：${!a ? `第 ${L.from} 张那天你没过` : `第 ${L.from} 张那天你过了，可第 ${j + 1} 张那天你没过，后一天开局没得画`}，这一对没画。`   /* 第四个 第 17 天 03:37 页132：刻2 把'这一张你没过'读成第 1 天没过（他第 1 天过了，没画是因为第 2 天没过） */; box.appendChild(row); return; }
     any = true;
     cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + factsOf(a);
     const pair = document.createElement('div'); pair.style.display = 'flex'; pair.style.gap = '16px'; pair.style.alignItems = 'flex-start'; pair.style.flexWrap = 'wrap';
