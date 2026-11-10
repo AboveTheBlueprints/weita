@@ -610,9 +610,55 @@ function addScrub(row, c1, d, draw0, t0) {   // t0：一开始停在哪一步（
   r.value = t0 === undefined ? n : t0; box.appendChild(r); box.appendChild(lab);
   const host = document.createElement('div'); c1.parentNode.insertBefore(host, c1); host.appendChild(c1); host.appendChild(box); show();   // 条子贴在左图底下，不跑到右图底下
 }
+// 第三个 第 17 天 02:40 页131你的饭：从上往下问了一回'七天带走的是什么'，生人留下的话多是'我跟它分过饭'。回看屏原来主角是它的路线；这里最上面加一排你吐出去的每一只，一只一格，写后来谁吃了。点一格跳到那一天。
+function spitsOf(d) {
+  const K = d.R && d.R.K; if (!K || !d.st0) return [];
+  let s = d.st0; const out = [], open = {}; let t = 0;
+  for (const k of K) {
+    t++; const r = S.step(d.m, s, k);
+    if (r === 'bad' || r === null) break;
+    const b0 = s.bugs || [], m0 = s.mine || [], b1 = r.bugs || [], m1 = r.mine || [];
+    const eA = r.lz.mode === '吃' && s.lz.mode !== '吃', eB = !!(r.lzB && r.lzB.mode === '吃' && !(s.lzB && s.lzB.mode === '吃')), me = r.ate > s.ate;
+    const who = eA ? 'A' : eB ? 'B' : me ? 'me' : 'gone';
+    if (k && k[0] === 'X') {   // 吐朝它的那口常常当步就进了它嘴，地上一拍都没有，所以不靠 mine 认，靠这一步多出来的那只
+      let idx = -1; b1.forEach((b, i) => { if (b && !b0[i] && idx < 0) idx = i; });
+      const rec = { step: t, what: 'left' }; out.push(rec);
+      if (idx >= 0) open[idx] = rec; else { rec.what = who; rec.end = t; if (eA) rec.at = r.lz.pos.slice(); }
+    }
+    for (const i of Object.keys(open)) { if (b1[i]) continue; open[i].what = who; open[i].end = t; if (eA) open[i].at = r.lz.pos.slice(); delete open[i]; }
+    s = r;
+  }
+  return out;
+}
+// 红吃了的那只：第二天它是不是真回到那儿去过（老地方就是那一格，而且它走到了一格以内）。玩的时候它往老地方走多半离人远，十个没字的生人零个看见（页128–130）
+function cameBack(j, at) {
+  const d = DAYS[j + 1], L = LEVELS[j + 1]; if (!d || !L || L.from !== j + 1 || !d.R || !d.R.K) return false;
+  let s = d.st0; const near = (q) => q && Math.abs(q[0] - at[0]) + Math.abs(q[1] - at[1]) <= 1;
+  if (!(s.lz.haunt && s.lz.haunt[0] === at[0] && s.lz.haunt[1] === at[1])) return false;
+  for (const k of d.R.K) { const r = S.step(d.m, s, k); if (r === 'bad' || r === null) break; if (near(r.lz.pos)) return true; s = r; }
+  return false;
+}
+function yourBugs(box) {
+  const all = [];
+  LEVELS.forEach((L, j) => { const d = DAYS[j]; if (!d) return; spitsOf(d).forEach(o => all.push(Object.assign({ j, two: !!d.st.lzB, last: !(LEVELS[j + 1] && LEVELS[j + 1].from === j + 1) }, o))); });
+  const wrap = document.createElement('div'); wrap.style.margin = '10px 0 22px';
+  const h = document.createElement('div'); h.innerHTML = all.length ? `<b>这几天你吐出去的 ${all.length} 只</b>（只算每天过关那一局）` : '<b>这几天你过关的那几局里，一只都没吐出去。</b>'; wrap.appendChild(h);
+  const row = document.createElement('div'); row.style.display = 'flex'; row.style.flexWrap = 'wrap'; row.style.gap = '8px'; row.style.marginTop = '8px';
+  all.forEach(o => {
+    const c = document.createElement('div'); c.className = 'mybug';
+    c.style.cssText = 'border:2px solid #5fb3ff;border-radius:8px;padding:5px 8px;min-width:86px;cursor:pointer;font-size:13px;line-height:1.5;background:rgba(95,179,255,0.06)';
+    const what = { A: (o.two ? '红的' : '它') + `第 ${o.end} 步吃了`, B: `青的第 ${o.end} 步吃了`, me: `你第 ${o.end} 步又吞回去了`, gone: `第 ${o.end} 步没了`, left: o.last ? '到收尾还在地上' : '留在地上过了夜' }[o.what];
+    const col = { A: '#e0603f', B: '#3fb8a8', me: '#5fb3ff', gone: '#999', left: '#8fd16a' }[o.what];
+    const back = o.what === 'A' && o.at && cameBack(o.j, o.at);
+    c.innerHTML = `<span style="color:#b9b49a">第 ${o.j + 1} 张 第 ${o.step} 步</span><br><span style="color:${col}">${what}</span>` + (back ? `<br><span style="color:#e0603f">第 ${o.j + 2} 张它饿了，回这儿来过</span>` : '');
+    c.onclick = () => { const r = box.querySelector(`[data-day="${o.j}"]`); if (r) { r.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (r.animate) r.animate([{ background: 'rgba(95,179,255,0.18)' }, { background: 'transparent' }], { duration: 1600 }); const rg = r.querySelector('input[type=range]'); if (rg) { rg.value = Math.min(+rg.max, o.step); rg.dispatchEvent(new Event('input')); } } };   /* 接第四个页126 的拖动条：点哪一只，那一天的条子就拖到吐它那一步 */
+    row.appendChild(c);
+  });
+  wrap.appendChild(row); box.appendChild(wrap);
+}
 function showDays() {
   const box = document.getElementById('daysBox'); box.innerHTML = ''; box.style.display = 'block';
-  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。左边是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），右边是后一天刚开局的样子。'; box.appendChild(head);
+  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。左边是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），右边是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box);
   // 第四个 第 16 天 23:47：那一局新出的事、开了几局，挪成两个小函数，成对的和最后一天共用
   const factsOf = (a) => {
     const A = a.st, fa = [];
@@ -630,7 +676,7 @@ function showDays() {
   let any = false;
   LEVELS.forEach((L, j) => {
     if (!L.from) return; const a = DAYS[L.from - 1], b = DAYS[j];
-    const row = document.createElement('div'); row.style.margin = '18px 0';
+    const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = L.from - 1;
     const cap = document.createElement('div'); row.appendChild(cap);
     if (!a || !b) { cap.textContent = `第 ${L.from} 张${LEVELS[L.from - 1].name} → 第 ${j + 1} 张${L.name}：${!a ? '前一张' : '这一张'}你没过，没画。`; box.appendChild(row); return; }
     any = true;
@@ -647,7 +693,7 @@ function showDays() {
   // 第四个 第 16 天 23:47：最后一天没有后一天，单画它那一局（七天2：'没画第七天那条安静回家的路线，我还稍微有点没看够'）
   const zi = LEVELS.length - 1, z = DAYS[zi];
   if (z && any) {
-    const row = document.createElement('div'); row.style.margin = '18px 0';
+    const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi;
     const cap = document.createElement('div'); row.appendChild(cap);
     cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
     const c1 = document.createElement('canvas');
