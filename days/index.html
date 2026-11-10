@@ -523,7 +523,7 @@ function ghostNextDraw(cv, i, b) {   // 画在右边那张（真的第二天开�
 }
 // 第一个 00:28：七天1、七天2 都没看见开头那句图例（截图是一对一对的，真网页上也隔着好几屏），都问'虚线在讲哪一段''红叉标的是谁'。挪到每一对底下，只说画的是什么。
 const ghostLine = (gh) => `<br><span style="color:#b9b49a">虚线：这一局${gh.n > 1 ? '那几口' : '那一口'}你要是没吐，它本来会走的路${gh.hit ? (gh.who && gh.n > 1 ? `；虚的红叉：光是第 ${gh.who} 步那一口没吐，它就会在第 ${gh.hitStep} 步扑到你` : `；虚的红叉：那样的话它会在第 ${gh.hitStep} 步扑到你`) : ''}。</span>`;   /* 第一个 00:33：写是哪一口、第几步，只说事，不说'救了你' */
-function ghost(cv, d) {
+function ghost(cv, d, tSel) {
   const G = ghostRun(d); if (!G) return null;
   const g = cv.getContext('2d'), C = WeiDraw.C, X = v => v * C + C / 2;
   const same = (P, Q) => { let i = 0; while (i < P.length && i < Q.length && P[i][0] === Q[i][0] && P[i][1] === Q[i][1]) i++; return i; };
@@ -539,7 +539,76 @@ function ghost(cv, d) {
   if (G.b) dash(G.b, d.R.b, '#3fb8a8', 24);
   if (G.hit) { const x = X(G.hit[0]), y = X(G.hit[1]); g.save(); g.globalAlpha = 0.85; g.strokeStyle = '#ff3b3b'; g.lineWidth = 4; g.setLineDash([5, 4]); g.beginPath(); g.moveTo(x - 15, y - 15); g.lineTo(x + 15, y + 15); g.moveTo(x + 15, y - 15); g.lineTo(x - 15, y + 15); g.stroke(); g.restore(); }
   if (G.hit) { const x = X(G.hit[0]), y = X(G.hit[1]); g.save(); g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; const t = `第${G.hitStep}步`, w = g.measureText(t).width + 8; g.fillStyle = 'rgba(17,17,17,0.85)'; g.fillRect(x - w / 2, y + 17, w, 16); g.fillStyle = '#ff6b6b'; g.fillText(t, x, y + 29); g.restore(); }
-  return { drew, hit: !!G.hit, hitStep: G.hitStep, who: G.who, n: G.n };   /* 跟玩的时候'红叉是它扑到你的那一格'同一个记号，只是虚的 */
+  /* 第四个 第 17 天 01:05 页126一个时刻：没被扑的那几天，虚线跟实线常贴着走，差在时间不在路（七天2'读不出每一段分别是追饭还是找我'）。
+     挑一个时刻：同一步号上，要是没吐的那只离你最近、真的那只比它远的那一步，画三个圈：你、真的它、本来的它。 */
+  let mo = null;
+  if (!G.hit && drew) {
+    const me = d.R.me, BF = {};   // 走过去要几步（绕墙），不是直线隔几格：七天2 第 3 天虚的那只在它自家石头上，直线 5 格、隔着墙
+    const D1 = (q, p) => { const k = p[0] + ',' + p[1]; if (!BF[k]) { const M = {}; M[k] = 0; const Qu = [p]; while (Qu.length) { const c = Qu.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = [c[0] + dx, c[1] + dy], nk = n[0] + ',' + n[1]; if (nk in M || d.m.wall.has(nk) || n[0] < 0 || n[1] < 0 || n[0] >= d.m.w || n[1] >= d.m.h) continue; M[nk] = M[c[0] + ',' + c[1]] + 1; Qu.push(n); } } BF[k] = M; } const v = BF[k][q[0] + ',' + q[1]]; return v === undefined ? 99 : v; };
+    for (const [P, Q, who] of [[G.a, d.R.a, 'a'], [G.b, d.R.b, 'b']]) {
+      if (!P || !Q) continue;
+      for (let t = 1; t < P.length && t < Q.length && t < me.length; t++) {
+        const dg = D1(P[t], me[t]), dr = D1(Q[t], me[t]); if (dr - dg < 2 || dg > 4) continue;
+        if (!mo || dg < mo.dg || (dg === mo.dg && dr - dg > mo.dr - mo.dg)) mo = { t, dg, dr, me: me[t], g: P[t], r: Q[t], who };
+      }
+    }
+    if (mo && tSel === undefined) {
+      const col = mo.who === 'b' ? '#3fb8a8' : '#e0603f';
+      const ring = (q, c, dashd, r) => { g.save(); g.strokeStyle = c; g.lineWidth = 3; g.globalAlpha = 0.95; if (dashd) g.setLineDash([4, 4]); g.beginPath(); g.arc(X(q[0]), X(q[1]), r, 0, Math.PI * 2); g.stroke(); g.restore(); };
+      ring(mo.me, '#6ab8ff', false, C * 0.46); ring(mo.r, col, false, C * 0.46); ring(mo.g, col, true, C * 0.46);
+      g.save(); g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; const t = `第${mo.t}步`, w = g.measureText(t).width + 8;
+      for (const q of [mo.me, mo.r, mo.g]) { const x = X(q[0]), y = X(q[1]); g.fillStyle = 'rgba(17,17,17,0.85)'; g.fillRect(x - w / 2, y - C * 0.46 - 15, w, 14); g.fillStyle = '#eee'; g.fillText(t, x, y - C * 0.46 - 4); }
+      g.restore();
+    }
+  }
+  return { drew, hit: !!G.hit, hitStep: G.hitStep, who: G.who, n: G.n, mo };   /* 跟玩的时候'红叉是它扑到你的那一格'同一个记号，只是虚的 */
+}
+// 第四个 第 17 天 01:40 页126拖动：时1 看回看'只看线，我分不清哪一段是在追虫，哪一段已经开始找我了''路线重叠的地方……没法一眼读出它们哪一下碰面'。
+// 线只画了走过哪，没画哪一刻在哪。左图底下一条拖动的步数：拖到第 N 步，你、它（青）、要是没吐的它，都在那一步的格子上画一个圈。
+function wdistOf(m) {   // 走过去要几步（绕墙）
+  const BF = {};
+  return (q, p) => { const k = p[0] + ',' + p[1]; if (!BF[k]) { const M = {}; M[k] = 0; const Qu = [p]; while (Qu.length) { const c = Qu.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const n = [c[0] + dx, c[1] + dy], nk = n[0] + ',' + n[1]; if (nk in M || m.wall.has(nk) || n[0] < 0 || n[1] < 0 || n[0] >= m.w || n[1] >= m.h) continue; M[nk] = M[c[0] + ',' + c[1]] + 1; Qu.push(n); } } BF[k] = M; } const v = BF[k][q[0] + ',' + q[1]]; return v === undefined ? 99 : v; };
+}
+// 第四个 01:52：时1 拖着看'小人还画在收尾的位置，拖出来的圈才是那一步的位置，眼睛会先去找小人'。照同一串键从开局重放一遍，拿到每一步的整个样子，拖到哪一步就把那一步整张画出来（它、虫、你都在那一步的地方）。
+// 第四个 01:57：时1 第二回拖'小人到了圈和路线数字中间，身子有些被压住'。拖的时候线和暗底先画在一张空画布上，再淡一半贴上去，那一步的它、你、虫透得出来。
+function faintReplay(cv, m, R) {
+  const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height;
+  WeiDraw.replay(off, m, R);
+  const g = cv.getContext('2d'); g.save(); g.globalAlpha = 0.5; g.drawImage(off, 0, 0); g.restore();
+}
+function realStates(d) {
+  if (d._SS) return d._SS;
+  const K = (d.R && d.R.K) || []; let s = d.st0; const SS = [s];
+  for (const k of K) { const r = S.step(d.m, s, k); if (!r || r === 'bad') break; s = r; SS.push(s); }
+  d._SS = SS; return SS;
+}
+function scrubDraw(cv, d, t) {
+  const g = cv.getContext('2d'), C = WeiDraw.C, X = v => v * C + C / 2, R = d.R, G = ghostRun(d), W = wdistOf(d.m);
+  const at = (P) => P && P.length ? P[Math.min(t, P.length - 1)] : null;
+  const ring = (q, c, dashd) => { if (!q) return; g.save(); g.strokeStyle = c; g.lineWidth = 3.5; if (dashd) g.setLineDash([4, 4]); g.beginPath(); g.arc(X(q[0]), X(q[1]), C * 0.46, 0, Math.PI * 2); g.stroke(); g.restore(); };
+  const me = at(R.me), A = at(R.a), B = at(R.b);
+  // 要是没吐的那只：那条线比 t 短（照旧走下去被扑了、或走不通），就停在最后那格
+  const gA = G ? at(G.a) : null, gB = G && G.b ? at(G.b) : null;
+  if (gA && A && (gA[0] !== A[0] || gA[1] !== A[1])) ring(gA, '#e0603f', true);
+  if (gB && B && (gB[0] !== B[0] || gB[1] !== B[1])) ring(gB, '#3fb8a8', true);
+  ring(A, '#e0603f', false); ring(B, '#3fb8a8', false); ring(me, '#6ab8ff', false);
+  const parts = [];
+  if (me && A) parts.push(`${R.b ? '红的' : '它'}走到你那格要 ${W(A, me)} 步`);
+  if (me && B) parts.push(`青的要 ${W(B, me)} 步`);
+  if (A && B) parts.push(`红的和青的隔 ${W(A, B)} 步`);   // 时1：'想看两只之间的事，底下却一直报它们离我几步'
+  if (me && gA && A && (gA[0] !== A[0] || gA[1] !== A[1])) parts.push(`没吐的话${R.b ? '红的' : '它'}要 ${W(gA, me)} 步`);
+  if (me && gB && B && (gB[0] !== B[0] || gB[1] !== B[1])) parts.push(`没吐的话青的要 ${W(gB, me)} 步`);
+  return parts.join('，');
+}
+function addScrub(row, c1, d, draw0, t0) {   // t0：一开始停在哪一步（有'没吐的那只离你最近'的那一刻就停那儿，没有就停在最后一步）
+  const n = d.R.me.length - 1; if (n < 1) return;
+  const box = document.createElement('div'); box.style.margin = '4px 0 0'; box.style.fontSize = '13px'; box.style.color = '#b9b49a';
+  const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = n; r.style.width = c1.style.width; r.style.display = 'block';
+  const lab = document.createElement('div');
+  const show = () => { const t = +r.value; draw0(t); const s = scrubDraw(c1, d, t); lab.textContent = `拖这条看每一步：第 ${t} 步，蓝圈是你，实圈是它们在的格${ghostRun(d) ? '，虚圈是没吐的话它那时在的格' : ''}。${s ? s + '。' : ''}`; };
+  r.addEventListener('input', show);
+  r.value = t0 === undefined ? n : t0; box.appendChild(r); box.appendChild(lab);
+  const host = document.createElement('div'); c1.parentNode.insertBefore(host, c1); host.appendChild(c1); host.appendChild(box); show();   // 条子贴在左图底下，不跑到右图底下
 }
 function showDays() {
   const box = document.getElementById('daysBox'); box.innerHTML = ''; box.style.display = 'block';
@@ -565,24 +634,25 @@ function showDays() {
     const cap = document.createElement('div'); row.appendChild(cap);
     if (!a || !b) { cap.textContent = `第 ${L.from} 张${LEVELS[L.from - 1].name} → 第 ${j + 1} 张${L.name}：${!a ? '前一张' : '这一张'}你没过，没画。`; box.appendChild(row); return; }
     any = true;
-    cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子回窝的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + factsOf(a);
+    cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + factsOf(a);
     const pair = document.createElement('div'); pair.style.display = 'flex'; pair.style.gap = '16px'; pair.style.alignItems = 'flex-start'; pair.style.flexWrap = 'wrap';
     const c1 = document.createElement('canvas'), c2 = document.createElement('canvas');
-    WeiDraw.frame(c1, a.m, { prev: null, st: a.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, a.m, a.R); { const gh = ghost(c1, a); if (gh && gh.drew) cap.innerHTML += ghostLine(gh); }
+    WeiDraw.frame(c1, a.m, { prev: null, st: a.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, a.m, a.R); const gh1 = ghost(c1, a); if (gh1 && gh1.drew) cap.innerHTML += ghostLine(gh1);
+    const draw1 = (t) => { const SSa = realStates(a); WeiDraw.frame(c1, a.m, { prev: null, st: SSa[Math.min(t, SSa.length - 1)], dead: null, drop: null }, 1); (t < SSa.length - 1 ? faintReplay : WeiDraw.replay)(c1, a.m, a.R);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, a, t); };
     WeiDraw.frame(c2, b.m, { prev: null, st: b.st0, dead: null, drop: null }, 1);
     { const gn = ghostNextDraw(c2, L.from - 1, b); if (gn && (gn.diff || gn.dots !== gn.dots1)) { const P = []; if (gn.nb) P.push('绿虚圈那几格会有虫'); if (gn.gone) P.push('灰虚圈套着的那几只不会在那儿'); if (gn.nh) P.push('它的老地方会在虚框那格'); if (gn.dots !== gn.dots1) P.push(`它身子底下${gn.dots ? '是' + ['', '一', '两', '三'][Math.min(3, gn.dots)] + '个' : '没有'}绿点`); cap.innerHTML += `<br><span style="color:#b9b49a">下边虚的：要是没吐，今天开局${P.join('，')}。</span>`; } }
     [c1, c2].forEach(c => { c.style.width = (c.width * 0.85) + 'px'; pair.appendChild(c); });
-    row.appendChild(pair); box.appendChild(row);
+    row.appendChild(pair); addScrub(row, c1, a, draw1, gh1 && gh1.mo ? gh1.mo.t : undefined); box.appendChild(row);
   });
   // 第四个 第 16 天 23:47：最后一天没有后一天，单画它那一局（七天2：'没画第七天那条安静回家的路线，我还稍微有点没看够'）
   const zi = LEVELS.length - 1, z = DAYS[zi];
   if (z && any) {
     const row = document.createElement('div'); row.style.margin = '18px 0';
     const cap = document.createElement('div'); row.appendChild(cap);
-    cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子回窝的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
+    cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
     const c1 = document.createElement('canvas');
-    WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R); { const gh = ghost(c1, z); if (gh && gh.drew) cap.innerHTML += ghostLine(gh); }
-    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); box.appendChild(row);
+    WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R); const ghz = ghost(c1, z); if (ghz && ghz.drew) cap.innerHTML += ghostLine(ghz);
+    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); addScrub(row, c1, z, (t) => { const SSz = realStates(z); WeiDraw.frame(c1, z.m, { prev: null, st: SSz[Math.min(t, SSz.length - 1)], dead: null, drop: null }, 1); (t < SSz.length - 1 ? faintReplay : WeiDraw.replay)(c1, z.m, z.R);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, z, t); }, ghz && ghz.mo ? ghz.mo.t : undefined); box.appendChild(row);
   }
   if (!any) { const p2 = document.createElement('p'); p2.textContent = '成对的那几张你都还没一起过，先去玩吧。'; box.appendChild(p2); }
   box.scrollIntoView({ behavior: 'smooth' });
