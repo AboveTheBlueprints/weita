@@ -468,9 +468,82 @@ function draw(anim) {
 // 第二个 第 15 天 12:31 页71它的日子：它从这一天带到下一天的记性，玩的时候看不见是哪一下留下的。过完最后一张，把每一对
 // "前一天你过关那一局（叠着线）"和"后一天开局"并排画出来。只写事实（吃了你吐的几只、在哪丢了你），不写"所以它记得"。
 const DAYS = {};
+// 第一个 第 17 天 00:20 页125本来会走（第四个 00:17 递来的：鸻那里'开着''关掉'两条一比原因才露出来）：
+// 那一局你吐过虫，就用同一个开局、同一串键，只把每一下吐换成'等'，重跑一遍，把它本来会走的线淡淡画在旁边。
+// 不写字。两条线分开的地方就是你那一口。你走的路照旧，要是照旧走下去会被扑，就停在那一格画一个淡红叉。
+function ghostRun(d, only) {   // only：只换这一下吐（K 里的下标）；不给就是每一下吐都换
+  const K = d.R && d.R.K; if (!K || !K.some(k => k && k[0] === 'X')) return null;
+  let s = d.st0; const A = [s.lz.pos], B = s.lzB ? [s.lzB.pos] : null, SS = [s]; let hit = null, hitStep = 0, j = -1;
+  for (const k of K) {
+    j++; const kk = (k[0] === 'X' && (only === undefined || only === j)) ? '.' : k;
+    const r = S.step(d.m, s, kk);
+    if (r === 'bad') break;   // 照旧走不通了（它挡着那一格），后面不再算
+    if (r === null) { const dd = S.DIRS[kk] || [0, 0]; hit = [s.pl[0] + dd[0], s.pl[1] + dd[1]]; hitStep = j + 1; (S.killedBy === 'B' && B ? B : A).push(hit); break; }
+    s = r; SS.push(s); A.push(s.lz.pos); if (B && s.lzB) B.push(s.lzB.pos);
+  }
+  // 第一个 00:33：七天2 '说明说的是那几口，我还不能把这个叉全算到第20步那一口头上'。被扑的话，一口一口单换，找出是哪一口
+  let who = null;
+  if (hit && only === undefined) { const xs = K.map((k, i) => k && k[0] === 'X' ? i : -1).filter(i => i >= 0); if (xs.length === 1) who = xs[0] + 1; else for (const i of xs) { const g1 = ghostRun(d, i); if (g1 && g1.hit) { who = i + 1; break; } } }
+  return { a: A, b: B, hit, hitStep, who, n: K.filter(k => k && k[0] === 'X').length, SS };
+}
+// 第一个 第 17 天 00:35 页125b：'要是没吐'那条一直跑到这一局收尾，再照它过夜，算出第二天开局本来是什么样（虫在哪、它的老地方、身子底下几个绿点）。被扑了的那局没有第二天，不算。
+function ghostNext(i) {
+  const d = DAYS[i], L = LEVELS[i + 1]; if (!d || !L || !L.day) return null;
+  const G = ghostRun(d); if (!G || G.hit) return null;
+  const ss = G.SS, st = ss[ss.length - 1];
+  let ea = 0; for (let q = 1; q < ss.length; q++) if (ss[q].lz.mode === '吃' && ss[q - 1].lz.mode !== '吃') ea++;
+  const real = DAYINFO[i];
+  const gi = Object.assign({}, real, { left: st.bugs.filter(b => b).length, ate: ea, haunt: st.lz.haunt || null, all: st.bugs.filter(b => b).map(b => b.slice()),
+    dead: (() => { const D = []; for (let q = 1; q < ss.length; q++) (ss[q - 1].bugs || []).forEach((b, k) => { if (b && !(ss[q].bugs || [])[k]) D.push(b.slice()); }); return D; })(),
+    mine: st.bugs.map((b, k) => (b && st.mine && st.mine[k]) ? b.slice() : null).filter(Boolean) });
+  const L0 = LEVELS[i], f = st.lz.fed || 0, f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : 0;
+  const gc = { a: f > f0 ? f : Math.max(0, f - 1), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };
+  const sI = DAYINFO[i], sC = CARRY[i]; DAYINFO[i] = gi; CARRY[i] = gc;
+  try {
+    const DP = dayPlan(L.day), text = dayText(L.day, DP.n);
+    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun;
+    if (gi.haunt) m2.haunt0 = gi.haunt; if (L.faceB) m2.faceB = L.faceB; if (L.hun0B !== undefined) m2.hun0B = L.hun0B;
+    m2.fed0 = gc.a; m2.fed0B = gc.b; if (L.V.includes('记仇')) m2.grudge0 = gc.g;
+    const s2 = S.init(m2); return { m: m2, st: s2 };
+  } finally { DAYINFO[i] = sI; CARRY[i] = sC; }
+}
+function ghostNextDraw(cv, i, b) {   // 画在右边那张（真的第二天开局）上：本来会有、真的没有的，淡淡画虚的
+  const N = ghostNext(i); if (!N) return null;
+  const g = cv.getContext('2d'), C = WeiDraw.C, key = p => p[0] + ',' + p[1];
+  const realB = new Set(b.st0.bugs.filter(Boolean).map(key)), ghB = N.st.bugs.filter(Boolean);
+  let diff = 0;
+  g.save(); g.setLineDash([5, 5]); g.lineWidth = 2.5;
+  let nb = 0, nh = 0; ghB.forEach(p => { if (realB.has(key(p))) return; diff++; nb++; g.strokeStyle = 'rgba(143,209,106,0.85)'; g.beginPath(); g.arc(p[0] * C + C / 2, p[1] * C + C / 2, C * 0.3, 0, 7); g.stroke(); });
+  const h1 = b.st0.lz.haunt, h0 = N.st.lz.haunt;
+  if (h0 && !(h1 && h1[0] === h0[0] && h1[1] === h0[1])) { diff++; nh++; g.strokeStyle = 'rgba(160,120,60,0.95)'; g.strokeRect(h0[0] * C + 6, h0[1] * C + 6, C - 12, C - 12); }
+  g.restore();
+  { const gone = b.st0.bugs.filter(Boolean).filter(p => !ghB.some(q => key(q) === key(p))); g.save(); g.setLineDash([3, 4]); g.lineWidth = 2; g.strokeStyle = 'rgba(200,200,190,0.8)'; gone.forEach(p => { g.beginPath(); g.arc(p[0] * C + C / 2, p[1] * C + C / 2, C * 0.42, 0, 7); g.stroke(); }); g.restore(); }   // 真有、本来不会有的那只，外面套一圈灰虚线
+  const dots = N.st.lz.fed || 0, dots1 = b.st0.lz.fed || 0;
+  return { diff, nb, nh, dots, dots1, gone: b.st0.bugs.filter(Boolean).filter(p => !ghB.some(q => key(q) === key(p))).length };
+}
+// 第一个 00:28：七天1、七天2 都没看见开头那句图例（截图是一对一对的，真网页上也隔着好几屏），都问'虚线在讲哪一段''红叉标的是谁'。挪到每一对底下，只说画的是什么。
+const ghostLine = (gh) => `<br><span style="color:#b9b49a">虚线：这一局${gh.n > 1 ? '那几口' : '那一口'}你要是没吐，它本来会走的路${gh.hit ? (gh.who && gh.n > 1 ? `；虚的红叉：光是第 ${gh.who} 步那一口没吐，它就会在第 ${gh.hitStep} 步扑到你` : `；虚的红叉：那样的话它会在第 ${gh.hitStep} 步扑到你`) : ''}。</span>`;   /* 第一个 00:33：写是哪一口、第几步，只说事，不说'救了你' */
+function ghost(cv, d) {
+  const G = ghostRun(d); if (!G) return null;
+  const g = cv.getContext('2d'), C = WeiDraw.C, X = v => v * C + C / 2;
+  const same = (P, Q) => { let i = 0; while (i < P.length && i < Q.length && P[i][0] === Q[i][0] && P[i][1] === Q[i][1]) i++; return i; };
+  function dash(P, Q, color, off) {
+    if (!P) return; const i0 = same(P, Q || []); if (i0 >= P.length) return;   // 一步都没分开，不画
+    const W = P.slice(Math.max(0, i0 - 1));
+    g.save(); g.strokeStyle = color; g.globalAlpha = 0.55; g.lineWidth = 3; g.setLineDash([7, 7]); g.lineJoin = 'round'; g.lineCap = 'round';
+    g.beginPath(); W.forEach((q, i) => { const x = X(q[0]) + off, y = X(q[1]) + off; if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.stroke();
+    g.restore();   /* 第一个 00:28：末尾原来画空心圈，可回放里空心圈是'开头'（七天1 读成'从上方一个空心圈拐下来'），拿掉 */
+  }
+  const drew = (G.a && same(G.a, d.R.a) < G.a.length) || (G.b && same(G.b, d.R.b || []) < G.b.length);
+  dash(G.a, d.R.a, '#e0603f', 20);   // 走同一条道时跟实线挨着、不叠上（实线红 6、青 13、白 -8）
+  if (G.b) dash(G.b, d.R.b, '#3fb8a8', 24);
+  if (G.hit) { const x = X(G.hit[0]), y = X(G.hit[1]); g.save(); g.globalAlpha = 0.85; g.strokeStyle = '#ff3b3b'; g.lineWidth = 4; g.setLineDash([5, 4]); g.beginPath(); g.moveTo(x - 15, y - 15); g.lineTo(x + 15, y + 15); g.moveTo(x + 15, y - 15); g.lineTo(x - 15, y + 15); g.stroke(); g.restore(); }
+  if (G.hit) { const x = X(G.hit[0]), y = X(G.hit[1]); g.save(); g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; const t = `第${G.hitStep}步`, w = g.measureText(t).width + 8; g.fillStyle = 'rgba(17,17,17,0.85)'; g.fillRect(x - w / 2, y + 17, w, 16); g.fillStyle = '#ff6b6b'; g.fillText(t, x, y + 29); g.restore(); }
+  return { drew, hit: !!G.hit, hitStep: G.hitStep, who: G.who, n: G.n };   /* 跟玩的时候'红叉是它扑到你的那一格'同一个记号，只是虚的 */
+}
 function showDays() {
   const box = document.getElementById('daysBox'); box.innerHTML = ''; box.style.display = 'block';
-  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。左边是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方），右边是后一天刚开局的样子。'; box.appendChild(head);
+  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。左边是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），右边是后一天刚开局的样子。'; box.appendChild(head);
   // 第四个 第 16 天 23:47：那一局新出的事、开了几局，挪成两个小函数，成对的和最后一天共用
   const factsOf = (a) => {
     const A = a.st, fa = [];
@@ -495,8 +568,9 @@ function showDays() {
     cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子回窝的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + factsOf(a);
     const pair = document.createElement('div'); pair.style.display = 'flex'; pair.style.gap = '16px'; pair.style.alignItems = 'flex-start'; pair.style.flexWrap = 'wrap';
     const c1 = document.createElement('canvas'), c2 = document.createElement('canvas');
-    WeiDraw.frame(c1, a.m, { prev: null, st: a.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, a.m, a.R);
+    WeiDraw.frame(c1, a.m, { prev: null, st: a.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, a.m, a.R); { const gh = ghost(c1, a); if (gh && gh.drew) cap.innerHTML += ghostLine(gh); }
     WeiDraw.frame(c2, b.m, { prev: null, st: b.st0, dead: null, drop: null }, 1);
+    { const gn = ghostNextDraw(c2, L.from - 1, b); if (gn && (gn.diff || gn.dots !== gn.dots1)) { const P = []; if (gn.nb) P.push('绿虚圈那几格会有虫'); if (gn.gone) P.push('灰虚圈套着的那几只不会在那儿'); if (gn.nh) P.push('它的老地方会在虚框那格'); if (gn.dots !== gn.dots1) P.push(`它身子底下${gn.dots ? '是' + ['', '一', '两', '三'][Math.min(3, gn.dots)] + '个' : '没有'}绿点`); cap.innerHTML += `<br><span style="color:#b9b49a">下边虚的：要是没吐，今天开局${P.join('，')}。</span>`; } }
     [c1, c2].forEach(c => { c.style.width = (c.width * 0.85) + 'px'; pair.appendChild(c); });
     row.appendChild(pair); box.appendChild(row);
   });
@@ -507,7 +581,7 @@ function showDays() {
     const cap = document.createElement('div'); row.appendChild(cap);
     cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子回窝的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
     const c1 = document.createElement('canvas');
-    WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R);
+    WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R); { const gh = ghost(c1, z); if (gh && gh.drew) cap.innerHTML += ghostLine(gh); }
     c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); box.appendChild(row);
   }
   if (!any) { const p2 = document.createElement('p'); p2.textContent = '成对的那几张你都还没一起过，先去玩吧。'; box.appendChild(p2); }
@@ -517,7 +591,7 @@ function showDays() {
 function replayPath() {
   const pts = hist.map(h => h.st).concat([st]);
   const R = { me: pts.map(p => p.pl), a: pts.map(p => p.lz.pos), b: st.lzB ? pts.map(p => p.lzB ? p.lzB.pos : null).filter(Boolean) : null,
-    drops: hist.slice(1).map(h => h.lastDrop).concat([lastDrop]).filter(Boolean) };
+    drops: hist.slice(1).map(h => h.lastDrop).concat([lastDrop]).filter(Boolean), K: hist.map(h => h.k) };
   if (deadMark) { R.me.push(deadMark.at); if (S.killedBy === 'B' && R.b) R.b.push(deadMark.at); else R.a.push(deadMark.at); }
   return R;
 }
@@ -563,7 +637,7 @@ function act(k) {
   if (aim) { aim = false; if ('URDL'.includes(k) && k.length === 1) k = 'X' + k; else { document.getElementById('msg').textContent = ''; draw(); return; } }
   const L = LEVELS[li];
   if (k[0] === 'X' && !L.V.includes('吐')) { document.getElementById('msg').textContent = '这一张不能吐虫。'; return; }
-  const snap = { st, prev, n, over, deadMark, lastDrop, heardNow, earNow, log: log.slice() };
+  const snap = { st, prev, n, over, deadMark, lastDrop, heardNow, earNow, log: log.slice(), k };   // 第一个 第 17 天 00:20 页125：记下这一下按的键，回看时拿去重跑'那一口不吐'
   lastDrop = k[0] === 'X' ? S.dropAt(m, st, k[1]) : null;
   const r = S.step(m, st, k);
   const msg = document.getElementById('msg');
