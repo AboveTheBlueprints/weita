@@ -45,7 +45,7 @@
   <div id="side">
     <div id="status"></div>
     <div id="msg"></div>
-    <div><button id="undo">撤一步（Z）</button> <button id="again">从头再来（R）</button> <button id="next" style="display:none">下一张 →</button></div>
+    <div><button id="undo">撤一步（Z）</button> <button id="again">从头再来（R）</button> <button id="next" style="display:none">下一张 →</button> <a id="newland" style="color:#777;font-size:12px;margin-left:6px">换一块地</a></div>
     <div><button id="days" style="display:none">看它这几天</button></div>
     <div id="daysBox" style="display:none"></div>
     <div class="keys" id="keys"></div>
@@ -247,7 +247,13 @@ const DAYMAP = `
 #.......*.......#
 #################`;   // 第二个 18:01：左下角那格拿掉了（几1、几2 都说'左下角拿虫再原路回家太稳了'，从窝顺墙就到，不过它的地）
 const DAYV = ['吐', '吐向它', '一件事', '不转回', '窝安全', '吐朝', '吐选', '听', '馋', '撞', '只扑盯着的', '背逃', '学', '记仇', '记恩', '让路', '日子', '饱不理', '老地方'];
-let SEED = (location.search.match(/seed=(\d+)/) || [])[1] ? +location.search.match(/seed=(\d+)/)[1] : (Date.now() % 100000) + 1;
+// 第二个 第 16 天 08:4x：不带 ?seed 打开时回到上回那块地（记在 localStorage），并把 seed 写进地址。起因：喊第二回两个生人认出来的全是'同一个早上少了一句'，换了地就对不上。'换一块地再过五天'照旧。
+const SEEDQ = location.search.match(/seed=(\d+)/);
+let SEEDLAST = 0; try { SEEDLAST = +localStorage.getItem('weita-days-seed') || 0; } catch (e) {}
+let SEED = SEEDQ ? +SEEDQ[1] : SEEDLAST > 0 ? SEEDLAST : (Date.now() % 100000) + 1;
+try { localStorage.setItem('weita-days-seed', String(SEED)); } catch (e) {}
+if (!SEEDQ) { try { history.replaceState(null, '', location.pathname + (location.search ? location.search + '&' : '?') + 'seed=' + SEED + location.hash); } catch (e) {} }
+{ const a = document.getElementById('newland'); if (a) a.href = '?seed=' + (SEED + 1); }   // 第一个 08:44：换一块地要放得看得见，不然有人以为坏了、一直是这一张
 const DAYINFO = {};   // 第 d 天（下标 d-1）过关时：{ left 地上剩几只, ate 它吃了几只 }
 function dayRng(s) { return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }; }
 function dayText(d, nBugs) {   // 第二个 第 16 天 04:45 页98虫过夜：昨天地上剩的虫（野的也算）第二天还在原地；新来的两只生在昨天虫没了的那几格（虫渣）或剩下的那几只旁边（两步以内、离窝 10 步以外），不再从五个虫位里随机挑。第 1 天照旧五个虫位。
