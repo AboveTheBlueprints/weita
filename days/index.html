@@ -471,6 +471,20 @@ const DAYS = {};
 function showDays() {
   const box = document.getElementById('daysBox'); box.innerHTML = ''; box.style.display = 'block';
   const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。左边是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方），右边是后一天刚开局的样子。'; box.appendChild(head);
+  // 第四个 第 16 天 23:47：那一局新出的事、开了几局，挪成两个小函数，成对的和最后一天共用
+  const factsOf = (a) => {
+    const A = a.st, fa = [];
+    const nm = A.lzB ? ['红的', '青的'] : ['它', ''];
+    // 第四个 第 16 天 23:31：fed、grudge 是它带过夜的，拿那一局开局（a.st0）比收尾，只写这一局里新出的（七天1 回看：第 3 天没吐，字却写'吃了你吐的一只'）
+    const A0 = a.st0 || A, fA = Math.max(0, (A.lz.fed || 0) - (A0.lz.fed || 0)), fB = A.lzB ? Math.max(0, (A.lzB.fed || 0) - ((A0.lzB && A0.lzB.fed) || 0)) : 0;
+    const g0 = A0.lz.grudge, g1 = A.lz.grudge, gNew = g1 && !(g0 && g0[0] === g1[0] && g0[1] === g1[1]);
+    if (fA) fa.push(`${nm[0]}吃了你吐的${['', '一', '两', '三'][Math.min(3, fA)]}只`);
+    if (fB) fa.push(`${nm[1]}吃了你吐的${['', '一', '两', '三'][Math.min(3, fB)]}只`);
+    if (gNew) fa.push(`${nm[0]}最后在画问号的那格丢了你`);
+    return fa.length ? `<br><span style="color:#b9b49a">那一局${fa.join('，')}。</span>` : '';
+  };
+  // 第四个 第 16 天 23:34：标题里写这一天开了几局（七天1：只画过关那局，线一天比一天短，'差点觉得自己越玩越顺'，重来和被吃都看不见）
+  const juOf = (i) => (DIAN.ju[i] || 1) > 1 ? `，这一天你一共开了 ${DIAN.ju[i]} 局` : '';
   let any = false;
   LEVELS.forEach((L, j) => {
     if (!L.from) return; const a = DAYS[L.from - 1], b = DAYS[j];
@@ -478,16 +492,7 @@ function showDays() {
     const cap = document.createElement('div'); row.appendChild(cap);
     if (!a || !b) { cap.textContent = `第 ${L.from} 张${LEVELS[L.from - 1].name} → 第 ${j + 1} 张${L.name}：${!a ? '前一张' : '这一张'}你没过，没画。`; box.appendChild(row); return; }
     any = true;
-    const A = a.st, fa = [];
-    const nm = A.lzB ? ['红的', '青的'] : ['它', ''];
-    // 第四个 第 16 天 23:34：标题里写这一天开了几局（七天1：只画过关那局，线一天比一天短，'差点觉得自己越玩越顺'，重来和被吃都看不见）
-    // 第四个 第 16 天 23:31：fed、grudge 是它带过夜的，拿那一局开局（a.st0）比收尾，只写这一局里新出的（七天1 回看：第 3 天没吐，字却写'吃了你吐的一只'）
-    const A0 = a.st0 || A, fA = Math.max(0, (A.lz.fed || 0) - (A0.lz.fed || 0)), fB = A.lzB ? Math.max(0, (A.lzB.fed || 0) - ((A0.lzB && A0.lzB.fed) || 0)) : 0;
-    const g0 = A0.lz.grudge, g1 = A.lz.grudge, gNew = g1 && !(g0 && g0[0] === g1[0] && g0[1] === g1[1]);
-    if (fA) fa.push(`${nm[0]}吃了你吐的${['', '一', '两', '三'][Math.min(3, fA)]}只`);
-    if (fB) fa.push(`${nm[1]}吃了你吐的${['', '一', '两', '三'][Math.min(3, fB)]}只`);
-    if (gNew) fa.push(`${nm[0]}最后在画问号的那格丢了你`);
-    cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子回窝的那一局' : '你过关那一局'}${(DIAN.ju[L.from - 1] || 1) > 1 ? `，这一天你一共开了 ${DIAN.ju[L.from - 1]} 局` : ''}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + (fa.length ? `<br><span style="color:#b9b49a">那一局${fa.join('，')}。</span>` : '');
+    cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子回窝的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + factsOf(a);
     const pair = document.createElement('div'); pair.style.display = 'flex'; pair.style.gap = '16px'; pair.style.alignItems = 'flex-start'; pair.style.flexWrap = 'wrap';
     const c1 = document.createElement('canvas'), c2 = document.createElement('canvas');
     WeiDraw.frame(c1, a.m, { prev: null, st: a.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, a.m, a.R);
@@ -495,6 +500,16 @@ function showDays() {
     [c1, c2].forEach(c => { c.style.width = (c.width * 0.85) + 'px'; pair.appendChild(c); });
     row.appendChild(pair); box.appendChild(row);
   });
+  // 第四个 第 16 天 23:47：最后一天没有后一天，单画它那一局（七天2：'没画第七天那条安静回家的路线，我还稍微有点没看够'）
+  const zi = LEVELS.length - 1, z = DAYS[zi];
+  if (z && any) {
+    const row = document.createElement('div'); row.style.margin = '18px 0';
+    const cap = document.createElement('div'); row.appendChild(cap);
+    cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子回窝的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
+    const c1 = document.createElement('canvas');
+    WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R);
+    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); box.appendChild(row);
+  }
   if (!any) { const p2 = document.createElement('p'); p2.textContent = '成对的那几张你都还没一起过，先去玩吧。'; box.appendChild(p2); }
   box.scrollIntoView({ behavior: 'smooth' });
 }
