@@ -45,7 +45,7 @@
   <div id="side">
     <div id="status"></div>
     <div id="msg"></div>
-    <div><button id="undo">撤一步（Z）</button> <button id="again">从头再来（R）</button> <button id="next" style="display:none">下一张 →</button> <a id="newland" style="color:#777;font-size:12px;margin-left:6px">换一块地</a></div>
+    <div><button id="undo">撤一步（Z）</button> <button id="again">从头再来（R）</button> <button id="next" style="display:none">下一张 →</button> <button id="endday" style="display:none">就这样过完这一天（N）→</button> <a id="newland" style="color:#777;font-size:12px;margin-left:6px">换一块地</a></div>
     <div><button id="days" style="display:none">看它这几天</button></div>
     <div id="daysBox" style="display:none"></div>
     <div class="keys" id="keys"></div>
@@ -433,12 +433,13 @@ function start(i) {
   const DOT = n => ['', '一', '两', '三'][Math.min(n, 3)];
   const yday = !CY2 ? '' : (L.faceB ? '　还是昨天那两只。' + (CY2.a ? `红的身子底下有${DOT(CY2.a)}个绿点。` : '') + (CY2.b ? `青的身子底下有${DOT(CY2.b)}个绿点。` : '') : '　还是昨天那只蜥蜴。' + (CY2.a && L.V.includes('记恩') ? `它身子底下有${DOT(CY2.a)}个绿点。` : ''));
   const CN7 = ['零', '一', '两', '三', '四', '五', '六'];
-  const dayLine = !L.day ? '' : (L.day === 1 ? `第 1 天。地上有${CN7[DP.n]}只虫。` : (DAYINFO[L.day - 2] ? `第 ${L.day} 天。昨天你回窝的时候，地上还剩${CN7[DAYINFO[L.day - 2].left]}只虫；今天地上有${CN7[DP.n]}只。` : `第 ${L.day} 天。地上有${CN7[DP.n]}只虫。`));   // 第二个 17:42 页77几天：只写数，不写为什么
+  const dayLine = !L.day ? '' : (L.day === 1 ? `第 1 天。地上有${CN7[DP.n]}只虫。` : (DAYINFO[L.day - 2] ? `第 ${L.day} 天。` + (DAYINFO[L.day - 2].empty ? '昨天你空着肚子回的窝，今天再空着回去就熬不过去了。' : '') + `昨天${DAYINFO[L.day - 2].empty ? '天黑' : '你回窝'}的时候，地上还剩${CN7[DAYINFO[L.day - 2].left]}只虫；今天地上有${CN7[DP.n]}只。` : `第 ${L.day} 天。地上有${CN7[DP.n]}只虫。`));   // 第二个 17:42 页77几天：只写数，不写为什么
   document.getElementById('intro').textContent = dayLine + goal() + yday + ((DIAN.ju[i] >= 4 && !PASSED.has(i) && i + 1 < LEVELS.length) ? '　（卡住了也可以点上面那排张名，先去玩后面的。）' : '');   // 第二个 第 15 天 02:13：整八2、4 卡在石缝四局，不知道张名能点，后面几张没见到
   const canX = L.V.includes('吐');
   document.getElementById('keys').innerHTML = (L.faceB ? '这张有两只蜥蜴，一只红的、一只青的，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。涂黄的格子是它们脸朝着的那一条（青的那条描着青边），一直到墙：你这一步走完还站在黄格里，它就看见你。' : '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。' /* 第二个 第 16 天 00:23：黄格那句拿掉，让它停一拍再冲自己教（首分钟/预期.md 末尾四个人） */) + '淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。`;
   document.getElementById('xbtn').style.visibility = canX ? 'visible' : 'hidden';
   document.getElementById('next').style.display = (PASSED.has(li) && li + 1 < LEVELS.length) ? 'inline-block' : 'none';   // 第一个 17:01：过了的张重来、撤回以后'下一张'还在
+  document.getElementById('endday').style.display = 'none';   // 第二个 页115
   document.getElementById('msg').textContent = '';
   document.querySelectorAll('#levels button').forEach((b, j) => b.classList.toggle('on', j === i));
   draw(); dian('开');
@@ -475,7 +476,7 @@ function showDays() {
     if (A.lz.fed) fa.push(`${nm[0]}吃了你吐的${['', '一', '两', '三'][Math.min(3, A.lz.fed)]}只`);
     if (A.lzB && A.lzB.fed) fa.push(`${nm[1]}吃了你吐的${['', '一', '两', '三'][Math.min(3, A.lzB.fed)]}只`);
     if (A.lz.grudge) fa.push(`${nm[0]}最后在画问号的那格丢了你`);
-    cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（你过关那一局）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + (fa.length ? `<br><span style="color:#b9b49a">那一局${fa.join('，')}。</span>` : '');
+    cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子回窝的那一局' : '你过关那一局'}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + (fa.length ? `<br><span style="color:#b9b49a">那一局${fa.join('，')}。</span>` : '');
     const pair = document.createElement('div'); pair.style.display = 'flex'; pair.style.gap = '16px'; pair.style.alignItems = 'flex-start'; pair.style.flexWrap = 'wrap';
     const c1 = document.createElement('canvas'), c2 = document.createElement('canvas');
     WeiDraw.frame(c1, a.m, { prev: null, st: a.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, a.m, a.R);
@@ -498,6 +499,24 @@ function replayPath() {
 let hist = [];
 const PASSED = new Set();
 const CARRY = {};   // 第二个 08:58 页60隔天：每张最后一次过关时，红、青各吃过你吐的几只（没被追丢清零的）
+// 第二个 第 16 天 14:05 页115：天黑了没带够虫回窝，这一天也算过了。喂过的那一口、它吃的、地上剩的都带到明天；你记成空着肚子回的窝。连着两天空着肚子才真输（第一个、第四个、第五个都投了算）。
+function keepDay() {
+  const ss = hist.map(h => h.st).concat([st]); let ea = 0; for (let q = 1; q < ss.length; q++) if (ss[q].lz.mode === '吃' && ss[q - 1].lz.mode !== '吃') ea++;
+  const lf = st.bugs.filter(b => b).length;
+  DAYINFO[li] = { left: lf, ate: ea, haunt: st.lz.haunt || null, all: st.bugs.filter(b => b).map(b => b.slice()), dead: (() => { const D = []; for (let q = 1; q < ss.length; q++) (ss[q - 1].bugs || []).forEach((b, i) => { if (b && !(ss[q].bugs || [])[i]) D.push(b.slice()); }); return D; })(), mine: st.bugs.map((b, i) => (b && st.mine && st.mine[i]) ? b.slice() : null).filter(Boolean), empty: true };
+  DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), empty: true };
+  CARRY[li] = { a: (() => { const f = st.lz.fed || 0, L0 = LEVELS[li], f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : 0; return f > f0 ? f : Math.max(0, f - 1); })(), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };
+  PASSED.add(li);
+}
+function canEndDay() { const L = LEVELS[li]; return !!L.day && !(DAYINFO[li - 1] && DAYINFO[li - 1].empty && li > 0); }
+function endDay() {
+  if (document.getElementById('endday').style.display === 'none') return '现在没有"就这样过完这一天"的按钮。';
+  dian('过一天'); keepDay(); document.getElementById('endday').style.display = 'none';
+  if (li + 1 < LEVELS.length) { start(li + 1); return null; }
+  over = true; const msg = document.getElementById('msg');
+  msg.innerHTML = `你空着肚子过完了这一天。这几天过完了。<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再来</a>`;
+  document.getElementById('days').style.display = 'inline-block'; draw(true); return null;
+}
 function undo() {
   if (!hist.length) return;
   dian('Z');
@@ -505,6 +524,7 @@ function undo() {
   ({ st, prev, n, over, deadMark, lastDrop, heardNow, earNow } = h); log = h.log.slice(); aim = false;
   document.getElementById('msg').textContent = '';
   document.getElementById('next').style.display = (PASSED.has(li) && li + 1 < LEVELS.length) ? 'inline-block' : 'none';   // 第一个 17:01：过了的张重来、撤回以后'下一张'还在
+  document.getElementById('endday').style.display = 'none';   // 第二个 页115
   draw();
 }
 function act(k) {
@@ -540,7 +560,7 @@ function act(k) {
   const ev = events2(k, st, r);   // 09:55 第三个：空着的步把有事的挤下去了，没动静的那步淡淡写一句
   log.unshift(ev.length ? `第 ${n} 步（${KNAME[k]}）：` + ev.join(' ') : `<span style="color:#77735f">第 ${n} 步（${KNAME[k]}）：你走了一格，它没动静。</span>`);
   prev = st; st = r;
-  if (st.ate + (st.hid || []).filter(b => b).length < m.need && st.bugs.every(b => !b)) { msg.textContent = `你肚子里只剩 ${st.ate} 只，地上也没有虫了，凑不够 ${m.need} 只，这一局赢不了了。可以接着看它，天黑前随时按 R 从头再来。`; }   // 第二个 第 16 天 02:05 页93：不当场判输，让人看完它吃那一口（赶7、渣8 都撞上）
+  if (st.ate + (st.hid || []).filter(b => b).length < m.need && st.bugs.every(b => !b)) { msg.textContent = `你肚子里只剩 ${st.ate} 只，地上也没有虫了，凑不够 ${m.need} 只，今天带不够虫回窝了。可以接着看它，` + (canEndDay() ? '也可以现在就这样过完这一天，或者按 R 从头再来。' : '天黑前随时按 R 从头再来。'); if (canEndDay()) document.getElementById('endday').style.display = 'inline-block'; }   // 第二个 第 16 天 02:05 页93：不当场判输，让人看完它吃那一口（赶7、渣8 都撞上）
   else if (st.ate < m.need && eq(st.pl, m.nest)) { msg.textContent = `到窝了，可肚子里只有 ${st.ate} 只，要带 ${m.need} 只回来。`; }   // 第二个·页11 17:29：七1、七2 带着不够数的虫回窝，屏幕没反应，以为要出去再进来
   else if (st.ate >= m.need && eq(st.pl, m.nest)) {
     over = true; msg.textContent = `回到窝了，过了！一共 ${n} 步。`;
@@ -549,7 +569,7 @@ function act(k) {
     else if (LEVELS[li].day) msg.innerHTML += ` 五天过完了。<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过五天</a>`;
     else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';
     if (li + 1 >= LEVELS.length) document.getElementById('days').style.display = 'inline-block';   // 第二个 12:31 页71它的日子
-  } else if (n >= lim()) { over = true; dian('黑'); msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; }
+  } else if (n >= lim()) { over = true; dian('黑'); if (!LEVELS[li].day) msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; else if (canEndDay()) { msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝，今晚空着肚子。可以就这样过完这一天，也可以按 R 从头再来。`; document.getElementById('endday').style.display = 'inline-block'; } else msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝。昨天你也是空着肚子回的窝，连着两天，熬不过这一夜。按 R 从头再来这一天。`; }
   draw(true);
 }
 
@@ -557,6 +577,7 @@ const KEYMAP = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R', 
 document.addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') { dian('重来'); start(li); e.preventDefault(); return; }
   if (e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') { undo(); e.preventDefault(); return; }
+  if ((e.key === 'n' || e.key === 'N') && document.getElementById('endday').style.display !== 'none') { endDay(); e.preventDefault(); return; }   // 第二个 页115
   if (e.key === 'Enter' && document.getElementById('next').style.display !== 'none') { start(li + 1); e.preventDefault(); return; }   // 第二个 第 15 天 04:36：整十一1 点过张名以后，那颗按钮留着焦点，回车同时'点'了它，又回到本张开头
   const k = KEYMAP[e.key]; if (k) { act(k); e.preventDefault(); }
 });
@@ -565,6 +586,7 @@ document.getElementById('again').onclick = () => { dian('重来'); start(li); };
 document.getElementById('days').onclick = showDays;   // 第二个 12:31 页71它的日子
 document.getElementById('undo').onclick = () => undo();
 document.getElementById('next').onclick = () => start(li + 1);
+document.getElementById('endday').onclick = () => endDay();   // 第二个 页115
 const lv = document.getElementById('levels');
 LEVELS.forEach((L, i) => { const b = document.createElement('button'); b.textContent = (i + 1) + ' ' + L.name; b.onclick = () => { start(i); b.blur(); }; lv.appendChild(b); });
 start(0);
