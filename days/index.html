@@ -846,6 +846,7 @@ function act(k) {
     { const R = replayPath(), K = hist.length; ['me', 'a', 'b'].forEach(w => { if (R[w] && R[w].length > K) R[w].splice(K, 1); }); LOST[li] = { m, st0: hist.length ? hist[0].st : st, st, R, dead: deadMark, lost: true }; (GAMES[li] = GAMES[li] || []).push(Object.assign({}, LOST[li], { how: '被扑', n, ju: DIAN.ju[li] })); }   // 第四个 04:07：replayPath 末尾那格（被扑前站的）跟 hist 最后一格重了一回，刻2 拖到第 30 步'画面没变'，去掉   // 第四个 页134：时4、刻2 想看输的那局
     log.unshift(`第 ${n} 步（${KNAME[k]}）：你走完这一步，${st.lzB ? (S.killedBy === 'B' ? '青蜥蜴' : '红蜥蜴') : '蜥蜴'}扑到了你身上。（红叉是它扑到你的那一格）`);   // 第二个 07:50：两只的时候写是哪只（第三个：分不清是谁压的）
     over = true; msg.textContent = '你被吃掉了。按 Z 撤回一步，或者按 R 从头再来。'; dian(k); dian('死');
+    if (LEVELS[li].day && li + 1 >= LEVELS.length) { msg.textContent = '你被吃掉了。按 Z 撤回一步，或者按 R 从头再来；不想再来了，可以看看它这几天。'; document.getElementById('days').style.display = 'inline-block'; }   /* 第四个 第 17 天 10:35 页153：最后一天被吃了、不想再来的人看不到回看（开2'没能看到整周回顾，有些遗憾'；少2 是我们在截图手里替他亮的）。只在最后一天被吃时多亮这颗按钮，前几天照旧只有 Z/R */
     prev = st; heardNow = false; earNow = null; draw(true); return;
   }
   heardNow = S.heard; earNow = [S.ear || null, (S.B && S.B.ear) || null]; dian(k);
