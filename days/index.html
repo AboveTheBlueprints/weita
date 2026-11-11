@@ -443,7 +443,7 @@ function start(i) {
      // 第三个 第 18 天 页173果：烂果招来的两只也算进'今天地上有几只'
   if (L.day) L.text = text2;
   m = new S.Map(text2, L.face, L.need, L.carry, L.V);
-  if (L.day) { m.tree = [5, 2]; m.fruitAt = [6, 2]; m.fruitStep = L.day === 1 ? 999 : 8;   /* 第 1 天只有树、不掉果子：第 1 天要教的是喂，果子一掉第 1 天就是'等果子回家'（我自己玩种子 8：20 步过） */ m.rot = ROT[L.day - 2] || null; }   // 第三个 第 18 天 页173果：红石头左上那格墙上一棵树，第 8 步往它石头正上方掉一颗果子
+  if (L.day) { m.tree = null; m.fruitAt = [6, 2]; m.fruitStep = 999; m.rot = ROT[L.day - 2] || null; }   // 第五个 第 18 天 页176收：果子拿掉（第三个 04:47 点头：那 18 步的果子是一条不用读红就吃饱的路，跟'喂它'抢）。原来是 m.tree = [5, 2]; m.fruitStep = L.day === 1 ? 999 : 8（第三个 页173果），要回来改这一行和下面两处
   if (L.hun0 !== undefined) m.hun0 = L.hun0; if (L.day && DAYINFO[L.day - 2] && DAYINFO[L.day - 2].haunt) m.haunt0 = DAYINFO[L.day - 2].haunt; if (L.dig0) m.dig0 = true; if (L.grudge0) m.grudge0 = L.grudge0; if (L.faceB) m.faceB = L.faceB; if (L.landR) m.landR = L.landR; if (L.hun0B !== undefined) m.hun0B = L.hun0B;
   if (L.day === 1 && BACK) { if (BACK.haunt) m.haunt0 = BACK.haunt; m.fed0 = BACK.a || 0; }   /* 第二个 页154回来 */ const CY = L.from ? CARRY[L.from - 1] : null; if (CY) { m.fed0 = CY.a; m.fed0B = CY.b; if (L.V.includes('记仇')) m.grudge0 = CY.g ? (L.gmap ? L.gmap(CY.g) : CY.g) : null; }   // 第二个 09:36 页62：第 8 张'第二天'也照第 7 张真丢你的地方，不再用写死的；第 7 张没甩掉过它，第 8 张开局就什么都不记   // 第二个 08:58 页60隔天：'又一天'开局记着你昨天（第 from 张最后过关那局）喂过它几只   // 第二个 第 15 天 01:50 页45邻居   // 第二个·页11 21:47 页35骗
   st = S.init(m); { const K = L.day && DAYINFO[L.day - 2] && DAYINFO[L.day - 2].mine; if (K && K.length) st.mine = st.bugs.map(b => !!b && K.some(k => k[0] === b[0] && k[1] === b[1])); }   // 第二个 02:30 页94：过夜的那几只还算你吐的（蓝圈、它吃了算你喂的）
@@ -520,7 +520,7 @@ function ghostNext(i) {
   const sI = DAYINFO[i], sC = CARRY[i]; DAYINFO[i] = gi; CARRY[i] = gc;
   try {
     const DP = dayPlan(L.day), text = dayText(L.day, DP.n);
-    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun; if (L.day) { m2.tree = [5, 2]; m2.fruitAt = [6, 2]; m2.fruitStep = L.day === 1 ? 999 : 8; m2.rot = ROT[L.day - 2] || null; }   /* 第三个 页173果：回看里重算那一天也得有树 */
+    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun; if (L.day) { m2.tree = null; m2.fruitAt = [6, 2]; m2.fruitStep = 999; m2.rot = ROT[L.day - 2] || null; }   /* 第五个 页176收：果子拿掉，回看重算跟着没有树 */
     if (gi.haunt) m2.haunt0 = gi.haunt; if (L.faceB) m2.faceB = L.faceB; if (L.hun0B !== undefined) m2.hun0B = L.hun0B;
     m2.fed0 = gc.a; m2.fed0B = gc.b; if (L.V.includes('记仇')) m2.grudge0 = gc.g;
     const s2 = S.init(m2); return { m: m2, st: s2 };
@@ -750,7 +750,7 @@ function nightFrom(i, ss, pgc) {   // 跟 ghostNext 后半一样，那天的一�
   const sI = DAYINFO[i], sC = CARRY[i]; DAYINFO[i] = gi; CARRY[i] = gc;
   try {
     const DP = dayPlan(L.day), text = dayText(L.day, DP.n);
-    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun; if (L.day) { m2.tree = [5, 2]; m2.fruitAt = [6, 2]; m2.fruitStep = L.day === 1 ? 999 : 8; m2.rot = ROT[L.day - 2] || null; }   /* 第三个 页173果：回看里重算那一天也得有树 */
+    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun; if (L.day) { m2.tree = null; m2.fruitAt = [6, 2]; m2.fruitStep = 999; m2.rot = ROT[L.day - 2] || null; }   /* 第五个 页176收：果子拿掉，回看重算跟着没有树 */
     if (gi.haunt) m2.haunt0 = gi.haunt; if (L.faceB) m2.faceB = L.faceB; if (L.hun0B !== undefined) m2.hun0B = L.hun0B;
     m2.fed0 = gc.a; m2.fed0B = gc.b; if (L.V.includes('记仇')) m2.grudge0 = gc.g;
     return { m: m2, st: S.init(m2), dots: gc.a, gc };
