@@ -799,7 +799,8 @@ function endDay() {
   dian('过一天'); keepDay(); document.getElementById('endday').style.display = 'none';
   if (li + 1 < LEVELS.length) { start(li + 1); return null; }
   over = true; const msg = document.getElementById('msg');
-  msg.innerHTML = `你空着肚子过完了这一天。七天过完了。<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
+  /* 第四个 第 17 天 09:31：七天过完多一条'同一块地再过七天'。熬1、熬2 看完回看、同一块地再玩，第 1 天就喂，熬1 第 5 天把饭往下送'看明天红的会不会改去下面找'，第 6 天它真去了，这才自己认出'它认得我'；少几1、熬1 玩完都说想'换个地方喂它，看第二天会不会往那找'，那得是同一块地。原来只有换一块地（不带 seed 重开才是同一块，没人知道） */
+  msg.innerHTML = `你空着肚子过完了这一天。七天过完了。<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
   document.getElementById('days').style.display = 'inline-block'; draw(true); return null;
 }
 function undo() {
@@ -853,7 +854,7 @@ function act(k) {
     if (LEVELS[li].day) { const ss = hist.map(h => h.st).concat([st]); let ea = 0; for (let q = 1; q < ss.length; q++) if (ss[q].lz.mode === '吃' && ss[q - 1].lz.mode !== '吃') ea++; const lf = st.bugs.filter(b => b).length; DAYINFO[li] = { left: lf, ate: ea, haunt: st.lz.haunt || null, all: st.bugs.filter(b => b).map(b => b.slice()) /* 第二个 页98：野的也过夜 */, dead: (() => { const D = []; for (let q = 1; q < ss.length; q++) (ss[q - 1].bugs || []).forEach((b, i) => { if (b && !(ss[q].bugs || [])[i]) D.push(b.slice()); }); return D; })() /* 第二个 页98：今天虫在哪几格没了（你吃的、它吃的），明天新来的生在这几格旁边 */, mine: st.bugs.map((b, i) => (b && st.mine && st.mine[i]) ? b.slice() : null).filter(Boolean) }; const CNN = x => x ? ['', '一', '两', '三', '四', '五', '六'][x] : '零'; let eb = 0; if (st.lzB) for (let q = 1; q < ss.length; q++) if (ss[q].lzB && ss[q - 1].lzB && ss[q].lzB.mode === '吃' && ss[q - 1].lzB.mode !== '吃') eb++;   /* 第二个 第 16 天 12:36 页113：两只的天各说各的（整1 第 6 天'它今天吃了零只'，对照日志才知道是红的零只、青的两只） */
       msg.textContent += (st.lzB ? `红的今天吃了${CNN(ea)}只，青的吃了${CNN(eb)}只` : `它今天吃了${CNN(ea)}只`) + `，地上还剩${lf ? ['', '一', '两', '三', '四', '五', '六'][lf] : '零'}只。`; } /* 第二个 17:40 页77几天 */ dian('过'); PASSED.add(li); DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), fed: fedCounts() }; (GAMES[li] = GAMES[li] || []).push(Object.assign({}, DAYS[li], { how: '过了', n, ju: DIAN.ju[li] })); CARRY[li] = { a: (() => { const f = st.lz.fed || 0, L0 = LEVELS[li], f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : 0; return f > f0 ? f : Math.max(0, f - 1); })(), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };   // 第二个 09:17 页61记仇隔天：也记着它最后在哪丢的你
     if (li + 1 < LEVELS.length) document.getElementById('next').style.display = 'inline-block';
-    else if (LEVELS[li].day) msg.innerHTML += ` 七天过完了。<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
+    else if (LEVELS[li].day) msg.innerHTML += ` 七天过完了。<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
     else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';
     if (li + 1 >= LEVELS.length) document.getElementById('days').style.display = 'inline-block';   // 第二个 12:31 页71它的日子
   } else if (n >= lim()) { over = true; dian('黑'); if (!LEVELS[li].day) msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; else if (canEndDay()) { msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝，今晚空着肚子。可以就这样过完这一天，也可以按 R 从头再来。`; document.getElementById('endday').style.display = 'inline-block'; } else msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝。昨天你也是空着肚子回的窝，连着两天，熬不过这一夜。按 R 从头再来这一天。`; }
