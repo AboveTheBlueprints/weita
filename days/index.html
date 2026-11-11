@@ -791,7 +791,16 @@ function showDays() {
     else if (fA) fa.push(`${nm[0]}吃了你吐的${['', '一', '两', '三'][Math.min(3, fA)]}只`);
     if (fB) fa.push(`${nm[1]}吃了你吐的${['', '一', '两', '三'][Math.min(3, fB)]}只`);
     if (gNew) fa.push(`${nm[0]}最后在画问号的那格丢了你`);
-    return fa.length ? `<br><span style="color:#b9b49a">那一局${fa.join('，')}。</span>` : '';
+    /* 第四个 第 17 天 16:32 页159先写你：每对底下先一步一行写你那一局做了什么（第 N 步你吐了一只），后半句才是它拿去干了什么，像不说结尾她那本子（第二个 15:48：'每一行开头都是我那晚做的事'）。原来那句'它一共吃了 N 只，其中 M 只是你吐的'从它那边写起，第四个 00:06'两人读出的都是蜥蜴那一面'。只换字，不多一格 */
+    const sp = spitsOf(a), CNb = ['', '一', '两', '三', '四', '五', '六', '七', '八', '九', '十'];
+    const endOf = (o) => ({ A: (A.lzB ? '红的' : '它') + (o.end === o.step ? '当步就吃了' : `第 ${o.end} 步吃了`), B: '青的' + (o.end === o.step ? '当步就吃了' : `第 ${o.end} 步吃了`), me: `你第 ${o.end} 步又吞回去了`, gone: `第 ${o.end} 步没了`, left: '到收尾还在地上' }[o.what]);
+    const ln = [];
+    if (!sp.length) ln.push('这一局你一只也没吐。');
+    sp.slice(0, 5).forEach(o => ln.push(`第 ${o.step} 步你吐了一只，${endOf(o)}。`));
+    if (sp.length > 5) ln.push(`后面你又吐了${CNb[Math.min(10, sp.length - 5)]}只。`);
+    if (gNew) ln.push(`在画问号的那格，${A.lzB ? '红的' : '它'}跟丢了你。`);   /* 16:46 先写1 两回：'甩掉了它'把我'趁它忙别的事溜走'说成了明确的甩追兵。先写你只写你做了的，没做的不替他认 */
+    if (tot !== undefined) ln.push(tot ? `（这一局${nm[0]}一共吃了${CNa[Math.min(7, tot)]}只。）` : `（这一局${nm[0]}一只也没吃到。）`);
+    return `<br><span style="color:#b9b49a">${ln.join('<br>')}</span>`;
   };
   // 第四个 第 16 天 23:34：标题里写这一天开了几局（七天1：只画过关那局，线一天比一天短，'差点觉得自己越玩越顺'，重来和被吃都看不见）
   const juOf = (i) => (DIAN.ju[i] || 1) > 1 ? `，这一天你一共开了 ${DIAN.ju[i]} 局` : '';
