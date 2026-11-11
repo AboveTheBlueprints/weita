@@ -1071,7 +1071,7 @@ function itAct(k) {
   if (n >= lim()) {
     over = true;
     const home = IT.who === 'B' ? S.eq(st.lzB.pos, m.postB) : S.eq(st.lz.pos, m.post);
-    document.getElementById('msg').textContent = `天黑了。这一天你吃了 ${IT.ate} 只虫。${home ? '你趴在自己的石头上。' : '你没回到石头上。'}`;
+    document.getElementById('msg').innerHTML = `天黑了。这一天你吃了 ${IT.ate} 只虫。${home ? '你趴在自己的石头上。' : '你没回到石头上。'}　<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;   /* 第四个 第 18 天 01:31：当完那天也给这两条。原来七天过完那屏有，点了换过来就没了，只剩上面那个小'换一块地'；它7 当完青说'想试试早一点把虫喂给红的'，同一块地得有门 */
     document.getElementById('days').style.display = 'inline-block';   // 第四个 第 17 天 23:15 页171先换：'看它这几天'等你当完红的那一天才亮，量单换过来认不认得出自己那一口
   }
   draw(true);
