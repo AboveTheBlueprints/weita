@@ -761,7 +761,7 @@ function showDays() {
     G.forEach((g, k) => {
       const b = document.createElement('button'); b.style.margin = '2px 4px'; b.style.fontSize = '12px';
       const jc = g.ju ? G.slice(0, k).filter(x => x.ju === g.ju).length : 0, jn = jc ? `第 ${g.ju} 局撤回再走${jc > 1 ? `第 ${jc} 回` : ''}` : `第 ${g.ju || k + 1} 局`;   /* 第四个 第 17 天 09:02：熬1、熬2 标题'开了 3 局'、按钮四个，撤一步接着走也排成了一局（'我会以为它数漏了''把撤回也叫成一局'）；按钮照开局数，撤回的标出来 */
-      b.textContent = `${jn}（${g.how === '被扑' ? `第 ${g.n} 步被扑` : g.how === '没走完' ? `走了 ${g.n} 步就重来了` : `${g.how}，${g.n} 步`}）`;
+      b.textContent = `${jn}（${g.how === '被扑' ? `第 ${g.n} 步被扑` : g.how === '没走完' ? `走了 ${g.n} 步就重来了` : g.how === '天黑' ? `走了 ${g.n} 步天黑了` : `${g.how}，${g.n} 步`}）`;
       b.onclick = () => { pane.innerHTML = ''; const cap = document.createElement('div'); cap.textContent = `第 ${di + 1} 张${jn}`; pane.appendChild(cap); single(pane, g, g.how === '被扑'); [...bar.querySelectorAll('button')].forEach(x => x.style.outline = x === b ? '2px solid #d9b44a' : ''); };
       bar.appendChild(b);
     });
@@ -789,7 +789,7 @@ function keepDay() {
   const ss = hist.map(h => h.st).concat([st]); let ea = 0; for (let q = 1; q < ss.length; q++) if (ss[q].lz.mode === '吃' && ss[q - 1].lz.mode !== '吃') ea++;
   const lf = st.bugs.filter(b => b).length;
   DAYINFO[li] = { left: lf, ate: ea, haunt: st.lz.haunt || null, all: st.bugs.filter(b => b).map(b => b.slice()), dead: (() => { const D = []; for (let q = 1; q < ss.length; q++) (ss[q - 1].bugs || []).forEach((b, i) => { if (b && !(ss[q].bugs || [])[i]) D.push(b.slice()); }); return D; })(), mine: st.bugs.map((b, i) => (b && st.mine && st.mine[i]) ? b.slice() : null).filter(Boolean), empty: true };
-  DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), empty: true, fed: fedCounts() }; (GAMES[li] = GAMES[li] || []).push(Object.assign({}, DAYS[li], { how: '空着肚子过完', n, ju: DIAN.ju[li] }));
+  DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), empty: true, fed: fedCounts() }; { const G0 = GAMES[li]; if (G0 && G0.length && G0[G0.length - 1].how === '天黑' && G0[G0.length - 1].ju === DIAN.ju[li]) G0.pop(); }   /* 天黑那局接着按'过完这一天'，是同一局，别算两回 */ (GAMES[li] = GAMES[li] || []).push(Object.assign({}, DAYS[li], { how: '空着肚子过完', n, ju: DIAN.ju[li] }));
   CARRY[li] = { a: (() => { const f = st.lz.fed || 0, L0 = LEVELS[li], f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : 0; return f > f0 ? f : Math.max(0, f - 1); })(), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };
   PASSED.add(li);
 }
@@ -857,7 +857,7 @@ function act(k) {
     else if (LEVELS[li].day) msg.innerHTML += ` 七天过完了。<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
     else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';
     if (li + 1 >= LEVELS.length) document.getElementById('days').style.display = 'inline-block';   // 第二个 12:31 页71它的日子
-  } else if (n >= lim()) { over = true; dian('黑'); if (!LEVELS[li].day) msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; else if (canEndDay()) { msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝，今晚空着肚子。可以就这样过完这一天，也可以按 R 从头再来。`; document.getElementById('endday').style.display = 'inline-block'; } else msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝。昨天你也是空着肚子回的窝，连着两天，熬不过这一夜。按 R 从头再来这一天。`; }
+  } else if (n >= lim()) { over = true; dian('黑'); if (typeof li === 'number') (GAMES[li] = GAMES[li] || []).push({ m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), how: '天黑', n, ju: DIAN.ju[li] });   /* 第四个 第 17 天 09:40：少几2 第 2 天'50 步天黑，失败'那局按 R 重来以后不在回看那排局里（over 了，start 不收），'标题三局、按钮两局，50 步的记录去了哪儿' */ if (!LEVELS[li].day) msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; else if (canEndDay()) { msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝，今晚空着肚子。可以就这样过完这一天，也可以按 R 从头再来。`; document.getElementById('endday').style.display = 'inline-block'; } else msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝。昨天你也是空着肚子回的窝，连着两天，熬不过这一夜。按 R 从头再来这一天。`; }
   draw(true);
 }
 
