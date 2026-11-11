@@ -18,7 +18,7 @@
   .drop { background: #3a3220; border-radius: 3px; }
   #side { flex: 1; min-width: 300px; }
   #status { font-size: 15px; margin: 10px 0; }
-  #msg { min-height: 24px; font-size: 16px; color: #ffd27a; margin: 8px 0; }
+  #msg { min-height: 48px; /* 页155：字挪到棋盘上面，一行变两行时棋盘不跳 */ font-size: 16px; color: #ffd27a; margin: 8px 0; }
   #log { font-size: 14px; line-height: 1.6; max-height: 360px; overflow-y: auto; border-top: 1px solid #3a3b33; padding-top: 6px; }
   #log div:first-child { color: #fff; }
   .keys { color: #8f8a78; font-size: 13px; line-height: 1.7; margin-top: 12px; }
@@ -35,18 +35,20 @@
     <h1>喂它一口 · 连着七天</h1>
     <div class="sub" id="intro"></div>
     <div id="levels"></div>
+    <!-- 第二个 第 17 天 11:56 页155：状态、过了/被吃那句、撤一步/从头再来挪到棋盘上面。原来在棋盘和方向键底下，1200×900 一屏里一行都看不见（y≈900 以下），笔记本上的人被吃了、过了都得往下滑才看得见字和按钮 -->
+    <div id="status"></div>
+    <div id="msg"></div>
+    <div><button id="undo">撤一步（Z）</button> <button id="again">从头再来（R）</button> <button id="next" style="display:none">下一张 →</button> <button id="endday" style="display:none">就这样过完这一天（N）→</button> <button id="days" style="display:none">看它这几天</button> <a id="newland" style="color:#777;font-size:12px;margin-left:6px">换一块地</a></div>
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap"><!-- 页155：方向键挪到棋盘右边，不然上面多了三行，吐那颗键掉到一屏外 -->
     <canvas id="board"></canvas>
     <div id="pad">
       <span></span><button data-k="U">↑</button><span></span>
       <button data-k="L">←</button><button data-k=".">等</button><button data-k="R">→</button>
       <span></span><button data-k="D">↓</button><button data-k="X" id="xbtn">吐</button>
     </div>
+    </div>
   </div>
   <div id="side">
-    <div id="status"></div>
-    <div id="msg"></div>
-    <div><button id="undo">撤一步（Z）</button> <button id="again">从头再来（R）</button> <button id="next" style="display:none">下一张 →</button> <button id="endday" style="display:none">就这样过完这一天（N）→</button> <a id="newland" style="color:#777;font-size:12px;margin-left:6px">换一块地</a></div>
-    <div><button id="days" style="display:none">看它这几天</button></div>
     <div id="daysBox" style="display:none"></div>
     <div class="keys" id="keys"></div>
     <div id="log"></div>
