@@ -559,5 +559,27 @@ const _init2 = init2;
 function init3(m) { const o = _init2(m); if (m.postB) o.lzB = { pos: m.postB, face: m.faceB || m.face, mode: '岗', tgt: null, mem: null, eat: 0, hun: m.hun0B === undefined ? (m.hun0 || 0) : m.hun0B, learn: 0, grudge: null, fed: m.fed0B || 0 }; return o; }   // 第二个 08:58 页60隔天
 api = { Map: Map_, step: step3, lands, init: init2, dropAt, DIRS, ORDER, eq, heard: false, wantBug };
 api.init = init3;
+// 第三个 第 18 天 01:10 页173果：红石头边上一棵树，每天第 m.fruitStep 步往 m.fruitAt 掉一颗果子。果子不跑、蜥蜴不吃；你走上去吃了算肚子里一只（带回窝照样算），可吐不出来（吐只吐虫）。
+// 没拿的果子夜里烂掉（index.html 记 ROT）；第二天它一早自己吃了，开局跟昨天吃够两只一样饱（第二版，01:27；第一版是冒两只虫，成了白给你的）。外面包一层，原来的 step3 一个字没动。
+{
+  const _stepT = api.step, _initT = api.init;
+  api.step = function (m, st, k) {
+    api.fruitDrop = false; api.fruitAte = false;
+    if (!m.tree) return _stepT(m, st, k);
+    const fin = st.fin || 0;
+    if (k[0] === 'X' && st.ate - fin < 1) return 'bad';
+    const r = _stepT(m, st, k);
+    if (r === null || r === 'bad') return r;
+    let fr = st.fr || null, fd = !!st.fd, f2 = fin;
+    if (fr && eq(r.pl, fr) && k !== '.' && k[0] !== 'X') { fr = null; f2 += 1; r.ate += 1; api.fruitAte = true; }
+    const tick = (st.tick || 0) + 1;
+    if (!fd && !fr && tick >= (m.fruitStep || 8)) {
+      const c = m.fruitAt, busy = eq(r.pl, c) || eq(r.lz.pos, c) || (r.lzB && eq(r.lzB.pos, c)) || has(r.bugs, c);
+      if (!busy) { fr = c.slice(); fd = true; api.fruitDrop = true; }
+    }
+    return Object.assign(r, { fr, fin: f2, fd, tick });
+  };
+  api.init = function (m) { const o = _initT(m); o.tick = 0; o.fr = null; o.fin = 0; o.fd = false; return o; };
+}
 if (typeof module !== 'undefined') module.exports = api; else root.WeiSim = api;
 })(this);

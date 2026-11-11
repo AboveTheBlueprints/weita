@@ -275,6 +275,10 @@ function frame(cv, m, info, t) {
   if (drop && !dead && t >= 1) {   // 按 x 虫会落的那一格（第二个·页11 17:06：吐选瞄准时 drop 是几格，一格一个框）
     for (const d of (Array.isArray(drop[0]) ? drop : [drop])) { g.setLineDash([6, 5]); g.strokeStyle = COL.drop; g.lineWidth = 2.5; g.strokeRect(d[0] * C + 6, d[1] * C + 6, C - 12, C - 12); g.setLineDash([]); }
   }
+  // 第三个 第 18 天 页173果：树（长在墙上）和果子
+  if (m.tree) { const X = cx(m.tree[0]), Y = cx(m.tree[1]); g.fillStyle = '#6b4a2b'; g.fillRect(X - 3, Y, 6, C * 0.42); g.fillStyle = '#3f7a3a'; g.beginPath(); g.arc(X, Y - 4, C * 0.36, 0, 7); g.fill(); g.fillStyle = '#4f9a48'; g.beginPath(); g.arc(X - 6, Y - 9, C * 0.2, 0, 7); g.fill(); }
+  if (st.fr) { const X = cx(st.fr[0]), Y = cx(st.fr[1]); g.fillStyle = '#e8892e'; g.beginPath(); g.arc(X, Y + 2, 10, 0, 7); g.fill(); g.fillStyle = '#f6b25a'; g.beginPath(); g.arc(X - 3, Y - 1, 4, 0, 7); g.fill(); g.strokeStyle = '#5a3a1a'; g.lineWidth = 2; g.beginPath(); g.moveTo(X, Y - 8); g.lineTo(X + 3, Y - 13); g.stroke(); }
+  if (m.rot) { const X = cx(m.rot[0]), Y = cx(m.rot[1]); g.fillStyle = 'rgba(110,80,40,0.55)'; g.beginPath(); g.ellipse(X, Y + 8, 12, 6, 0, 0, 7); g.fill(); }
   // 虫
   st.bugs.forEach((b, i) => {
     if (!b) return;
