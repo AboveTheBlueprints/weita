@@ -632,6 +632,15 @@ function scrubDraw(cv, d, t) {
   }
   return parts.join('，');
 }
+// 第三个 第 17 天 18:58 页163哪一天：回看一天两张差不多的大图（前一天过关那局、后一天开局），四组小工都说往下翻要回头找标题才知道在看哪一天。
+// 每张图左上角贴一块小牌子写'第 N 天　开局/你过关那一局'，跟图一起滚。牌子是 HTML 不是画在 canvas 上，拖条子重画不会抹掉。
+function dayTag(cv, text) {
+  const w = document.createElement('div'); w.style.position = 'relative'; w.style.display = 'inline-block'; w.style.verticalAlign = 'top';
+  cv.parentNode.insertBefore(w, cv); w.appendChild(cv);
+  const t = document.createElement('span'); t.textContent = text;
+  t.style.cssText = 'position:absolute;top:5px;left:6px;font-size:13px;line-height:1.4;color:#f2f2ea;background:rgba(14,14,11,0.82);padding:1px 8px;border-radius:3px;pointer-events:none;z-index:2';
+  w.appendChild(t); return w;
+}
 function addScrub(row, c1, d, draw0, t0) {   // t0：一开始停在哪一步（有'没吐的那只离你最近'的那一刻就停那儿，没有就停在最后一步）
   const n = d.R.me.length - 1; if (n < 1) return;
   const box = document.createElement('div'); box.style.margin = '4px 0 0'; box.style.fontSize = '13px'; box.style.color = '#b9b49a';
@@ -824,12 +833,12 @@ function showDays() {
   const atDead = (d) => { const s = d.st, at = d.dead.at, B = s.lzB && eqP(s.lzB.pos, d.dead.from) && !eqP(s.lz.pos, d.dead.from); return Object.assign({}, s, { pl: at.slice(), lz: B ? s.lz : Object.assign({}, s.lz, { pos: at.slice() }), lzB: B ? Object.assign({}, s.lzB, { pos: at.slice() }) : s.lzB }); };
   const eqP = (p, q) => !!p && !!q && p[0] === q[0] && p[1] === q[1];
   const NONUM = { noNum: true };   // 第四个 第 17 天 04:45 页138少字：回看里线上不写每 5 步的步数，拿掉以后少没少东西（三个人说圈、线、数字挤；有拖动条和'第 N 步那时'以后步数还用不用）
-  const single = (row, d, isLost) => {
+  const single = (row, d, isLost, tag) => {   /* 第三个 页163：tag 是贴在图左上角那块牌子的字 */
     const c1 = document.createElement('canvas');
     const fin = () => { WeiDraw.frame(c1, d.m, { prev: null, st: isLost && d.dead ? atDead(d) : d.st, dead: isLost && d.dead ? Object.assign({}, d.dead, { from: d.dead.at }) : null, drop: null }, 1); WeiDraw.replay(c1, d.m, d.R, NONUM);
       if (isLost && d.dead) { const g = c1.getContext('2d'), C = WeiDraw.C, x = d.dead.at[0] * C + C / 2, y = d.dead.at[1] * C + C / 2, r = C * 0.3; g.save(); g.strokeStyle = '#ff3b3b'; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - r, y - r); g.lineTo(x + r, y + r); g.moveTo(x + r, y - r); g.lineTo(x - r, y + r); g.stroke(); g.restore(); } };   /* 第四个 04:08：刻2'红叉在蓝红叠圈左边一格，我得回头读扑到了你身上才敢认'——他当成叉的是蜥蜴扑之前站的那格；在被扑那格上画一个大红叉 */
     fin(); const g = isLost ? null : ghost(c1, d);
-    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1);
+    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); if (tag) dayTag(c1, tag);
     addScrub(row, c1, d, (t) => { const SS = realStates(d); if (t >= SS.length - 1 && (isLost || t >= d.R.me.length - 1)) { if (isLost && t < d.R.me.length - 1) { WeiDraw.frame(c1, d.m, { prev: null, st: SS[SS.length - 1], dead: null, drop: null }, 1); faintReplay(c1, d.m, d.R, NONUM, t); return; } fin(); if (!isLost) ghost(c1, d, t); return; } WeiDraw.frame(c1, d.m, { prev: null, st: SS[Math.min(t, SS.length - 1)], dead: null, drop: null }, 1); faintReplay(c1, d.m, d.R, NONUM, t); if (!isLost) ghost(c1, d, t); }, g && g.mo ? g.mo.t : undefined);
     return g;
   };
@@ -840,8 +849,8 @@ function showDays() {
     const cap = document.createElement('div'); row.appendChild(cap);
     if (!a || !b) {
       const lo = !a ? LOST[L.from - 1] : null, nm = `<b>${LEVELS[L.from - 1].name}</b>`;
-      if (a) { cap.innerHTML = `${nm}（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　${L.name}${LOST[j] ? '那天你没过，那天你最后输的那一局画在下面一张' : DIAN.ju[j] ? '那天你没过，后一天开局没画' : '你还没玩到，没画'}` + factsOf(a, L.from - 1);   /* 第四个 第 17 天 05:25 页138：少2'不太清楚这句话说的是第七天还是第八天没画' */ /* 第四个 18:38 页162：第 4 天过了、第 5 天还没开，原来也写'第 5 天那天你没过'，见1 见2 都愣'我记得的是根本没开始第 5 天'。没开过的那天写'你还没玩到' */ const g = single(row, a, false); if (g && g.drew) cap.innerHTML += ghostLine(g); any = true; }
-      else if (lo) { cap.innerHTML = `${nm}（这一天你没过，画的是你最后输的那一局${juOf(L.from - 1)}，红叉是它扑到你的那一格）`; single(row, lo, true); any = true; }
+      if (a) { cap.innerHTML = `${nm}（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　${L.name}${LOST[j] ? '那天你没过，那天你最后输的那一局画在下面一张' : DIAN.ju[j] ? '那天你没过，后一天开局没画' : '你还没玩到，没画'}` + factsOf(a, L.from - 1);   /* 第四个 第 17 天 05:25 页138：少2'不太清楚这句话说的是第七天还是第八天没画' */ /* 第四个 18:38 页162：第 4 天过了、第 5 天还没开，原来也写'第 5 天那天你没过'，见1 见2 都愣'我记得的是根本没开始第 5 天'。没开过的那天写'你还没玩到' */ const g = single(row, a, false, `${LEVELS[L.from - 1].name}　${a.empty ? '空着肚子过完的那一局' : '你过关那一局'}`); if (g && g.drew) cap.innerHTML += ghostLine(g); any = true; }
+      else if (lo) { cap.innerHTML = `${nm}（这一天你没过，画的是你最后输的那一局${juOf(L.from - 1)}，红叉是它扑到你的那一格）`; single(row, lo, true, `${LEVELS[L.from - 1].name}　你最后输的那一局`); any = true; }
       else cap.textContent = `${LEVELS[L.from - 1].name} → ${L.name}：第 ${L.from} 张那天你没玩到，这一对没画。`;
       box.appendChild(row); return;
     }   /* 第四个 第 17 天 03:55 页134：刻2 第 2、5 天四局没过跳了，最想看的正是第 5 天输的那局（'它明明往回退，脸却还朝着我，我怎么又走进了它的下一扑'），时4 也要过 */
@@ -855,18 +864,19 @@ function showDays() {
     if (a.R && a.R.me && a.R.me.length > 1) { const g2 = c2.getContext('2d'), CC = WeiDraw.C; g2.save(); g2.strokeStyle = 'rgba(242,242,234,0.42)'; g2.lineWidth = 3; g2.setLineDash([3, 7]); g2.lineJoin = 'round'; g2.lineCap = 'round'; g2.beginPath(); a.R.me.forEach((q, k) => { const X = q[0] * CC + CC / 2 - 8, Y = q[1] * CC + CC / 2 - 8; k ? g2.lineTo(X, Y) : g2.moveTo(X, Y); }); g2.stroke(); g2.restore(); cap.innerHTML += '<br><span style="color:#b9b49a">下边那张上淡淡的白虚线，是你前一天那一局走的路。</span>'; }   /* 第三个 第 17 天 07:05 页141叠线：后一天开局那张上叠一层前一天你的路（拇指甲 33：那一步和它的变化得同屏） */
     { const gn = ghostNextDraw(c2, L.from - 1, b); if (gn && (gn.diff || gn.dots !== gn.dots1)) { const P = []; if (gn.nb) P.push('绿虚圈那几格会有虫'); if (gn.gone) P.push('灰虚圈套着的那几只不会在那儿'); if (gn.nh) P.push('它的老地方会在虚框那格'); if (gn.dots !== gn.dots1) P.push(`它身子底下${gn.dots ? '是' + ['', '一', '两', '三'][Math.min(3, gn.dots)] + '个' : '没有'}绿点`); cap.innerHTML += `<br><span style="color:#b9b49a">下边虚的：要是没吐，今天开局${P.join('，')}。</span>`; } }
     [c1, c2].forEach(c => { c.style.width = (c.width * 0.85) + 'px'; pair.appendChild(c); });
+    dayTag(c1, `${LEVELS[L.from - 1].name}　${a.empty ? '空着肚子过完的那一局' : '你过关那一局'}`); dayTag(c2, `${L.name}　开局`);   /* 第三个 第 17 天 18:58 页163哪一天：每张图左上角写是哪天哪一张 */
     row.appendChild(pair); addScrub(row, c1, a, draw1, gh1 && gh1.mo ? gh1.mo.t : undefined); box.appendChild(row);
   });
   // 第四个 第 16 天 23:47：最后一天没有后一天，单画它那一局（七天2：'没画第七天那条安静回家的路线，我还稍微有点没看够'）
   const zi = LEVELS.length - 1, z = DAYS[zi];
-  if (!z && LOST[zi]) { const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi; const cap = document.createElement('div'); row.appendChild(cap); cap.innerHTML = `<b>${LEVELS[zi].name}</b>（这一天你没过，画的是你最后输的那一局${juOf(zi)}，红叉是它扑到你的那一格）　→　没有下一天了`; single(row, LOST[zi], true); box.appendChild(row); any = true; }   // 第四个 页134
+  if (!z && LOST[zi]) { const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi; const cap = document.createElement('div'); row.appendChild(cap); cap.innerHTML = `<b>${LEVELS[zi].name}</b>（这一天你没过，画的是你最后输的那一局${juOf(zi)}，红叉是它扑到你的那一格）　→　没有下一天了`; single(row, LOST[zi], true, `${LEVELS[zi].name}　你最后输的那一局`); box.appendChild(row); any = true; }   // 第四个 页134
   if (z && any) {
     const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi;
     const cap = document.createElement('div'); row.appendChild(cap);
     cap.innerHTML = `<b>${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
     const c1 = document.createElement('canvas');
     WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R, NONUM); const ghz = ghost(c1, z); if (ghz && ghz.drew) cap.innerHTML += ghostLine(ghz);
-    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); addScrub(row, c1, z, (t) => { const SSz = realStates(z); WeiDraw.frame(c1, z.m, { prev: null, st: SSz[Math.min(t, SSz.length - 1)], dead: null, drop: null }, 1); (t < SSz.length - 1 ? faintReplay : WeiDraw.replay)(c1, z.m, z.R, NONUM, t);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, z, t); }, ghz && ghz.mo ? ghz.mo.t : undefined); box.appendChild(row);
+    c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); dayTag(c1, `${LEVELS[zi].name}　${z.empty ? '空着肚子过完的那一局' : '你过关那一局'}`); addScrub(row, c1, z, (t) => { const SSz = realStates(z); WeiDraw.frame(c1, z.m, { prev: null, st: SSz[Math.min(t, SSz.length - 1)], dead: null, drop: null }, 1); (t < SSz.length - 1 ? faintReplay : WeiDraw.replay)(c1, z.m, z.R, NONUM, t);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, z, t); }, ghz && ghz.mo ? ghz.mo.t : undefined); box.appendChild(row);
   }
   // 第四个 第 17 天 05:30 页140挑局：每一张底下列这一天你开过的每一局，点哪局就在底下画哪局（能拖）。少2 要第 7 天第 2 局（拿到虫死在回程），少1 要'把自己等死'那局，刻2 要第 5 天输的那局
   [...box.querySelectorAll('div[data-day]')].forEach(row => {
@@ -877,7 +887,7 @@ function showDays() {
       const b = document.createElement('button'); b.style.margin = '2px 4px'; b.style.fontSize = '12px';
       const jc = g.ju ? G.slice(0, k).filter(x => x.ju === g.ju).length : 0, jn = jc ? `第 ${g.ju} 局撤回再走${jc > 1 ? `第 ${jc} 回` : ''}` : `第 ${g.ju || k + 1} 局`;   /* 第四个 第 17 天 09:02：熬1、熬2 标题'开了 3 局'、按钮四个，撤一步接着走也排成了一局（'我会以为它数漏了''把撤回也叫成一局'）；按钮照开局数，撤回的标出来 */
       b.textContent = `${jn}（${g.how === '被扑' ? `第 ${g.n} 步被扑` : g.how === '没走完' ? `走了 ${g.n} 步就重来了` : g.how === '天黑' ? `走了 ${g.n} 步天黑了` : `${g.how}，${g.n} 步`}）`;
-      b.onclick = () => { pane.innerHTML = ''; const cap = document.createElement('div'); cap.textContent = `第 ${di + 1} 天${jn}`; pane.appendChild(cap); single(pane, g, g.how === '被扑'); [...bar.querySelectorAll('button')].forEach(x => x.style.outline = x === b ? '2px solid #d9b44a' : ''); };
+      b.onclick = () => { pane.innerHTML = ''; const cap = document.createElement('div'); cap.textContent = `第 ${di + 1} 天${jn}`; pane.appendChild(cap); single(pane, g, g.how === '被扑', `第 ${di + 1} 天　${jn}`); [...bar.querySelectorAll('button')].forEach(x => x.style.outline = x === b ? '2px solid #d9b44a' : ''); };
       bar.appendChild(b);
     });
     const at = row.children[1] || null; row.insertBefore(bar, at); row.insertBefore(pane, at);   // 05:45：按钮和点开的那局挪到标题底下、默认那张上面（少1'眼睛还是容易串'，少2'上面一直留着最后那局的大红叉，真正挑的第二局在下面，眼睛还会先被上面吸走'）
