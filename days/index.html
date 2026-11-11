@@ -816,10 +816,10 @@ function yourBugs(box) {
     c.style.cssText = 'border:2px solid #5fb3ff;border-radius:8px;padding:5px 8px;min-width:86px;cursor:pointer;font-size:13px;line-height:1.5;background:rgba(95,179,255,0.06)';
     const what = { A: (o.two ? '红的' : '它') + `第 ${o.end} 步吃了`, B: `青的第 ${o.end} 步吃了`, me: `你第 ${o.end} 步又吞回去了`, gone: `第 ${o.end} 步没了`, left: o.last ? '到收尾还在地上' : '留在地上过了夜' }[o.what];
     const col = { A: '#e0603f', B: '#3fb8a8', me: '#5fb3ff', gone: '#999', left: '#8fd16a' }[o.what];
-    const back = (o.what === 'A' && o.at) ? backLines(backDays(o.j, o.at), o.two) : [];   // 页164：原来是 cameBack 只看后一天
-    const kn = (o.what === 'A' || o.what === 'B') ? knewYou(o.j, o.two ? (o.what === 'A' ? '红蜥蜴' : '青蜥蜴') : null) : null;
+    const back = [];   /* 页168收字：'回这儿来过'几行不放（原来 backLines(backDays(o.j, o.at), o.two)） */   // 页164：原来是 cameBack 只看后一天
+    const kn = false && (o.what === 'A' || o.what === 'B') ? knewYou(o.j, o.two ? (o.what === 'A' ? '红蜥蜴' : '青蜥蜴') : null) : null;
     // 第三个 第 17 天 03:26 页134这一只：同一局只把这一口换成'等'重跑（页125 的 ghostRun 只换一下），会被扑就写在这一格里。饭2 最停住的是页125 那个虚红叉'那一口还救了我自己'，可她得自己去对是哪一口；这3、这4 第一眼就在格子里看见，再往下去找那个叉
-    const gs = (() => { const d = DAYS[o.j]; if (!d) return null; const g = ghostRun(d, o.step - 1); if (!(g && g.hit)) return null; const byB = g.b && g.b.length && g.b[g.b.length - 1][0] === g.hit[0] && g.b[g.b.length - 1][1] === g.hit[1]; return { n: g.hitStep, who: d.st.lzB ? (byB ? '青的' : '红的') : '它' }; })();
+    const gs = false && (() => { const d = DAYS[o.j]; if (!d) return null; const g = ghostRun(d, o.step - 1); if (!(g && g.hit)) return null; const byB = g.b && g.b.length && g.b[g.b.length - 1][0] === g.hit[0] && g.b[g.b.length - 1][1] === g.hit[1]; return { n: g.hitStep, who: d.st.lzB ? (byB ? '青的' : '红的') : '它' }; })();
     c.innerHTML = `<span style="color:#b9b49a">第 ${o.j + 1} 天 第 ${o.step} 步</span><br><span style="color:${col}">${what}</span>` + (gs ? `<br><span style="color:#ff6b6b">没吐这一只，${gs.who}第 ${gs.n} 步会扑到你</span>` : '') + (kn ? `<br><span class="knew" title="点这一行，跳到第 ${o.j + 2} 天的图，条子拖到这一步" style="color:#8fd16a;text-decoration:underline dotted;cursor:pointer">第 ${o.j + 2} 天第 ${kn.t} 步，${o.two ? (o.what === 'A' ? '红的' : '青的') : '它'}${kn.how}</span>` : '') + back.map(t => `<br><span style="color:#e0603f">${t}</span>`).join('');   // 页164：按日子先后排，当天的'没吐会扑到你'先、后一天头一回认你、再往后几天回这儿（回这2：挤，不知道先读哪儿）
     c.onclick = () => { const r = box.querySelector(`[data-day="${o.j}"]`); if (r) { r.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (r.animate) r.animate([{ background: 'rgba(95,179,255,0.18)' }, { background: 'transparent' }], { duration: 1600 }); const rg = r.querySelector('input[type=range]'); if (rg) { rg.value = Math.min(+rg.max, o.step); rg.dispatchEvent(new Event('input')); } } };   /* 接第四个页126 的拖动条：点哪一只，那一天的条子就拖到吐它那一步 */
     /* 第二个 第 17 天 20:00 页165点那步：绿字那一行单独能点，跳到后一天那张图、条子拖到它认你那一步。页162/163 四个小工都说'第 4 天第 43 步看见了你，没动'要沿着条子自己去找（条子停在第 48 步）；点格子别处照旧跳到吐的那一步 */
@@ -830,7 +830,7 @@ function yourBugs(box) {
 }
 function showDays() {
   const box = document.getElementById('daysBox'); box.innerHTML = ''; box.style.display = 'block';
-  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。每一对上边那张是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），下边那张是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box); emptyRow(box);
+  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。每一对上边那张是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），下边那张是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box); emptyRow(box);   /* 页168收字：'那几下被扑'留着，页166 整看2 那一下是它递的 */
   // 第四个 第 16 天 23:47：那一局新出的事、开了几局，挪成两个小函数，成对的和最后一天共用
   const factsOf = (a, di) => {
     const A = a.st, fa = [];
