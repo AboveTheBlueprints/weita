@@ -610,11 +610,16 @@ function scrubDraw(cv, d, t) {
   if (gB && B && (gB[0] !== B[0] || gB[1] !== B[1])) ring(gB, '#3fb8a8', true);
   ring(A, '#e0603f', false); ring(B, '#3fb8a8', false); ring(me, '#6ab8ff', false);
   const parts = [];
-  if (me && A) parts.push(`${R.b ? '红的' : '它'}走到你那格要 ${W(A, me)} 步`);
-  if (me && B) parts.push(`青的要 ${W(B, me)} 步`);
-  if (A && B) parts.push(`红的和青的隔 ${W(A, B)} 步`);   // 时1：'想看两只之间的事，底下却一直报它们离我几步'
-  if (me && gA && A && (gA[0] !== A[0] || gA[1] !== A[1])) parts.push(`没吐的话${R.b ? '红的' : '它'}要 ${W(gA, me)} 步`);
-  if (me && gB && B && (gB[0] !== B[0] || gB[1] !== B[1])) parts.push(`没吐的话青的要 ${W(gB, me)} 步`);
+  // 第四个 第 17 天 09:06 页150：只在'没吐的话'跟真的不一样的那几步说，两个数放一句里比；别的步不报距离、不报红青隔几步。
+  // 熬1、熬2 最停住的都是'走到你那格要 9 步，没吐的话它要 3 步'（'那一口给了我多少余地'）；吃1、吃2、熬1、熬2 都说别的那串数读不顺（'是只按眼前距离算，还是它真会来追'）。
+  const cmp = (who, q, gq) => { const a = W(q, me), b = W(gq, me); return `这一步${who}离你 ${a} 步路，没吐的话${b < a ? '只隔' : '是'} ${b} 步`; };
+  // 09:33：没吐那条路上它在第 hitStep 步就扑到你了，那以后没有'没吐的话离你几步'可比（留1 第 49 步写成'没吐的话是 18 步'，是拿你后来的位置去量它扑你那一格）
+  const gone = G && G.hit && t >= G.hitStep;
+  if (gone) { if (t === G.hitStep) parts.push(`没吐的话，${R.b ? (G.b && G.b.length && G.b[G.b.length - 1][0] === G.hit[0] && G.b[G.b.length - 1][1] === G.hit[1] ? '青的' : '红的') : '它'}这一步扑到你`); }
+  else {
+  if (me && gA && A && (gA[0] !== A[0] || gA[1] !== A[1])) parts.push(cmp(R.b ? '红的' : '它', A, gA));
+  if (me && gB && B && (gB[0] !== B[0] || gB[1] !== B[1])) parts.push(cmp('青的', B, gB));
+  }
   return parts.join('，');
 }
 function addScrub(row, c1, d, draw0, t0) {   // t0：一开始停在哪一步（有'没吐的那只离你最近'的那一刻就停那儿，没有就停在最后一步）
