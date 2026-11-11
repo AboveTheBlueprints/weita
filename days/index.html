@@ -531,7 +531,7 @@ function ghostNextDraw(cv, i, b) {   // 画在右边那张（真的第二天开�
   return { diff, nb, nh, dots, dots1, gone: b.st0.bugs.filter(Boolean).filter(p => !ghB.some(q => key(q) === key(p))).length };
 }
 // 第一个 00:28：七天1、七天2 都没看见开头那句图例（截图是一对一对的，真网页上也隔着好几屏），都问'虚线在讲哪一段''红叉标的是谁'。挪到每一对底下，只说画的是什么。
-const ghostLine = (gh) => `<br><span style="color:#b9b49a">虚线：这一局${gh.n > 1 ? '那几口' : '那一口'}你要是没吐，它本来会走的路${gh.hit ? (gh.who && gh.n > 1 ? `；虚的红叉：光是第 ${gh.who} 步那一口没吐，它就会在第 ${gh.hitStep} 步扑到你` : `；虚的红叉：那样的话它会在第 ${gh.hitStep} 步扑到你`) : ''}。</span>`;   /* 第一个 00:33：写是哪一口、第几步，只说事，不说'救了你' */
+const ghostLine = (gh) => `<br><span style="color:#b9b49a">虚线：这一局${gh.n > 1 ? '那几口' : '那一口'}你要是没吐，它本来会走的路${gh.hit ? (gh.who && gh.n > 1 ? `；虚的叉：光是第 ${gh.who} 步那一口没吐，它就会在第 ${gh.hitStep} 步扑到你` : `；虚的叉：那样的话它会在第 ${gh.hitStep} 步扑到你`) : ''}。</span>`;   /* 第一个 00:33：写是哪一口、第几步，只说事，不说'救了你' */
 function ghost(cv, d, tSel) {
   const G = ghostRun(d); if (!G) return null;
   const g = cv.getContext('2d'), C = WeiDraw.C, X = v => v * C + C / 2;
@@ -544,10 +544,12 @@ function ghost(cv, d, tSel) {
     g.restore();   /* 第一个 00:28：末尾原来画空心圈，可回放里空心圈是'开头'（七天1 读成'从上方一个空心圈拐下来'），拿掉 */
   }
   const drew = (G.a && same(G.a, d.R.a) < G.a.length) || (G.b && same(G.b, d.R.b || []) < G.b.length);
-  dash(G.a, d.R.a, '#e0603f', 20);   // 走同一条道时跟实线挨着、不叠上（实线红 6、青 13、白 -8）
-  if (G.b) dash(G.b, d.R.b, '#3fb8a8', 24);
-  if (G.hit) { const x = X(G.hit[0]), y = X(G.hit[1]); g.save(); g.globalAlpha = 0.85; g.strokeStyle = '#ff3b3b'; g.lineWidth = 4; g.setLineDash([5, 4]); g.beginPath(); g.moveTo(x - 15, y - 15); g.lineTo(x + 15, y + 15); g.moveTo(x + 15, y - 15); g.lineTo(x - 15, y + 15); g.stroke(); g.restore(); }
-  if (G.hit) { const x = X(G.hit[0]), y = X(G.hit[1]); g.save(); g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; const t = `第${G.hitStep}步`, w = g.measureText(t).width + 8; g.fillStyle = 'rgba(17,17,17,0.85)'; g.fillRect(x - w / 2, y + 17, w, 16); g.fillStyle = '#ff6b6b'; g.fillText(t, x, y + 29); g.restore(); }
+  /* 第四个 第 17 天 17:20 页160虚的换色：比2 比3 第 5 天以后'分不清哪条真走过、哪条是假如没吐'——真的和假如的原来同一个红。假如那一层全换成底下说明字的灰黄 GH，红青只留给真走过的 */
+  const GH = '#b9b49a';
+  dash(G.a, d.R.a, GH, 20);   // 走同一条道时跟实线挨着、不叠上（实线红 6、青 13、白 -8）
+  if (G.b) dash(G.b, d.R.b, GH, 24);
+  if (G.hit) { const x = X(G.hit[0]), y = X(G.hit[1]); g.save(); g.globalAlpha = 0.95; g.strokeStyle = GH; g.lineWidth = 4; g.setLineDash([5, 4]); g.beginPath(); g.moveTo(x - 15, y - 15); g.lineTo(x + 15, y + 15); g.moveTo(x + 15, y - 15); g.lineTo(x - 15, y + 15); g.stroke(); g.restore(); }
+  if (G.hit) { const x = X(G.hit[0]), y = X(G.hit[1]); g.save(); g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; const t = `第${G.hitStep}步`, w = g.measureText(t).width + 8; g.fillStyle = 'rgba(17,17,17,0.85)'; g.fillRect(x - w / 2, y + 17, w, 16); g.fillStyle = GH; g.fillText(t, x, y + 29); g.restore(); }
   /* 第四个 第 17 天 01:05 页126一个时刻：没被扑的那几天，虚线跟实线常贴着走，差在时间不在路（七天2'读不出每一段分别是追饭还是找我'）。
      挑一个时刻：同一步号上，要是没吐的那只离你最近、真的那只比它远的那一步，画三个圈：你、真的它、本来的它。 */
   let mo = null;
@@ -564,7 +566,7 @@ function ghost(cv, d, tSel) {
     if (mo && tSel === undefined) {
       const col = mo.who === 'b' ? '#3fb8a8' : '#e0603f';
       const ring = (q, c, dashd, r) => { g.save(); g.strokeStyle = c; g.lineWidth = 3; g.globalAlpha = 0.95; if (dashd) g.setLineDash([4, 4]); g.beginPath(); g.arc(X(q[0]), X(q[1]), r, 0, Math.PI * 2); g.stroke(); g.restore(); };
-      ring(mo.me, '#6ab8ff', false, C * 0.46); ring(mo.r, col, false, C * 0.46); ring(mo.g, col, true, C * 0.46);
+      ring(mo.me, '#6ab8ff', false, C * 0.46); ring(mo.r, col, false, C * 0.46); ring(mo.g, GH, true, C * 0.46);
       g.save(); g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; const t = `第${mo.t}步`, w = g.measureText(t).width + 8;
       for (const q of [mo.me, mo.r, mo.g]) { const x = X(q[0]), y = X(q[1]); g.fillStyle = 'rgba(17,17,17,0.85)'; g.fillRect(x - w / 2, y - C * 0.46 - 15, w, 14); g.fillStyle = '#eee'; g.fillText(t, x, y - C * 0.46 - 4); }
       g.restore();
@@ -612,8 +614,8 @@ function scrubDraw(cv, d, t) {
   const me = at(R.me), A = at(R.a), B = at(R.b);
   // 要是没吐的那只：那条线比 t 短（照旧走下去被扑了、或走不通），就停在最后那格
   const gA = G ? at(G.a) : null, gB = G && G.b ? at(G.b) : null;
-  if (gA && A && (gA[0] !== A[0] || gA[1] !== A[1])) ring(gA, '#e0603f', true);
-  if (gB && B && (gB[0] !== B[0] || gB[1] !== B[1])) ring(gB, '#3fb8a8', true);
+  if (gA && A && (gA[0] !== A[0] || gA[1] !== A[1])) ring(gA, '#b9b49a', true);   // 第四个 页160：没吐的那只的虚圈也换灰黄，红青只留给真的
+  if (gB && B && (gB[0] !== B[0] || gB[1] !== B[1])) ring(gB, '#b9b49a', true);
   ring(A, '#e0603f', false); ring(B, '#3fb8a8', false); ring(me, '#6ab8ff', false);
   const parts = [];
   // 第四个 第 17 天 09:06 页150：只在'没吐的话'跟真的不一样的那几步说，两个数放一句里比；别的步不报距离、不报红青隔几步。
