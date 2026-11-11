@@ -682,6 +682,11 @@ function spitsOf(d) {
 }
 // 红吃了的那只：第二天它是不是真回到那儿去过（老地方就是那一格，而且它走到了一格以内）。玩的时候它往老地方走多半离人远，十个没字的生人零个看见（页128–130）
 /* 第四个 第 17 天 18:27 页162看见了你：后一天（同一只接着过的那天）它头一回认你的那一步——'看见了你，没动'或'侧了侧身子，让你过去'。页109 第二个：喂读不读得出，靠紧跟着的那一下回话。我自己玩种子 77 第 4 天被它放过去，回看格子里只有'回这儿来过'，没有这一下 */
+function goStep(box, di, t) {   /* 第二个 页165：滚到那一天的大图，把它自己那根条子（不是挑局点开的那根）拖到第 t 步，闪一下 */
+  const r = box.querySelector(`[data-day="${di}"]`); if (!r) return;
+  r.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (r.animate) r.animate([{ background: 'rgba(143,209,106,0.18)' }, { background: 'transparent' }], { duration: 1600 });
+  const rg = [...r.querySelectorAll('input[type=range]')].find(x => !x.closest('[data-pane]')); if (rg) { rg.value = Math.min(+rg.max, t); rg.dispatchEvent(new Event('input')); }
+}
 function knewYou(j, who) {
   const d = DAYS[j + 1], L = LEVELS[j + 1]; if (!d || !L || L.from !== j + 1 || !d.R || !d.R.K) return null;
   let EV; try { EV = evOf(d); } catch (x) { return null; } if (!EV) return null;
@@ -814,8 +819,10 @@ function yourBugs(box) {
     const kn = (o.what === 'A' || o.what === 'B') ? knewYou(o.j, o.two ? (o.what === 'A' ? '红蜥蜴' : '青蜥蜴') : null) : null;
     // 第三个 第 17 天 03:26 页134这一只：同一局只把这一口换成'等'重跑（页125 的 ghostRun 只换一下），会被扑就写在这一格里。饭2 最停住的是页125 那个虚红叉'那一口还救了我自己'，可她得自己去对是哪一口；这3、这4 第一眼就在格子里看见，再往下去找那个叉
     const gs = (() => { const d = DAYS[o.j]; if (!d) return null; const g = ghostRun(d, o.step - 1); if (!(g && g.hit)) return null; const byB = g.b && g.b.length && g.b[g.b.length - 1][0] === g.hit[0] && g.b[g.b.length - 1][1] === g.hit[1]; return { n: g.hitStep, who: d.st.lzB ? (byB ? '青的' : '红的') : '它' }; })();
-    c.innerHTML = `<span style="color:#b9b49a">第 ${o.j + 1} 天 第 ${o.step} 步</span><br><span style="color:${col}">${what}</span>` + (gs ? `<br><span style="color:#ff6b6b">没吐这一只，${gs.who}第 ${gs.n} 步会扑到你</span>` : '') + (kn ? `<br><span style="color:#8fd16a">第 ${o.j + 2} 天第 ${kn.t} 步，${o.two ? (o.what === 'A' ? '红的' : '青的') : '它'}${kn.how}</span>` : '') + back.map(t => `<br><span style="color:#e0603f">${t}</span>`).join('');   // 页164：按日子先后排，当天的'没吐会扑到你'先、后一天头一回认你、再往后几天回这儿（回这2：挤，不知道先读哪儿）
+    c.innerHTML = `<span style="color:#b9b49a">第 ${o.j + 1} 天 第 ${o.step} 步</span><br><span style="color:${col}">${what}</span>` + (gs ? `<br><span style="color:#ff6b6b">没吐这一只，${gs.who}第 ${gs.n} 步会扑到你</span>` : '') + (kn ? `<br><span class="knew" title="点这一行，跳到第 ${o.j + 2} 天的图，条子拖到这一步" style="color:#8fd16a;text-decoration:underline dotted;cursor:pointer">第 ${o.j + 2} 天第 ${kn.t} 步，${o.two ? (o.what === 'A' ? '红的' : '青的') : '它'}${kn.how}</span>` : '') + back.map(t => `<br><span style="color:#e0603f">${t}</span>`).join('');   // 页164：按日子先后排，当天的'没吐会扑到你'先、后一天头一回认你、再往后几天回这儿（回这2：挤，不知道先读哪儿）
     c.onclick = () => { const r = box.querySelector(`[data-day="${o.j}"]`); if (r) { r.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (r.animate) r.animate([{ background: 'rgba(95,179,255,0.18)' }, { background: 'transparent' }], { duration: 1600 }); const rg = r.querySelector('input[type=range]'); if (rg) { rg.value = Math.min(+rg.max, o.step); rg.dispatchEvent(new Event('input')); } } };   /* 接第四个页126 的拖动条：点哪一只，那一天的条子就拖到吐它那一步 */
+    /* 第二个 第 17 天 20:00 页165点那步：绿字那一行单独能点，跳到后一天那张图、条子拖到它认你那一步。页162/163 四个小工都说'第 4 天第 43 步看见了你，没动'要沿着条子自己去找（条子停在第 48 步）；点格子别处照旧跳到吐的那一步 */
+    const kv = c.querySelector('.knew'); if (kv && kn) kv.onclick = (ev) => { ev.stopPropagation(); goStep(box, o.j + 1, kn.t); };
     row.appendChild(c);
   });
   wrap.appendChild(row); box.appendChild(wrap);
@@ -903,7 +910,7 @@ function showDays() {
   [...box.querySelectorAll('div[data-day]')].forEach(row => {
     const di = +row.dataset.day, G = GAMES[di] || []; if (G.length < 2) return;
     const bar = document.createElement('div'); bar.style.margin = '6px 0 0'; bar.style.fontSize = '13px'; bar.innerHTML = `第 ${di + 1} 天你开过的每一局：`;
-    const pane = document.createElement('div');
+    const pane = document.createElement('div'); pane.dataset.pane = '1';
     G.forEach((g, k) => {
       const b = document.createElement('button'); b.style.margin = '2px 4px'; b.style.fontSize = '12px';
       const jc = g.ju ? G.slice(0, k).filter(x => x.ju === g.ju).length : 0, jn = jc ? `第 ${g.ju} 局撤回再走${jc > 1 ? `第 ${jc} 回` : ''}` : `第 ${g.ju || k + 1} 局`;   /* 第四个 第 17 天 09:02：熬1、熬2 标题'开了 3 局'、按钮四个，撤一步接着走也排成了一局（'我会以为它数漏了''把撤回也叫成一局'）；按钮照开局数，撤回的标出来 */
