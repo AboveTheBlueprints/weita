@@ -815,6 +815,7 @@ function emptyRow(box) {   // 第二个 13:35 v3：挂在那一扑上、从那�
 function yourBugs(box) {
   const all = [];
   LEVELS.forEach((L, j) => { const d = DAYS[j]; if (!d) return; spitsOf(d).forEach(o => all.push(Object.assign({ j, two: !!d.st.lzB, last: !(LEVELS[j + 1] && LEVELS[j + 1].from === j + 1) }, o))); });
+  if (all.length) return;   /* 第五个 页176收：吐过的那排拿掉；一口没吐的人只留下面'一只都没吐出去'那句，没有按钮（第四个 05:15：收1 旧饭1 它6 三个一口没喂的都是这句点醒的） */
   const wrap = document.createElement('div'); wrap.style.margin = '10px 0 22px';
   const h = document.createElement('div'); h.innerHTML = all.length ? `<b>这几天你吐出去的 ${all.length} 只</b>（只算每天过关那一局）` : '<b>这几天你过关的那几局里，一只都没吐出去。</b>'; wrap.appendChild(h);
   const row = document.createElement('div'); row.style.display = 'flex'; row.style.flexWrap = 'wrap'; row.style.gap = '8px'; row.style.marginTop = '8px';
@@ -837,9 +838,9 @@ function yourBugs(box) {
 }
 function showDays() {
   const box = document.getElementById('daysBox'); box.innerHTML = ''; box.style.display = 'block';
-  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。每一对上边那张是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），下边那张是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box); emptyRow(box);   /* 页168收字：'那几下被扑'留着，页166 整看2 那一下是它递的 */
+  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。每一对上边那张是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），下边那张是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box);   /* 第五个 第 18 天 页176收：emptyRow(box)（'那几下被扑'那排）拿掉；yourBugs 只在一口没吐时留那一句（第四个 05:15） */   /* 页168收字：'那几下被扑'留着，页166 整看2 那一下是它递的 */
   // 第四个 第 16 天 23:47：那一局新出的事、开了几局，挪成两个小函数，成对的和最后一天共用
-  const factsOf = (a, di) => {
+  const factsOf = (a, di) => { return '';   /* 第五个 页176收：每对底下不写'那一局新出的事'，只留图和虚线那行（ghostLine 不在这儿） */
     const A = a.st, fa = [];
     const nm = A.lzB ? ['红的', '青的'] : ['它', ''];
     // 第四个 第 16 天 23:31：fed、grudge 是它带过夜的，拿那一局开局（a.st0）比收尾，只写这一局里新出的（七天1 回看：第 3 天没吐，字却写'吃了你吐的一只'）
