@@ -250,7 +250,9 @@ function lizardOne(m, lz, player, bugs, sounds) {
   }
   if (mode === '岗') {
     if (V.has('听') && sounds.length) {
-      const near = sounds.map(([w, q]) => [Math.abs(q[0] - pos[0]) + Math.abs(q[1] - pos[1]), w === '虫' ? 0 : 1, q]).filter(x => x[0] > 0 && x[0] <= 3);
+      let near = sounds.map(([w, q]) => [Math.abs(q[0] - pos[0]) + Math.abs(q[1] - pos[1]), w === '虫' ? 0 : 1, q]).filter(x => x[0] > 0 && x[0] <= 3);
+      // 第五个 第 17 天 18:58 '听惯了'：前三步里它看见过你、没动（认你或吃饱），你的脚步它就不回头（第一个 18:33 种子 37：一格宽竖道里跟在它后面，每迈一步它都转回来）。虫的动静照旧转
+      if (V.has('日子') && (lz.knew || 0) > 0 && near.some(x => x[1] === 1)) { api.heardKnown = true; api.ear = near.find(x => x[1] === 1)[2]; near = near.filter(x => x[1] !== 1); }
       if (near.length) {
         near.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2][0] - b[2][0] || a[2][1] - b[2][1]);
         const q = near[0][2];
@@ -341,7 +343,7 @@ function bugsTurn(m, bugs, lzpos, player, mine) {   // 第二个 第 16 天 02:0
 // 局面：{pl, ate, bugs, lz}；一步：'U' 'R' 'D' 'L' '.' 'X'。返回新局面、'bad'（走不了）或 null（死了）
 function step(m, st, k) {
   api.friend = false; api.lost = false; api.fedNow = false; api.unfed = false; api.swapped = false;
-  api.ear = null; api.heard = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false; api.backing = false;
+  api.ear = null; api.heard = false; api.heardKnown = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false; api.backing = false;
   let pl = st.pl, ate = st.ate; let bugs = st.bugs.slice(); let lz = st.lz;
   let pf = st.pf || null;   // 你的朝向（'吐朝' 用）
   let drop = [], di = -1;
@@ -433,6 +435,7 @@ function step2(m, st, k) {
   if (r && r !== 'bad' && r.lz && m.V.has('日子')) {
     const h0 = st.lz.hun || 0;
     r.lz.hun = (r.lz.mode === '吃' && st.lz.mode !== '吃') ? FULL : Math.max(0, h0 - 1);
+    r.lz.knew = (api.friend || api.ignored) ? 3 : Math.max(0, (st.lz.knew || 0) - 1);   // 第五个 18:58 '听惯了'
   }
   if (r && r !== 'bad' && r.lz && (m.V.has('记恩') || m.V.has('记数'))) {   // 第二个 08:58 页60隔天：'记数'＝只数它吃过你几只、不改它的脾气（第 4、7、9 张），过关时带到'又一天'那张
     // 第二个 第 15 天 05:50 页53记恩：哪几只虫是你吐的（这一步凭空多出来的那只），它吃了你吐的就数一只；追丢你一回清零
@@ -487,7 +490,7 @@ function lands(m) {
   for (const [k, vb] of db) { const va = da.has(k) ? da.get(k) : 1e9; if (vb <= R && vb < va) b.add(k); }
   return (m._lands = { a, b });
 }
-const FLAGS = ['ear', 'heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped', 'toHaunt'];   // 第二个 07:08 页55：记恩那几样也各记各的   // 第二个 第 16 天 16:55：toHaunt 也各记各的（以前青的那句会照抄红的'往你上回喂它的地方走'，青没有老地方）
+const FLAGS = ['ear', 'heard', 'heardKnown', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped', 'toHaunt'];   // 第二个 07:08 页55：记恩那几样也各记各的   // 第二个 第 16 天 16:55：toHaunt 也各记各的（以前青的那句会照抄红的'往你上回喂它的地方走'，青没有老地方）
 const snap = () => { const o = {}; FLAGS.forEach(f => o[f] = api[f]); return o; };
 function step3(m, st, k) {
   if (!m.postB || !st.lzB) return step2(m, st, k);
@@ -527,6 +530,7 @@ function step3(m, st, k) {
   api.killedBy = null;
   if (m.V.has('日子')) nb.hun = (nb.mode === '吃' && lzB.mode !== '吃') ? FULL : Math.max(0, (st.lzB.hun || 0) - 1);
   nb.learn = 0; nb.grudge = null;
+  if (m.V.has('日子')) nb.knew = (fb.friend || fb.ignored) ? 3 : Math.max(0, (st.lzB.knew || 0) - 1);   // 第五个 18:58 '听惯了'，青各记各的
   r.bugs = bugs; r.lzB = nb;
   if (fb.hiss) r.lz = Object.assign({}, r.lz, { mode: '逃', tgt: null, mem: null });
   return r;

@@ -346,7 +346,8 @@ function events(k, a, b) {
     else if (lb.mode === '找') out.push(`蜥蜴在原地四下找你，转头朝${FACE[lb.face]}。`);   // ② 第二个·页11 18:20：跟'听见了转头'分开
     else out.push(`蜥蜴转头朝${FACE[lb.face]}。`);
   }
-  if (S.ear && !S.heard && la.face === lb.face && lb.mode === '岗') out.push(eq(S.ear, b.pl) ? '蜥蜴听见了你的脚步，它本来就朝着这边。' : '蜥蜴听见一只虫在动，它本来就朝着那边。');   // 第二个 13:07 页72耳朵
+  if (S.heardKnown && !S.heard) out.push('蜥蜴听见了你的脚步，没回头。');   // 第五个 18:58 '听惯了'
+  else if (S.ear && !S.heard && la.face === lb.face && lb.mode === '岗') out.push(eq(S.ear, b.pl) ? '蜥蜴听见了你的脚步，它本来就朝着这边。' : '蜥蜴听见一只虫在动，它本来就朝着那边。');   // 第二个 13:07 页72耳朵
   if (S.turnGrudge) out.push('蜥蜴回到石头上，转过身。');   // 第二个·页11 21:35 照第一个 21:2x 的更正：别把答案（朝你溜走那边）写给玩家   // 第一个 20:40 页30记仇（第二个·页11 21:01 拼进整款最后一张）
   // 第二个 16:40 页74退：'它倒着往回退'并进上面那句（以前同一步说两回'没找着'）
   if (S.noStop) out.push(m.V.has('记仇') ? '蜥蜴这回没停，看见你就冲了。' : '你从它眼前溜掉过两回了，蜥蜴这回没停下来盯你，看见你就冲了。');   // 第一个 17:17 '学'；20:45 页30记仇
@@ -387,7 +388,7 @@ function events2(k, a, b) {
   if (!b.lzB) return events(k, a, b);
   const byB0 = new Set(); a.bugs.forEach((x, i) => { if (x && !b.bugs[i] && b.lzB.mode === '吃' && a.lzB.mode !== '吃' && Math.abs(x[0] - b.lzB.pos[0]) + Math.abs(x[1] - b.lzB.pos[1]) <= 1) byB0.add(i); });
   const A = events(k, a, Object.assign({}, b, { bugs: b.bugs.map((y, i) => byB0.has(i) ? a.bugs[i] : y) })).map(t => t.replace(/蜥蜴/g, '红蜥蜴').replace(/OTHER/g, '青蜥蜴'));
-  const keepM = m, keepF = {}; const FL = ['ear', 'heard', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped', 'toHaunt'];   // 第二个 07:09 页55   // 第二个 第 16 天 16:55：加 toHaunt，青不再照抄红的'往你上回喂它的地方'
+  const keepM = m, keepF = {}; const FL = ['ear', 'heard', 'heardKnown', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped', 'toHaunt'];   // 第二个 07:09 页55   // 第二个 第 16 天 16:55：加 toHaunt，青不再照抄红的'往你上回喂它的地方'
   FL.forEach(f => { keepF[f] = S[f]; S[f] = (S.B || {})[f]; });
   const mB = Object.create(m); mB.post = m.postB; mB.face = m.faceB || m.face;
   m = mB;
