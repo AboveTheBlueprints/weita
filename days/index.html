@@ -749,7 +749,7 @@ function emptyRow(box) {   // 第二个 13:35 v3：挂在那一扑上、从那�
     const who = o.two ? '红的' : '它';
     const dots = o.dots0 ? `那天开局${who}身子底下只有${CN[o.dots0 - 1] || o.dots0}个绿点` : `那天开局${who}身子底下一个绿点都没有`;
     const back = o.j2 - o.j === 1 ? '前一天' : '前两天';
-    c.innerHTML = `<span style="color:#e0603f">第 ${o.j2 + 1} 张第 ${o.n2} 步，${who}扑到了你</span><br><span style="color:#b9b49a">${dots}</span><br><span style="color:#ddd8c8">${back}（第 ${o.j + 1} 张）第 ${o.step} 步，${who}饿着，离你 ${o.far} 格，你肚子里有虫</span>`;
+    c.innerHTML = `<span style="color:#e0603f">第 ${o.j2 + 1} 天第 ${o.n2} 步，${who}扑到了你</span><br><span style="color:#b9b49a">${dots}</span><br><span style="color:#ddd8c8">${back}（第 ${o.j + 1} 天）第 ${o.step} 步，${who}饿着，离你 ${o.far} 格，你肚子里有虫</span>`;
     c.onclick = () => { const r = box.querySelector(`[data-day="${o.j}"]`); if (r) { r.scrollIntoView({ behavior: 'smooth', block: 'start' }); const rg = r.querySelector('input[type=range]'); if (rg) { rg.value = Math.min(+rg.max, o.step); rg.dispatchEvent(new Event('input')); } } };
     row.appendChild(c);
   });
@@ -769,7 +769,7 @@ function yourBugs(box) {
     const back = o.what === 'A' && o.at && cameBack(o.j, o.at);
     // 第三个 第 17 天 03:26 页134这一只：同一局只把这一口换成'等'重跑（页125 的 ghostRun 只换一下），会被扑就写在这一格里。饭2 最停住的是页125 那个虚红叉'那一口还救了我自己'，可她得自己去对是哪一口；这3、这4 第一眼就在格子里看见，再往下去找那个叉
     const gs = (() => { const d = DAYS[o.j]; if (!d) return null; const g = ghostRun(d, o.step - 1); if (!(g && g.hit)) return null; const byB = g.b && g.b.length && g.b[g.b.length - 1][0] === g.hit[0] && g.b[g.b.length - 1][1] === g.hit[1]; return { n: g.hitStep, who: d.st.lzB ? (byB ? '青的' : '红的') : '它' }; })();
-    c.innerHTML = `<span style="color:#b9b49a">第 ${o.j + 1} 张 第 ${o.step} 步</span><br><span style="color:${col}">${what}</span>` + (back ? `<br><span style="color:#e0603f">第 ${o.j + 2} 张它饿了，回这儿来过</span>` : '') + (gs ? `<br><span style="color:#ff6b6b">没吐这一只，${gs.who}第 ${gs.n} 步会扑到你</span>` : '');
+    c.innerHTML = `<span style="color:#b9b49a">第 ${o.j + 1} 天 第 ${o.step} 步</span><br><span style="color:${col}">${what}</span>` + (back ? `<br><span style="color:#e0603f">第 ${o.j + 2} 天它饿了，回这儿来过</span>` : '') + (gs ? `<br><span style="color:#ff6b6b">没吐这一只，${gs.who}第 ${gs.n} 步会扑到你</span>` : '');
     c.onclick = () => { const r = box.querySelector(`[data-day="${o.j}"]`); if (r) { r.scrollIntoView({ behavior: 'smooth', block: 'start' }); if (r.animate) r.animate([{ background: 'rgba(95,179,255,0.18)' }, { background: 'transparent' }], { duration: 1600 }); const rg = r.querySelector('input[type=range]'); if (rg) { rg.value = Math.min(+rg.max, o.step); rg.dispatchEvent(new Event('input')); } } };   /* 接第四个页126 的拖动条：点哪一只，那一天的条子就拖到吐它那一步 */
     row.appendChild(c);
   });
@@ -824,14 +824,14 @@ function showDays() {
     const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = L.from - 1;
     const cap = document.createElement('div'); row.appendChild(cap);
     if (!a || !b) {
-      const lo = !a ? LOST[L.from - 1] : null, nm = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>`;
-      if (a) { cap.innerHTML = `${nm}（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　第 ${j + 1} 张${L.name}那天你没过${LOST[j] ? '，那天你最后输的那一局画在下面一张' : '，后一天开局没画'}` + factsOf(a, L.from - 1);   /* 第四个 第 17 天 05:25 页138：少2'不太清楚这句话说的是第七天还是第八天没画' */ const g = single(row, a, false); if (g && g.drew) cap.innerHTML += ghostLine(g); any = true; }
+      const lo = !a ? LOST[L.from - 1] : null, nm = `<b>${LEVELS[L.from - 1].name}</b>`;
+      if (a) { cap.innerHTML = `${nm}（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　${L.name}那天你没过${LOST[j] ? '，那天你最后输的那一局画在下面一张' : '，后一天开局没画'}` + factsOf(a, L.from - 1);   /* 第四个 第 17 天 05:25 页138：少2'不太清楚这句话说的是第七天还是第八天没画' */ const g = single(row, a, false); if (g && g.drew) cap.innerHTML += ghostLine(g); any = true; }
       else if (lo) { cap.innerHTML = `${nm}（这一天你没过，画的是你最后输的那一局${juOf(L.from - 1)}，红叉是它扑到你的那一格）`; single(row, lo, true); any = true; }
-      else cap.textContent = `第 ${L.from} 张${LEVELS[L.from - 1].name} → 第 ${j + 1} 张${L.name}：第 ${L.from} 张那天你没玩到，这一对没画。`;
+      else cap.textContent = `${LEVELS[L.from - 1].name} → ${L.name}：第 ${L.from} 张那天你没玩到，这一对没画。`;
       box.appendChild(row); return;
     }   /* 第四个 第 17 天 03:55 页134：刻2 第 2、5 天四局没过跳了，最想看的正是第 5 天输的那局（'它明明往回退，脸却还朝着我，我怎么又走进了它的下一扑'），时4 也要过 */
     any = true;
-    cap.innerHTML = `<b>第 ${L.from} 张${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　<b>第 ${j + 1} 张${L.name}</b>（开局）` + factsOf(a, L.from - 1);
+    cap.innerHTML = `<b>${LEVELS[L.from - 1].name}</b>（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　<b>${L.name}</b>（开局）` + factsOf(a, L.from - 1);
     const pair = document.createElement('div'); pair.style.display = 'flex'; pair.style.gap = '16px'; pair.style.alignItems = 'flex-start'; pair.style.flexWrap = 'wrap';
     const c1 = document.createElement('canvas'), c2 = document.createElement('canvas');
     WeiDraw.frame(c1, a.m, { prev: null, st: a.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, a.m, a.R, NONUM); const gh1 = ghost(c1, a); if (gh1 && gh1.drew) cap.innerHTML += ghostLine(gh1);
@@ -844,11 +844,11 @@ function showDays() {
   });
   // 第四个 第 16 天 23:47：最后一天没有后一天，单画它那一局（七天2：'没画第七天那条安静回家的路线，我还稍微有点没看够'）
   const zi = LEVELS.length - 1, z = DAYS[zi];
-  if (!z && LOST[zi]) { const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi; const cap = document.createElement('div'); row.appendChild(cap); cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（这一天你没过，画的是你最后输的那一局${juOf(zi)}，红叉是它扑到你的那一格）　→　没有下一天了`; single(row, LOST[zi], true); box.appendChild(row); any = true; }   // 第四个 页134
+  if (!z && LOST[zi]) { const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi; const cap = document.createElement('div'); row.appendChild(cap); cap.innerHTML = `<b>${LEVELS[zi].name}</b>（这一天你没过，画的是你最后输的那一局${juOf(zi)}，红叉是它扑到你的那一格）　→　没有下一天了`; single(row, LOST[zi], true); box.appendChild(row); any = true; }   // 第四个 页134
   if (z && any) {
     const row = document.createElement('div'); row.style.margin = '18px 0'; row.dataset.day = zi;
     const cap = document.createElement('div'); row.appendChild(cap);
-    cap.innerHTML = `<b>第 ${zi + 1} 张${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
+    cap.innerHTML = `<b>${LEVELS[zi].name}</b>（${z.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(zi)}）　→　没有下一天了` + factsOf(z);
     const c1 = document.createElement('canvas');
     WeiDraw.frame(c1, z.m, { prev: null, st: z.st, dead: null, drop: null }, 1); WeiDraw.replay(c1, z.m, z.R, NONUM); const ghz = ghost(c1, z); if (ghz && ghz.drew) cap.innerHTML += ghostLine(ghz);
     c1.style.width = (c1.width * 0.85) + 'px'; row.appendChild(c1); addScrub(row, c1, z, (t) => { const SSz = realStates(z); WeiDraw.frame(c1, z.m, { prev: null, st: SSz[Math.min(t, SSz.length - 1)], dead: null, drop: null }, 1); (t < SSz.length - 1 ? faintReplay : WeiDraw.replay)(c1, z.m, z.R, NONUM, t);   /* 停在最后一步（一打开的样子）照旧整条线 */ ghost(c1, z, t); }, ghz && ghz.mo ? ghz.mo.t : undefined); box.appendChild(row);
@@ -856,13 +856,13 @@ function showDays() {
   // 第四个 第 17 天 05:30 页140挑局：每一张底下列这一天你开过的每一局，点哪局就在底下画哪局（能拖）。少2 要第 7 天第 2 局（拿到虫死在回程），少1 要'把自己等死'那局，刻2 要第 5 天输的那局
   [...box.querySelectorAll('div[data-day]')].forEach(row => {
     const di = +row.dataset.day, G = GAMES[di] || []; if (G.length < 2) return;
-    const bar = document.createElement('div'); bar.style.margin = '6px 0 0'; bar.style.fontSize = '13px'; bar.innerHTML = `第 ${di + 1} 张这一天你开过的每一局：`;
+    const bar = document.createElement('div'); bar.style.margin = '6px 0 0'; bar.style.fontSize = '13px'; bar.innerHTML = `第 ${di + 1} 天你开过的每一局：`;
     const pane = document.createElement('div');
     G.forEach((g, k) => {
       const b = document.createElement('button'); b.style.margin = '2px 4px'; b.style.fontSize = '12px';
       const jc = g.ju ? G.slice(0, k).filter(x => x.ju === g.ju).length : 0, jn = jc ? `第 ${g.ju} 局撤回再走${jc > 1 ? `第 ${jc} 回` : ''}` : `第 ${g.ju || k + 1} 局`;   /* 第四个 第 17 天 09:02：熬1、熬2 标题'开了 3 局'、按钮四个，撤一步接着走也排成了一局（'我会以为它数漏了''把撤回也叫成一局'）；按钮照开局数，撤回的标出来 */
       b.textContent = `${jn}（${g.how === '被扑' ? `第 ${g.n} 步被扑` : g.how === '没走完' ? `走了 ${g.n} 步就重来了` : g.how === '天黑' ? `走了 ${g.n} 步天黑了` : `${g.how}，${g.n} 步`}）`;
-      b.onclick = () => { pane.innerHTML = ''; const cap = document.createElement('div'); cap.textContent = `第 ${di + 1} 张${jn}`; pane.appendChild(cap); single(pane, g, g.how === '被扑'); [...bar.querySelectorAll('button')].forEach(x => x.style.outline = x === b ? '2px solid #d9b44a' : ''); };
+      b.onclick = () => { pane.innerHTML = ''; const cap = document.createElement('div'); cap.textContent = `第 ${di + 1} 天${jn}`; pane.appendChild(cap); single(pane, g, g.how === '被扑'); [...bar.querySelectorAll('button')].forEach(x => x.style.outline = x === b ? '2px solid #d9b44a' : ''); };
       bar.appendChild(b);
     });
     const at = row.children[1] || null; row.insertBefore(bar, at); row.insertBefore(pane, at);   // 05:45：按钮和点开的那局挪到标题底下、默认那张上面（少1'眼睛还是容易串'，少2'上面一直留着最后那局的大红叉，真正挑的第二局在下面，眼睛还会先被上面吸走'）
