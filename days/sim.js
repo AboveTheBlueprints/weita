@@ -346,6 +346,21 @@ function bugsTurn(m, bugs, lzpos, player, mine) {   // 第二个 第 16 天 02:0
 }
 
 // 局面：{pl, ate, bugs, lz}；一步：'U' 'R' 'D' 'L' '.' 'X'。返回新局面、'bad'（走不了）或 null（死了）
+// 第四个 第 17 天 22:25 页168你是它：红的不想，照 api.itKey 走一格。嚼着的两步不能动；走进墙、灰的你那天、青站着的格子就原地转头
+function itMove(m, lz, pl, bugs) {
+  const k = api.itKey; let pos = lz.pos, face = lz.face; api.itBlocked = null;
+  if (lz.mode === '吃') { const eat = lz.eat - 1; return [Object.assign({}, lz, { mode: eat > 0 ? '吃' : '岗', eat, tgt: null, mem: null }), false]; }
+  { const b0 = idx(bugs, pos); if (b0 >= 0) { bugs[b0] = null; return [Object.assign({}, lz, { mode: '吃', eat: 2, tgt: null, mem: null }), false]; } }   // 第四个 第 18 天 00:27 页172：虫吐到你脚下（嘴边）就吃，当青的那天灰的'我'往你嘴里吐
+  if (k === '.' || !DIRS[k]) return [Object.assign({}, lz, { mode: '岗', tgt: null, mem: null, eat: 0 }), false];
+  face = k; const np = [pos[0] + DIRS[k][0], pos[1] + DIRS[k][1]];
+  if (!m.free(np)) api.itBlocked = '墙';
+  else if (eq(np, pl)) api.itBlocked = '你';
+  else if (m._other && eq(np, m._other.pos)) api.itBlocked = '另一只';
+  if (api.itBlocked) return [Object.assign({}, lz, { face, mode: '岗', tgt: null, mem: null, eat: 0 }), false];
+  pos = np; const bi = idx(bugs, pos);
+  if (bi >= 0) { bugs[bi] = null; return [Object.assign({}, lz, { pos, face, mode: '吃', eat: 2, tgt: null, mem: null }), false]; }
+  return [Object.assign({}, lz, { pos, face, mode: '岗', tgt: null, mem: null, eat: 0 }), false];
+}
 function step(m, st, k) {
   api.friend = false; api.lost = false; api.fedNow = false; api.unfed = false; api.swapped = false;
   api.ear = null; api.heard = false; api.heardKnown = false; api.waitYou = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false; api.backing = false;
@@ -392,8 +407,8 @@ function step(m, st, k) {
   const sounds = drop.concat(k !== '.' && k[0] !== 'X' ? [['你', pl]] : []);
   bugs.forEach((a, i) => { const b = nb[i]; if (b !== null && !(a !== null && eq(a, b))) sounds.push(['虫', b]); });
   bugs = nb;
-  const [lz2, dead] = lizardTurn(m, lz, pl, bugs, sounds);
-  if (dead || eq(pl, lz2.pos)) return null;
+  const [lz2, dead] = api.itKey && api.itWho !== 'B' ? itMove(m, lz, pl, bugs) : lizardTurn(m, lz, pl, bugs, sounds);   // 第四个 第 17 天 22:25 页168你是它：红的听你的键
+  if ((dead || eq(pl, lz2.pos)) && !api.itGhostGone) return null;   // 页172：当青的那天红的扑了灰的'我'，跟 548 行一样不再算
   return withPf(V, { pl, ate, bugs, lz: lz2 }, pf);
 }
 function farDrop(m, pl, pf, bugs, lzp, lzp2) {   // 第四个 第 16 天 18:50：lzp2 是另一只（第 6、7 天的青）。以前只挡红，虫从青身上飞过去（种子 54 第 6 天贴着青往它那边吐，落在它身后两格）
@@ -519,7 +534,7 @@ function step3(m, st, k) {
   let bugs = bugsTurn(m, r.bugs, lzB.pos, r.pl, r.mine);
   FLAGS.forEach(f => api[f] = (f === 'hiss' ? false : null));
   const bugs0 = bugs.slice();
-  const [nb, dead] = lizardTurn(mB, lzB, r.pl, bugs, sounds);
+  const [nb, dead] = api.itKey && api.itWho === 'B' ? itMove(mB, lzB, r.pl, bugs) : lizardTurn(mB, lzB, r.pl, bugs, sounds);   // 第四个 第 18 天 页172：当青的那天青听你的键
   if (m.V.has('记恩') || m.V.has('记数')) {   // 第二个 07:08 页55：青也记恩：它吃了你吐的那只就数一只，追丢你一回清零
     let fedB = false; const mine = r.mine || [];
     bugs0.forEach((b, i) => { if (b && mine[i] && (bugs[i] === null || bugs[i] === undefined) && nb.mode === '吃' && lzB.mode !== '吃') { fedB = true; mine[i] = false; } });
@@ -531,7 +546,7 @@ function step3(m, st, k) {
   if (eq(nb.pos, r.lz.pos)) nb.pos = lzB.pos.slice();   // 同上
   const fb = snap();
   FLAGS.forEach(f => api[f] = fa[f]); api.B = fb;
-  if (dead || eq(r.pl, nb.pos)) { api.killedBy = 'B'; return null; }
+  if ((dead || eq(r.pl, nb.pos)) && !api.itGhostGone) { api.killedBy = 'B'; return null; }   // 第四个 第 17 天 23:51 页171：灰的'我'被青扑过以后不再算，免得 itAct 卡死（它4 第 26 步）
   api.killedBy = null;
   if (m.V.has('日子')) nb.hun = (nb.mode === '吃' && lzB.mode !== '吃') ? FULL : Math.max(0, (st.lzB.hun || 0) - 1);
   nb.learn = 0; nb.grudge = null;

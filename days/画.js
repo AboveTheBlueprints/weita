@@ -58,6 +58,7 @@ function drawBug(g, X, Y, a, mine) {
 }
 
 function drawMe(g, X, Y, belly, pf) {
+  if (root.WeiDraw && root.WeiDraw.ghost) { g.save(); g.globalAlpha = 0.5; const c0 = COL.me; COL.me = '#9a9a9a'; root.WeiDraw.ghost = false; try { drawMe(g, X, Y, 0, pf); } finally { root.WeiDraw.ghost = true; COL.me = c0; g.restore(); } return; }   // 第四个 页168你是它：你那天的样子画成半透明的灰，肚子里的虫不画
   if (pf) {   // 10:28 你的朝向（第一个并的'吐朝'：吐在你脸前一格）：圆边上一个小尖
     const [dx, dy] = DV[pf];
     g.fillStyle = COL.me; g.beginPath();
