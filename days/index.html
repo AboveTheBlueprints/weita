@@ -1057,18 +1057,23 @@ function itStart() {
 function itAct(k) {
   if (over || !IT) return;
   if (k[0] === 'X') return;
-  let g = IT.ghostGone ? '.' : (IT.K[IT.t] || '.');
+  let g = IT.ghostGone ? '.' : (IT.K[IT.t] || '.'); const g0 = g;
   if (g !== '.' && g[0] !== 'X' && S.DIRS[g]) { const q = [st.pl[0] + S.DIRS[g][0], st.pl[1] + S.DIRS[g][1]]; if (S.eq(q, IT.who === 'B' ? st.lzB.pos : st.lz.pos)) g = '.'; }   // 那天走得过去的格子现在站着你（红的），它原地等一步
   const st0 = st; st.ate = g[0] === 'X' ? 1 : 0;   /* 灰的肚子不算数：只在它要吐那一步给它一只；平时是 0，免得它走进窝那一步'窝安全'提前收工、红的那一步没走 */
   S.itKey = k;
   lastDrop = g[0] === 'X' ? S.dropAt(m, st, g[1]) : null;
   let r = S.step(m, st, g);
-  if (r === 'bad' && g !== '.') { lastDrop = null; r = S.step(m, st, '.'); }
+  let bump = false; if (r === 'bad' && g !== '.') { bump = true; lastDrop = null; r = S.step(m, st, '.'); }
   if (r === null) { lastDrop = null; IT.ghostGone = true; S.itGhostGone = true; r = S.step(m, st, '.'); if (r === null || r === 'bad') { S.itKey = null; return; } }
   S.itKey = null;
   if (r === 'bad') return;
   IT.t++; n++; prev = st0; st = r;
   const lines = [];
+  /* 第四个 第 18 天 03:05：灰的"我"没照那天走成的、吃了地上虫的，各写一句。第二个 02:30 当青时挡了它一步，它后面全错开一格、那口吐到墙上，红、青、灰的三个在一格宽的道里卡了 12 步，'屏上一个字没有'。照键不照位置不改（第二个说好），只把没走成的写出来；撞墙只写头一回 */
+  const blk = g0 !== '.' && g0[0] !== 'X' && g === '.'; if (blk && !IT.wasBlk) lines.push('灰的"我"要往你这格走，走不过来，原地站住了。'); IT.wasBlk = blk;   // 连着挡住只写头一步
+  if (!IT.ghostGone && (prev.bugs || []).some((b, i) => b && S.eq(b, st.pl) && !(st.bugs || [])[i])) lines.push('灰的"我"走到这一格，把地上那只虫吃了。');   // 第一个 02:21：灰的踩上自己那天吐的那只、捡回去了，屏上没一个字
+  if (blk) {} else if (g0[0] === 'X' && !lastDrop) lines.push('灰的"我"吐了一下，没吐出去。');
+  else if (bump && !IT.saidBump) { IT.saidBump = true; lines.push('灰的"我"往墙上走了一步，没走动。'); }
   if (S.itBlocked) lines.push(S.itBlocked === '墙' ? '那边是墙，你转过头去。' : S.itBlocked === '你' ? '那一格站着灰的"我"，你过不去，转过头去。' : `那一格站着${itName(IT.who === 'B' ? 'A' : 'B')}的，你过不去。`);
   const me = IT.who === 'B' ? st.lzB : st.lz, me0 = IT.who === 'B' ? prev.lzB : prev.lz;
   if (me.mode === '吃' && me0.mode !== '吃') { IT.ate++; const mineNow = IT.who === 'B' ? (S.B && S.B.fedNow) : S.fedNow; if (mineNow) IT.mineAte++; lines.push('你吃了一只虫。');   /* 是谁吐的不写（拇指甲 4：字说出来就成了我替他读），它身子底下的绿点照画 */ }
