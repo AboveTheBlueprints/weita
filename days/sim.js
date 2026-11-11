@@ -252,7 +252,12 @@ function lizardOne(m, lz, player, bugs, sounds) {
     if (V.has('听') && sounds.length) {
       let near = sounds.map(([w, q]) => [Math.abs(q[0] - pos[0]) + Math.abs(q[1] - pos[1]), w === '虫' ? 0 : 1, q]).filter(x => x[0] > 0 && x[0] <= 3);
       // 第五个 第 17 天 18:58 '听惯了'：前三步里它看见过你、没动（认你或吃饱），你的脚步它就不回头（第一个 18:33 种子 37：一格宽竖道里跟在它后面，每迈一步它都转回来）。虫的动静照旧转
-      if (V.has('日子') && (lz.knew || 0) > 0 && near.some(x => x[1] === 1)) { api.heardKnown = true; api.ear = near.find(x => x[1] === 1)[2]; near = near.filter(x => x[1] !== 1); }
+      if (V.has('日子') && (lz.knew || 0) > 0 && near.some(x => x[1] === 1)) {
+        api.heardKnown = true; api.ear = near.find(x => x[1] === 1)[2]; near = near.filter(x => x[1] !== 1);
+        // 第五个 第 17 天 20:20 '停下来等你'：喂过它的，你紧跟在它身后一格，它听见你的脚步不回头，停下来往边上靠，你再往前一步它就让你过去（第一个 19:56：'听惯了'以后竖道里堵、让、送那一串一起没了）
+        const bk = [pos[0] - DIRS[face][0], pos[1] - DIRS[face][1]];
+        if (V.has('让路') && (lz.fed || 0) >= 1 && eq(api.ear, bk)) { api.waitYou = true; return [{ pos, face, mode, tgt: null, mem: null, eat }, false]; }
+      }
       if (near.length) {
         near.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2][0] - b[2][0] || a[2][1] - b[2][1]);
         const q = near[0][2];
@@ -343,7 +348,7 @@ function bugsTurn(m, bugs, lzpos, player, mine) {   // 第二个 第 16 天 02:0
 // 局面：{pl, ate, bugs, lz}；一步：'U' 'R' 'D' 'L' '.' 'X'。返回新局面、'bad'（走不了）或 null（死了）
 function step(m, st, k) {
   api.friend = false; api.lost = false; api.fedNow = false; api.unfed = false; api.swapped = false;
-  api.ear = null; api.heard = false; api.heardKnown = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false; api.backing = false;
+  api.ear = null; api.heard = false; api.heardKnown = false; api.waitYou = false; api.ignored = false; api.fooled = false; api.noStop = false; api.turnGrudge = false; api.backing = false;
   let pl = st.pl, ate = st.ate; let bugs = st.bugs.slice(); let lz = st.lz;
   let pf = st.pf || null;   // 你的朝向（'吐朝' 用）
   let drop = [], di = -1;
@@ -490,7 +495,7 @@ function lands(m) {
   for (const [k, vb] of db) { const va = da.has(k) ? da.get(k) : 1e9; if (vb <= R && vb < va) b.add(k); }
   return (m._lands = { a, b });
 }
-const FLAGS = ['ear', 'heard', 'heardKnown', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped', 'toHaunt'];   // 第二个 07:08 页55：记恩那几样也各记各的   // 第二个 第 16 天 16:55：toHaunt 也各记各的（以前青的那句会照抄红的'往你上回喂它的地方走'，青没有老地方）
+const FLAGS = ['ear', 'heard', 'heardKnown', 'waitYou', 'ignored', 'fooled', 'noStop', 'turnGrudge', 'backing', 'mgr', 'hiss', 'why', 'dug', 'dugOut', 'friend', 'lost', 'fedNow', 'unfed', 'swapped', 'toHaunt'];   // 第二个 07:08 页55：记恩那几样也各记各的   // 第二个 第 16 天 16:55：toHaunt 也各记各的（以前青的那句会照抄红的'往你上回喂它的地方走'，青没有老地方）
 const snap = () => { const o = {}; FLAGS.forEach(f => o[f] = api[f]); return o; };
 function step3(m, st, k) {
   if (!m.postB || !st.lzB) return step2(m, st, k);

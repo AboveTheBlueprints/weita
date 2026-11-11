@@ -346,7 +346,8 @@ function events(k, a, b) {
     else if (lb.mode === '找') out.push(`蜥蜴在原地四下找你，转头朝${FACE[lb.face]}。`);   // ② 第二个·页11 18:20：跟'听见了转头'分开
     else out.push(`蜥蜴转头朝${FACE[lb.face]}。`);
   }
-  if (S.heardKnown && !S.heard) out.push('蜥蜴听见了你的脚步，没回头。');   // 第五个 18:58 '听惯了'
+  if (S.waitYou) out.push('蜥蜴听见了你的脚步，停下来，往墙边靠了靠。');   // 第五个 20:20 '停下来等你'
+  else if (S.heardKnown && !S.heard) out.push('蜥蜴听见了你的脚步，没回头。');   // 第五个 18:58 '听惯了'
   else if (S.ear && !S.heard && la.face === lb.face && lb.mode === '岗') out.push(eq(S.ear, b.pl) ? '蜥蜴听见了你的脚步，它本来就朝着这边。' : '蜥蜴听见一只虫在动，它本来就朝着那边。');   // 第二个 13:07 页72耳朵
   if (S.turnGrudge) out.push('蜥蜴回到石头上，转过身。');   // 第二个·页11 21:35 照第一个 21:2x 的更正：别把答案（朝你溜走那边）写给玩家   // 第一个 20:40 页30记仇（第二个·页11 21:01 拼进整款最后一张）
   // 第二个 16:40 页74退：'它倒着往回退'并进上面那句（以前同一步说两回'没找着'）
