@@ -839,7 +839,7 @@ function showDays() {
     const cap = document.createElement('div'); row.appendChild(cap);
     if (!a || !b) {
       const lo = !a ? LOST[L.from - 1] : null, nm = `<b>${LEVELS[L.from - 1].name}</b>`;
-      if (a) { cap.innerHTML = `${nm}（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　${L.name}那天你没过${LOST[j] ? '，那天你最后输的那一局画在下面一张' : '，后一天开局没画'}` + factsOf(a, L.from - 1);   /* 第四个 第 17 天 05:25 页138：少2'不太清楚这句话说的是第七天还是第八天没画' */ const g = single(row, a, false); if (g && g.drew) cap.innerHTML += ghostLine(g); any = true; }
+      if (a) { cap.innerHTML = `${nm}（${a.empty ? '你空着肚子过完这一天的那一局' : '你过关那一局'}${juOf(L.from - 1)}）　→　${L.name}${LOST[j] ? '那天你没过，那天你最后输的那一局画在下面一张' : DIAN.ju[j] ? '那天你没过，后一天开局没画' : '你还没玩到，没画'}` + factsOf(a, L.from - 1);   /* 第四个 第 17 天 05:25 页138：少2'不太清楚这句话说的是第七天还是第八天没画' */ /* 第四个 18:38 页162：第 4 天过了、第 5 天还没开，原来也写'第 5 天那天你没过'，见1 见2 都愣'我记得的是根本没开始第 5 天'。没开过的那天写'你还没玩到' */ const g = single(row, a, false); if (g && g.drew) cap.innerHTML += ghostLine(g); any = true; }
       else if (lo) { cap.innerHTML = `${nm}（这一天你没过，画的是你最后输的那一局${juOf(L.from - 1)}，红叉是它扑到你的那一格）`; single(row, lo, true); any = true; }
       else cap.textContent = `${LEVELS[L.from - 1].name} → ${L.name}：第 ${L.from} 张那天你没玩到，这一对没画。`;
       box.appendChild(row); return;
