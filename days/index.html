@@ -470,6 +470,7 @@ function draw(anim) {
   document.getElementById('status').textContent = `第 ${li + 1} ${LEVELS[li].day ? '天' : '张'}　走了 ${n} 步，还剩 ${lim() - n} 步　肚子里 ${st.ate} 只，要带 ${m.need} 只回窝` +   // 第二个 第 15 天 08:30 页57带几只：整十五1、2 都把要带几只弄错过（第 4、5、6、14 张），开头那句看过就忘
  (m.V.has('日子') ? `　${st.lzB ? '红的' : '蜥蜴的'}肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '饱劲过了' : '瘪了'}` + (st.lzB ? `，青的：${st.lzB.hun >= 5 ? '鼓鼓的' : st.lzB.hun >= 1 ? '饱劲过了' : '瘪了'}` : '') : '');
   document.getElementById('log').innerHTML = log.map(t => `<div>${t}</div>`).join('');
+  document.getElementById('log').style.display = '';   // 第四个 页161：点了看它这几天会把这串藏起来，一接着玩就露出来
 }
 
 // 第二个 第 15 天 12:31 页71它的日子：它从这一天带到下一天的记性，玩的时候看不见是哪一下留下的。过完最后一张，把每一对
@@ -870,6 +871,8 @@ function showDays() {
     const at = row.children[1] || null; row.insertBefore(bar, at); row.insertBefore(pane, at);   // 05:45：按钮和点开的那局挪到标题底下、默认那张上面（少1'眼睛还是容易串'，少2'上面一直留着最后那局的大红叉，真正挑的第二局在下面，眼睛还会先被上面吸走'）
   });
   if (!any) { const p2 = document.createElement('p'); p2.textContent = '成对的那几张你都还没一起过，先去玩吧。'; box.appendChild(p2); }
+  /* 第四个 第 17 天 17:37 页161末尾倒序：玩的时候那一串逐步记录最新的在上，回看时挂在长页最底下就成了倒着读。六个人嫌（熬1 熬2'打断了没有下一天了那一下'，比3'末尾密字倒序'，换1'最末尾那片倒序文字最累'，换2'还得反过来读'）；页135 有人指着它第 27、28 步认回自己，所以不删：收进一个折着的框，正着排 */
+  { const lg = document.getElementById('log'); if (lg && log.length) { lg.style.display = 'none'; const det = document.createElement('details'); det.style.margin = '22px 0 8px'; const sm = document.createElement('summary'); sm.textContent = '最后那一局，每一步写了什么（点开看，从第 1 步往下）'; sm.style.cursor = 'pointer'; sm.style.color = '#b9b49a'; det.appendChild(sm); const dv = document.createElement('div'); dv.style.marginTop = '8px'; dv.innerHTML = log.slice().reverse().map(t => `<div>${t}</div>`).join(''); det.appendChild(dv); box.appendChild(det); } }
   box.scrollIntoView({ behavior: 'smooth' });
 }
 // 第二个 第 15 天 12:05 页70回看：这一局每一步你和它在哪，从撤回用的 hist 里取（撤回了，线也跟着退）
