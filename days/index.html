@@ -675,6 +675,86 @@ function cameBack(j, at) {
   for (const k of d.R.K) { const r = S.step(d.m, s, k); if (r === 'bad' || r === null) break; if (near(r.lz.pos)) return true; s = r; }
   return false;
 }
+// 第二个 第 17 天 12:45 页157没给的那口：最上面那排只有你吐出去的。第三个当玩家（种子 77）说玩的时候最重的是没给的那两天（拿着饭从饿着的它头顶走过去），屏上是空的。我玩布谷，最后那屏拿'一直照实说'整局重跑跟我比，差的全落在我当时脸热的那一步上，那一下我才认出是我那一步。
+// 这里照那个办法找你没给的那几口：你肚子里有虫、它饿着、离你不过 4 格，这一步和下一步都没吐。在那一步插一口吐（朝它那边），把那天过关那局重跑到底、照它过夜，再拿第二天头一回被扑那局的键原样跑一遍：那一扑没了，才出一格。不改那天别的键，跑不通（撞墙、它挡着）就不算。
+function runK(m, s0, K) { let s = s0; const SS = [s]; for (let t = 0; t < K.length; t++) { const r = S.step(m, s, K[t]); if (r === 'bad') return { SS, bad: true }; if (r === null) return { SS, hit: true, step: t + 1 }; s = r; SS.push(s); } return { SS }; }
+function nightFrom(i, ss, pgc) {   // 跟 ghostNext 后半一样，那天的一串状态从外面给；pgc：前一天过夜带过来的（隔两天算时用，不给就是真的那份）
+  const sP = CARRY[i - 1]; if (pgc) CARRY[i - 1] = pgc;
+  try {
+  const L = LEVELS[i + 1]; if (!L || !L.day) return null;
+  const st = ss[ss.length - 1];
+  let ea = 0; for (let q = 1; q < ss.length; q++) if (ss[q].lz.mode === '吃' && ss[q - 1].lz.mode !== '吃') ea++;
+  const real = DAYINFO[i];
+  const gi = Object.assign({}, real, { left: st.bugs.filter(b => b).length, ate: ea, haunt: st.lz.haunt || null, all: st.bugs.filter(b => b).map(b => b.slice()),
+    dead: (() => { const D = []; for (let q = 1; q < ss.length; q++) (ss[q - 1].bugs || []).forEach((b, k) => { if (b && !(ss[q].bugs || [])[k]) D.push(b.slice()); }); return D; })(),
+    mine: st.bugs.map((b, k) => (b && st.mine && st.mine[k]) ? b.slice() : null).filter(Boolean) });
+  const L0 = LEVELS[i], f = st.lz.fed || 0, f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : (L0.day === 1 && BACK ? (BACK.a || 0) : 0);
+  const gc = { a: f > f0 ? f : Math.max(0, f - 1), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null };
+  const sI = DAYINFO[i], sC = CARRY[i]; DAYINFO[i] = gi; CARRY[i] = gc;
+  try {
+    const DP = dayPlan(L.day), text = dayText(L.day, DP.n);
+    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun;
+    if (gi.haunt) m2.haunt0 = gi.haunt; if (L.faceB) m2.faceB = L.faceB; if (L.hun0B !== undefined) m2.hun0B = L.hun0B;
+    m2.fed0 = gc.a; m2.fed0B = gc.b; if (L.V.includes('记仇')) m2.grudge0 = gc.g;
+    return { m: m2, st: S.init(m2), dots: gc.a, gc };
+  } finally { DAYINFO[i] = sI; CARRY[i] = sC; }
+  } finally { CARRY[i - 1] = sP; }
+}
+function emptyBites() {   // 第二天没被扑就再往下算一天（第三个那局：第 3 天没给，第 4 天没事，第 5 天开局一个绿点都没了才扑）
+  const out = [];
+  const firstP = j => { const P = (GAMES[j] || []).find(g => g.how === '被扑'); if (!P || !P.R || !P.R.K || !P.st0) return null;
+    const me = P.R.me, a0 = me[me.length - 2], a1 = me[me.length - 1];
+    const dk = a0 && a1 ? (Object.keys(S.DIRS).find(k => S.DIRS[k][0] === a1[0] - a0[0] && S.DIRS[k][1] === a1[1] - a0[1]) || '.') : '.';
+    return P.R.K.concat([dk]); };
+  LEVELS.forEach((L, i) => {
+    const d = DAYS[i]; if (!d || d.empty || !d.R || !d.R.K || !d.st0 || !L.V.includes('吐') || !LEVELS[i + 1] || L.day === 1) return;   // 第二个 13:30 v2：第 1 天不出格。空口1、空口2 都连上了第 1 天第 3 步→第 2 天那一扑，可都不认是自己的一步（'当时我还在认路呢''像在数我欠了几顿'）
+    const K = d.R.K, base = runK(d.m, d.st0, K); if (base.hit || base.bad) return;
+    let lastT = -9;
+    base.SS.slice(0, K.length).forEach((s, t) => {
+      const k = K[t], k1 = K[t + 1];
+      if (!(s.ate >= 1) || s.lz.hun > 0 || (k && k[0] === 'X') || (k1 && k1[0] === 'X') || t - lastT < 3) return;
+      const dx = s.lz.pos[0] - s.pl[0], dy = s.lz.pos[1] - s.pl[1], far = Math.abs(dx) + Math.abs(dy); if (far > 4) return;
+      lastT = t;
+      const dir = Math.abs(dx) >= Math.abs(dy) ? (dx > 0 ? 'R' : 'L') : (dy > 0 ? 'D' : 'U');
+      const A = runK(d.m, d.st0, K.slice(0, t).concat(['X' + dir], K.slice(t))); if (A.hit || A.bad) return;
+      let N = nightFrom(i, A.SS), N0 = nightFrom(i, base.SS), j = i + 1;
+      for (let hop = 0; hop < 2 && N && N0; hop++) {
+        const PK = firstP(j);
+        if (PK) {
+          const ctl = runK(N0.m, N0.st, PK); if (!ctl.hit) break;   // 不改的话照它过夜再跑那局，得还是被扑；不是就是这套算不准，不出格
+          const B = runK(N.m, N.st, PK); if (B.hit || B.bad) break;
+          const e = A.SS[A.SS.length - 1];
+          out.push({ j: i, step: t, far, j2: j, n2: ctl.step, short: e.ate < d.m.need, two: !!s.lzB, dots0: N0.dots, byB: false });
+          break;
+        }
+        const dj = DAYS[j]; if (!dj || dj.empty || !dj.R || !LEVELS[j + 1]) break;
+        const RA = runK(N.m, N.st, dj.R.K), R0 = runK(N0.m, N0.st, dj.R.K); if (RA.hit || RA.bad || R0.hit || R0.bad) break;
+        const NA = nightFrom(j, RA.SS, N.gc), NB = nightFrom(j, R0.SS, N0.gc); N = NA; N0 = NB; j++;
+      }
+    });
+  });
+  // 同一扑只留一口：离它最近的那一下（一样近取后头那下）。屏1 一扑能找出两三口，排一排读着像在数落
+  const best = {}; out.forEach(o => { const key = o.j2 + ':' + o.n2, b = best[key]; if (!b || o.far < b.far || (o.far === b.far && (o.j > b.j || (o.j === b.j && o.step > b.step)))) best[key] = o; });
+  return Object.values(best).sort((a, b) => a.j - b.j || a.step - b.step);
+}
+function emptyRow(box) {   // 第二个 13:35 v3：挂在那一扑上、从那一扑往回指（梓韬方法论'裁决证据'：事件 -> 源头）。不写'要是给了'，不写代价
+  const all = emptyBites(); if (!all.length) return;
+  const wrap = document.createElement('div'); wrap.style.margin = '-12px 0 22px';
+  const h = document.createElement('div'); h.innerHTML = '<b>那几下被扑</b>'; wrap.appendChild(h);
+  const row = document.createElement('div'); row.style.display = 'flex'; row.style.flexWrap = 'wrap'; row.style.gap = '8px'; row.style.marginTop = '8px';
+  const CN = ['一', '两', '三', '四', '五'];
+  all.forEach(o => {
+    const c = document.createElement('div');
+    c.style.cssText = 'border:2px solid #b0503a;border-radius:8px;padding:5px 8px;min-width:86px;cursor:pointer;font-size:13px;line-height:1.5';
+    const who = o.two ? '红的' : '它';
+    const dots = o.dots0 ? `那天开局${who}身子底下只有${CN[o.dots0 - 1] || o.dots0}个绿点` : `那天开局${who}身子底下一个绿点都没有`;
+    const back = o.j2 - o.j === 1 ? '前一天' : '前两天';
+    c.innerHTML = `<span style="color:#e0603f">第 ${o.j2 + 1} 张第 ${o.n2} 步，${who}扑到了你</span><br><span style="color:#b9b49a">${dots}</span><br><span style="color:#ddd8c8">${back}（第 ${o.j + 1} 张）第 ${o.step} 步，${who}饿着，离你 ${o.far} 格，你肚子里有虫</span>`;
+    c.onclick = () => { const r = box.querySelector(`[data-day="${o.j}"]`); if (r) { r.scrollIntoView({ behavior: 'smooth', block: 'start' }); const rg = r.querySelector('input[type=range]'); if (rg) { rg.value = Math.min(+rg.max, o.step); rg.dispatchEvent(new Event('input')); } } };
+    row.appendChild(c);
+  });
+  wrap.appendChild(row); box.appendChild(wrap);
+}
 function yourBugs(box) {
   const all = [];
   LEVELS.forEach((L, j) => { const d = DAYS[j]; if (!d) return; spitsOf(d).forEach(o => all.push(Object.assign({ j, two: !!d.st.lzB, last: !(LEVELS[j + 1] && LEVELS[j + 1].from === j + 1) }, o))); });
@@ -697,7 +777,7 @@ function yourBugs(box) {
 }
 function showDays() {
   const box = document.getElementById('daysBox'); box.innerHTML = ''; box.style.display = 'block';
-  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。每一对上边那张是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），下边那张是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box);
+  const head = document.createElement('p'); head.textContent = '有几张开头写着"还是昨天那只"。每一对上边那张是前一天你过关的那一局（白线是你，红线、青线是它们，绿圈是你吐虫的地方；虚线是同一局里那几口你要是没吐，它们本来会走的路），下边那张是后一天刚开局的样子。'; box.appendChild(head); yourBugs(box); emptyRow(box);
   // 第四个 第 16 天 23:47：那一局新出的事、开了几局，挪成两个小函数，成对的和最后一天共用
   const factsOf = (a, di) => {
     const A = a.st, fa = [];
