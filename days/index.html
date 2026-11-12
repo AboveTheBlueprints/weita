@@ -317,13 +317,14 @@ let li = 0, m, st, prev, n, over, log, deadMark, lastDrop = null;
 function events(k, a, b) {
   const out = [];
   const la = a.lz, lb = b.lz;
-  if (k === '.') out.push('你没动。');
+  if (k === '.' && !S.logTook) out.push('你没动。');   // 吹万 页196：在朽木上等一步是扒，不说'没动'
   if (k[0] === 'X') out.push(eq(lastDrop, a.pl) ? '你吐出了一只虫，落在你脚下。' : '你吐出了一只虫。');
   if (S.fruitDrop && b._anyBug === undefined) out.push('树上掉下来一颗果子，落在蜥蜴的石头跟前。');   // 第三个 第 18 天 页173果
   if (S.fruitAte && b._anyBug === undefined) out.push('你吃了一颗果子。');
   else if (b.ate > a.ate && !S.dugOut && !S.logTook) out.push('你吃到了一只虫！');
   if (m.logAt) { const nL = b.bugs.filter(q => q && q[0] === m.logAt[0] && q[1] === m.logAt[1]).length, CNL = ['零','一','两','三','四','五','六'];   /* 吹万 页184朽木 */
-    if (S.logTook) out.push(`你从朽木里叼出一只虫。里头还剩${CNL[nL + (b.deep || 0)]}只。`);   /* 吹万 第 18 天 20:2x：剩的那只缩进深处后不在 bugs 里，原来写成'还剩零只'，下一句又说'只剩一只' */
+    if (S.logOn) out.push(`你站在朽木上。里头${CNL[nL]}只缩着没出来，在上面等一下，能扒出一只。`);   /* 吹万 页196等才叼 */
+    if (S.logTook) out.push(`你在朽木上扒了扒，叼出一只虫。里头还剩${CNL[nL + (b.deep || 0)]}只。`);   /* 吹万 第 18 天 20:2x：剩的那只缩进深处后不在 bugs 里，原来写成'还剩零只'，下一句又说'只剩一只' */
     if (S.logBorn) out.push(`朽木里窸窸窣窣，又爬出一只。里头现在${CNL[nL]}只。`);
     if (S.logLz) out.push(`${S.logLz}的从朽木里叼走一只。`);   /* 页187 */
     if (S.logStop) out.push('朽木里只剩一只了。一只生不出来，它往深处一缩，没动静了。');

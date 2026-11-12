@@ -588,12 +588,23 @@ api.init = init3;
   const LOGBREED = 8, LOGCAP = 4;   // 页187：5 改 8，比红饿一回（约 6 步）慢，醒过来的朽木会被红慢慢吃回一只，不是一只吃不完的碗
   const _stepW = api.step, _initW = api.init;
   api.step = function (m, st, k) {
-    api.logBorn = false; api.logStop = false; api.logEmpty = false; api.logTook = false; api.logWake = false; api.logReach = false; api.logLz = '';
+    api.logBorn = false; api.logOn = false; api.logStop = false; api.logEmpty = false; api.logTook = false; api.logWake = false; api.logReach = false; api.logLz = '';
     if (!m.logAt) return _stepW(m, st, k);
     const r = _stepW(m, st, k);
     if (r === null || r === 'bad') return r;
     const L = m.logAt, at = b => !!b && eq(b, L);
     st.bugs.forEach((b, i) => { if (at(b) && r.bugs[i] && !at(r.bugs[i])) r.bugs[i] = L.slice(); });   // 朽木里的不跑
+    {   // 吹万 第 18 天 20:45 页196等才叼：走上朽木不叼（门1 '走过朽木时直接叼到了一只，没想到'，木头多半是回家路过踩死的）；站在上面'等'一步，才扒出一只（门1 第 4 天'原地等不会拿虫'，他本来以为会）。
+      api.logOn = false;
+      if (eq(r.pl, L) && k !== '.' && r.ate > st.ate) {   // 踩上去（或在上面撞墙）：吃掉的都放回去
+        let back = r.ate - st.ate;
+        st.bugs.forEach((b, i) => { if (back > 0 && at(b) && r.bugs[i] === null) { r.bugs[i] = L.slice(); back -= 1; r.ate -= 1; } });
+      }
+      if (eq(r.pl, L) && !eq(st.pl, L) && r.bugs.some(at)) api.logOn = true;
+      if (k === '.' && eq(st.pl, L) && eq(r.pl, L)) {   // 在上面等一步：扒出一只
+        const i = r.bugs.findIndex(at); if (i >= 0) { r.bugs[i] = null; r.ate += 1; }
+      }
+    }
     if (eq(r.pl, L) && r.ate - st.ate > 1) {   // 一步只叼一只
       let extra = r.ate - st.ate - 1;
       st.bugs.forEach((b, i) => { if (extra > 0 && at(b) && r.bugs[i] === null) { r.bugs[i] = L.slice(); extra -= 1; r.ate -= 1; } });
