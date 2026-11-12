@@ -369,7 +369,7 @@ function step(m, st, k) {
   let drop = [], di = -1;
   const V = m.V;
   if (k[0] === 'X') {   // 第二个 16:34 '吐选'：'XU' 'XR' 'XD' 'XL' 往那边扔
-    if (!V.has('吐') || ate < 1 || has(bugs, pl)) return 'bad';
+    if (!V.has('吐') || ate < 1 || (has(bugs, pl) && !(m.logAt && eq(pl, m.logAt)))) return 'bad';   // 吹万 第 19 天 01:14：站在朽木上（里头有虫）也吐得出：原来木头里的虫算'脚下已经有一只'，人一站上去就一口都吐不出，爪1 第 5 天往木头里补了一只、转身想喂红，'朝左吐没生效'；屑1 第 4 天往木头连吐也被它挡住
     let at = pl;
     if (V.has('吐向它')) {
       let t;   // 第一个 10:21 '吐朝'：吐在你脸前一格（你最后走的那一步的方向；墙/已有虫就落在脚下）
