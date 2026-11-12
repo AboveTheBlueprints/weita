@@ -454,7 +454,7 @@ function start(i) {
   // 为什么：网页上的人第一局挨个踩，记住哪几道有虫，第二局直接去，用不着看它；每局都不变的只剩它的脾气（饿了去扒有虫的缝）。
   const text = (L.layouts && DIAN.ju[i] > 1) ? L.layouts[(DIAN.ju[i] - 2) % L.layouts.length] : L.text;
   let DP = null; if (L.day) { DP = dayPlan(L.day); L.hun0 = DP.hun; }
-  if (L.day) { const G = L.day === 4 && logCount0(4) < 2; L.need = G ? 2 : 1; if (G) { DP.n = 1; L.hun0 = 0; } L.gate = G; }   /* 吹万 页192朽木门：照玩具第二张，朽木昨天死了的话第 4 天地上只给一只、要带两只、红一早就饿；不往朽木里添一只过不了。第 5 天起不摆 */
+  if (L.day) { const G = L.day === 4 && logCount0(4) < 2; L.need = G ? 2 : (L.day === 1 ? 2 : 1); if (G) { DP.n = 1; L.hun0 = 0; } L.gate = G; }   /* 吹万 第 19 天 00:34 修：原来写死 L.need = 1，把第 1 天的 need 2（页124）也盖成了 1，第 1 天成了开局肚子里一只、两步回窝就过（有1、屑1 都两步过） */ /* 吹万 页192朽木门：照玩具第二张，朽木昨天死了的话第 4 天地上只给一只、要带两只、红一早就饿；不往朽木里添一只过不了。第 5 天起不摆 */
   const text2 = L.day ? dayText(L.day, DP.n) : text;
      // 第三个 第 18 天 页173果：烂果招来的两只也算进'今天地上有几只'
   if (L.day) L.text = text2;
