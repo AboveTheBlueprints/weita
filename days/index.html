@@ -414,7 +414,7 @@ function events2(k, a, b) {
   let B;
   // 哪几只虫是黄吃的：这一步不见了、黄刚开始嚼、就在黄脚下或旁边一格
   const byB = new Set(); a.bugs.forEach((x, i) => { if (x && !b.bugs[i] && b.lzB.mode === '吃' && a.lzB.mode !== '吃' && Math.abs(x[0] - b.lzB.pos[0]) + Math.abs(x[1] - b.lzB.pos[1]) <= 1) byB.add(i); });
-  try { B = events('.', Object.assign({}, a, { lz: a.lzB, pl: b.pl, ate: b.ate, bugs: a.bugs.map((x, i) => byB.has(i) ? x : null) }), Object.assign({}, b, { lz: b.lzB, bugs: a.bugs.map(() => null), _anyBug: b.bugs.some(x => x) })   /* 第二个 14:21 页73一只：青饿了时字要看地上真有没有虫（两只的'日子'以前没开过，写成了'地上没虫了'） */).filter(t => t !== '你没动。' && !t.startsWith('你') && !t.startsWith('这只正是')); }
+  try { B = events('.', Object.assign({}, a, { lz: a.lzB, pl: b.pl, ate: b.ate, bugs: a.bugs.map((x, i) => byB.has(i) ? x : null) }), Object.assign({}, b, { lz: b.lzB, bugs: a.bugs.map(() => null), _anyBug: b.bugs.some(x => x) })   /* 第二个 14:21 页73一只：青饿了时字要看地上真有没有虫（两只的'日子'以前没开过，写成了'地上没虫了'） */).filter(t => t !== '你没动。' && !t.startsWith('你') && !t.startsWith('这只正是') && !t.includes('朽木')); }   /* 吹万 第 19 天 00:43：朽木的字是地上的事，红那一遍已经写了；青这一遍 bugs 全是 null，原来又写一遍'又爬出一只。里头现在零只'（种子 1113 第 6 天第 8 步，同一行先说三只、再说零只） */
   finally { m = keepM; FL.forEach(f => S[f] = keepF[f]); }
   B = B.map(t => t.replace(/蜥蜴/g, '青蜥蜴').replace(/OTHER/g, '红蜥蜴'));
   if (b.lz.mode === '逃' && a.lz.mode !== '逃') A.push('红蜥蜴掉头就跑。');
