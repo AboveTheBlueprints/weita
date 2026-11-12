@@ -294,6 +294,16 @@ function frame(cv, m, info, t) {
       g.beginPath(); g.arc(px, py, n === 1 ? 4 : 5, 0, 7); g.fill();
     }
   }
+  // 吹万 第 18 天 21:4x 页197木屑：你在朽木上每扒一下，木头底下落一撮木屑；前几天的还在（颜色暗一点），不写字。
+  if (m.logAt) {
+    const X = cx(m.logAt[0]), Y = cx(m.logAt[1]), old = m.logDust0 || 0, all = old + (st.dust || 0);
+    for (let i = 0; i < all; i++) {
+      const bx = X - C * 0.3 + (i % 4) * C * 0.2, by = Y + C * 0.33 + Math.floor(i / 4) * 5;
+      g.strokeStyle = i < old ? '#a8865a' : '#e6c58c'; g.lineWidth = 2.8; g.lineCap = 'round';   // 木屑画成几根浅色的小卷片，跟虫渣的深褐点分开
+      for (const [dx, dy, a] of [[-4, 0, 0.5], [3, -1.5, -0.7], [0, 3, 1.3], [5, 2.5, 0.2], [-3, 4, -0.3]]) { g.beginPath(); g.moveTo(bx + dx - 3.6 * Math.cos(a), by + dy - 3.6 * Math.sin(a)); g.lineTo(bx + dx + 3.6 * Math.cos(a), by + dy + 3.6 * Math.sin(a)); g.stroke(); }
+      g.lineCap = 'butt';
+    }
+  }
   // 虫
   st.bugs.forEach((b, i) => {
     if (!b) return;
