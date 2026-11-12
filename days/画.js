@@ -280,14 +280,29 @@ function frame(cv, m, info, t) {
   if (m.tree) { const X = cx(m.tree[0]), Y = cx(m.tree[1]); g.fillStyle = '#6b4a2b'; g.fillRect(X - 3, Y, 6, C * 0.42); g.fillStyle = '#3f7a3a'; g.beginPath(); g.arc(X, Y - 4, C * 0.36, 0, 7); g.fill(); g.fillStyle = '#4f9a48'; g.beginPath(); g.arc(X - 6, Y - 9, C * 0.2, 0, 7); g.fill(); }
   if (st.fr) { const X = cx(st.fr[0]), Y = cx(st.fr[1]); g.fillStyle = '#e8892e'; g.beginPath(); g.arc(X, Y + 2, 10, 0, 7); g.fill(); g.fillStyle = '#f6b25a'; g.beginPath(); g.arc(X - 3, Y - 1, 4, 0, 7); g.fill(); g.strokeStyle = '#5a3a1a'; g.lineWidth = 2; g.beginPath(); g.moveTo(X, Y - 8); g.lineTo(X + 3, Y - 13); g.stroke(); }
   if (m.rot) { const X = cx(m.rot[0]), Y = cx(m.rot[1]); g.fillStyle = 'rgba(110,80,40,0.55)'; g.beginPath(); g.ellipse(X, Y + 8, 12, 6, 0, 0, 7); g.fill(); }
+  // 吹万 第 18 天 17:07 页184朽木：朽木画成一截横着的褐木头，里头几只就露几个绿点；只剩一只时那一点缩在木头深处、暗下去；两只以上点会一闪一闪（窸窸窣窣）
+  const onLog = b => m.logAt && b && b[0] === m.logAt[0] && b[1] === m.logAt[1];
+  if (m.logAt) {
+    const X = cx(m.logAt[0]), Y = cx(m.logAt[1]), n = st.bugs.filter(onLog).length + (st.deep ? 1 : 0);
+    g.fillStyle = '#6e4e2e'; g.fillRect(X - C * 0.42, Y - C * 0.2, C * 0.84, C * 0.4);
+    g.fillStyle = '#4a321c'; g.beginPath(); g.ellipse(X + C * 0.42, Y, C * 0.07, C * 0.2, 0, 0, 7); g.fill();
+    g.strokeStyle = '#3a2614'; g.lineWidth = 1.5; for (const dx of [-0.22, 0.05, 0.25]) { g.beginPath(); g.moveTo(X + C * dx, Y - C * 0.18); g.lineTo(X + C * dx + 4, Y + C * 0.18); g.stroke(); }
+    const live = n >= 2, now = (typeof performance !== 'undefined' ? performance.now() : 0) / 400;
+    for (let i = 0; i < n; i++) {
+      const px = X - C * 0.3 + i * C * 0.2, py = Y + (i % 2 ? 3 : -3);
+      g.fillStyle = n === 1 ? 'rgba(70,120,55,0.9)' : `rgba(130,210,100,${live ? 0.75 + 0.25 * Math.sin(now + i) : 1})`;
+      g.beginPath(); g.arc(px, py, n === 1 ? 4 : 5, 0, 7); g.fill();
+    }
+  }
   // 虫
   st.bugs.forEach((b, i) => {
     if (!b) return;
+    if (onLog(b) && (!prev || !prev.bugs[i] || onLog(prev.bugs[i]))) return;   // 趴在朽木里的不单画
     const pb = prev && prev.bugs[i];
     const [X, Y] = pb ? at(pb, b, tMove) : at(b);
     drawBug(g, X, Y, null, !!(st.mine && st.mine[i]));
   });
-  if (prev && t < 1) prev.bugs.forEach((b, i) => { if (b && !st.bugs[i]) drawBug(g, cx(b[0]), cx(b[1]), 1 - seg(t, 0.3, 0.6), !!(prev.mine && prev.mine[i])); });
+  if (prev && t < 1) prev.bugs.forEach((b, i) => { if (b && !st.bugs[i] && !onLog(b)) drawBug(g, cx(b[0]), cx(b[1]), 1 - seg(t, 0.3, 0.6), !!(prev.mine && prev.mine[i])); });
   if (info.spit && t < 1) {
     const [sx, sy] = at(info.spit.from, info.spit.to, Math.min(1, t * 1.6));
     drawBug(g, sx, sy, t < 0.7 ? 1 : (1 - t) / 0.3);

@@ -263,15 +263,20 @@ if (!SEEDQ) { try { history.replaceState(null, '', location.pathname + (location
 { const a = document.getElementById('newland'); if (a) a.href = '?seed=' + (SEED + 1); }   // 第一个 08:44：换一块地要放得看得见，不然有人以为坏了、一直是这一张
 const DAYINFO = {}; const ROT = {};   /* 第三个 第 18 天 页173果：第 d 天（下标 d-1）过完时地上没人拿的果子 */   // 第 d 天（下标 d-1）过关时：{ left 地上剩几只, ate 它吃了几只 }
 function dayRng(s) { return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }; }
+// 吹万 第 18 天 17:06 页184朽木：第 LOGDAY 天起，红石头正下方三格（过道口）一截朽木。头一天里头两只；往后每天开局是昨天天黑时里头剩的那几只。
+const LOGAT = [9, 1], LOGDAY = 3, LOG0 = 2;   /* 页188朽木手：挪到上路 (9,1)，人去右边的路上最先碰到它；你叼一只它就在你脚下缩进去 */   /* 页187朽木醒：第 3 天开局两只、活的；红多半先吃一只，你看着它掉到一只、缩进去 */   /* 页186朽木种：第 3 天起，开局只剩深处一只 */
+function logCount0(d) { if (d < LOGDAY) return 0; if (d === LOGDAY) return LOG0; const Y = DAYINFO[d - 2]; const c = Y ? (Y.all || []).filter(k => k[0] === LOGAT[0] && k[1] === LOGAT[1]).length : 0; return c >= 2 ? c : 1; }   /* 页186：不到两只就是深处那一只 */
+function logSetup(mm, L) { if (!L.day || L.day < LOGDAY) return; mm.logAt = LOGAT.slice(); mm.bugs = mm.bugs.filter(b => !(b[0] === LOGAT[0] && b[1] === LOGAT[1])); const c = logCount0(L.day); if (c >= 2) { for (let i = 0; i < c; i++) mm.bugs.push(LOGAT.slice()); } else mm.logDeep0 = true; }
 function dayText(d, nBugs) {   // 第二个 第 16 天 04:45 页98虫过夜：昨天地上剩的虫（野的也算）第二天还在原地；新来的两只生在昨天虫没了的那几格（虫渣）或剩下的那几只旁边（两步以内、离窝 10 步以外），不再从五个虫位里随机挑。第 1 天照旧五个虫位。
   const MAP = d >= 6 ? DAYMAP2 : DAYMAP;   // 第二个 页113
   const spots = []; MAP.split('\n').forEach((r, y) => [...r].forEach((c, x) => c === '*' && spots.push([x, y])));
   const Y = DAYINFO[d - 2]; const left = (Y && Y.all) || []; const dead = ((Y && Y.dead) || []).map(k => [k[0], k[1] + 1]);
   const r = dayRng(SEED * 7 + d * 131);
   const rows = MAP.split('\n').map(x => [...x]);
-  const pick = left.map(k => [k[0], k[1] + 1]).filter(([x, y]) => !'NPLM'.includes(rows[y][x]));   // DAYMAP 头一行是空的，这里的 y 比棋盘上的多 1。第二个 12:37 页113：昨天剩在青石头那格上的虫不过夜（整2 种子 31 第 5 天剩一只正在 (13,3)，盖掉了 M，第 6 天地上没有青的）
+  const isLog = (x, y) => d >= LOGDAY && x === LOGAT[0] && y === LOGAT[1] + 1;
+  const pick = left.map(k => [k[0], k[1] + 1]).filter(([x, y]) => !'NPLM'.includes(rows[y][x]) && !isLog(x, y));   // DAYMAP 头一行是空的，这里的 y 比棋盘上的多 1。第二个 12:37 页113：昨天剩在青石头那格上的虫不过夜（整2 种子 31 第 5 天剩一只正在 (13,3)，盖掉了 M，第 6 天地上没有青的）
   const isFloor = (x, y) => rows[y] && rows[y][x] !== undefined && rows[y][x] !== '#';
-  const taken = (x, y) => pick.some(q => q[0] === x && q[1] === y) || 'NPLM'.includes(rows[y][x]);
+  const taken = (x, y) => pick.some(q => q[0] === x && q[1] === y) || 'NPLM'.includes(rows[y][x]) || isLog(x, y);
   let nest = null; rows.forEach((row, y) => row.forEach((c, x) => { if (c === 'N') nest = [x, y]; }));
   const dist = (a) => { const D = {}; const Q = [a]; D[a] = 0; while (Q.length) { const [x, y] = Q.shift(); for (const [dx, dy] of [[1,0],[-1,0],[0,1],[0,-1]]) { const nx = x + dx, ny = y + dy; if (isFloor(nx, ny) && D[[nx, ny]] === undefined) { D[[nx, ny]] = D[[x, y]] + 1; Q.push([nx, ny]); } } } return D; };
   const fromNest = dist(nest);
@@ -285,6 +290,7 @@ function dayText(d, nBugs) {   // 第二个 第 16 天 04:45 页98虫过夜：�
     }
     const pool = spots.filter(([x, y]) => !taken(x, y)); if (!pool.length) break; pick.push(pool[Math.floor(r() * pool.length)]);
   }
+  if (LEVELS[d - 1] && LEVELS[d - 1].gate && pick.length > nBugs) pick.length = nBugs;   /* 吹万 页192朽木门：那一天地上只留一只 */
   pick.forEach(([x, y]) => rows[y][x] = 'B');
   /* 第三个 第 18 天 01:27 页173果第二版：烂果不再冒虫（果甲果乙：冒在窝门口的两只成了白给，第 3–7 天 8 步打卡），改成它一早自己吃了，见 dayPlan0 */
   return rows.map(x => x.join('').replace(/\*/g, '.')).join('\n');
@@ -315,7 +321,15 @@ function events(k, a, b) {
   if (k[0] === 'X') out.push(eq(lastDrop, a.pl) ? '你吐出了一只虫，落在你脚下。' : '你吐出了一只虫。');
   if (S.fruitDrop && b._anyBug === undefined) out.push('树上掉下来一颗果子，落在蜥蜴的石头跟前。');   // 第三个 第 18 天 页173果
   if (S.fruitAte && b._anyBug === undefined) out.push('你吃了一颗果子。');
-  else if (b.ate > a.ate && !S.dugOut) out.push('你吃到了一只虫！');
+  else if (b.ate > a.ate && !S.dugOut && !S.logTook) out.push('你吃到了一只虫！');
+  if (m.logAt) { const nL = b.bugs.filter(q => q && q[0] === m.logAt[0] && q[1] === m.logAt[1]).length, CNL = ['零','一','两','三','四','五','六'];   /* 吹万 页184朽木 */
+    if (S.logTook) out.push(`你从朽木里叼出一只虫。里头还剩${CNL[nL]}只。`);
+    if (S.logBorn) out.push(`朽木里窸窸窣窣，又爬出一只。里头现在${CNL[nL]}只。`);
+    if (S.logLz) out.push(`${S.logLz}的从朽木里叼走一只。`);   /* 页187 */
+    if (S.logStop) out.push('朽木里只剩一只了。一只生不出来，它往深处一缩，没动静了。');
+    if (S.logEmpty) out.push('朽木空了。');
+    if (S.logWake) out.push('虫落进朽木，深处那只动了动，又爬出来一只。里头现在三只，窸窸窣窣的。');
+    if (S.logReach) out.push('朽木里那只缩在深处，够不着。'); }
   if (b.ate > a.ate && !S.dugOut && !S.fruitAte && eq(S.wantBug(m, a), b.pl)) out.push('这只正是蜥蜴想去吃的。');   // 第二个 第 15 天 01:25 页44认得：竖井那下（你吃了它想吃的，它改去另一只），整八11、12 都走到了，都说成'它饿了自己去竖井底下找虫'，没认出是自己那一口
   a.bugs.forEach((x, i) => {
     const y = b.bugs[i];
@@ -439,10 +453,11 @@ function start(i) {
   // 为什么：网页上的人第一局挨个踩，记住哪几道有虫，第二局直接去，用不着看它；每局都不变的只剩它的脾气（饿了去扒有虫的缝）。
   const text = (L.layouts && DIAN.ju[i] > 1) ? L.layouts[(DIAN.ju[i] - 2) % L.layouts.length] : L.text;
   let DP = null; if (L.day) { DP = dayPlan(L.day); L.hun0 = DP.hun; }
+  if (L.day) { const G = L.day === 4 && logCount0(4) < 2; L.need = G ? 2 : 1; if (G) { DP.n = 1; L.hun0 = 0; } L.gate = G; }   /* 吹万 页192朽木门：照玩具第二张，朽木昨天死了的话第 4 天地上只给一只、要带两只、红一早就饿；不往朽木里添一只过不了。第 5 天起不摆 */
   const text2 = L.day ? dayText(L.day, DP.n) : text;
      // 第三个 第 18 天 页173果：烂果招来的两只也算进'今天地上有几只'
   if (L.day) L.text = text2;
-  m = new S.Map(text2, L.face, L.need, L.carry, L.V);
+  m = new S.Map(text2, L.face, L.need, L.carry, L.V); logSetup(m, L);
   if (L.day) { m.tree = null; m.fruitAt = [6, 2]; m.fruitStep = 999; m.rot = ROT[L.day - 2] || null; }   // 第五个 第 18 天 页176收：果子拿掉（第三个 04:47 点头：那 18 步的果子是一条不用读红就吃饱的路，跟'喂它'抢）。原来是 m.tree = [5, 2]; m.fruitStep = L.day === 1 ? 999 : 8（第三个 页173果），要回来改这一行和下面两处
   if (L.hun0 !== undefined) m.hun0 = L.hun0; if (L.day && DAYINFO[L.day - 2] && DAYINFO[L.day - 2].haunt) m.haunt0 = DAYINFO[L.day - 2].haunt; if (L.dig0) m.dig0 = true; if (L.grudge0) m.grudge0 = L.grudge0; if (L.faceB) m.faceB = L.faceB; if (L.landR) m.landR = L.landR; if (L.hun0B !== undefined) m.hun0B = L.hun0B;
   if (L.day === 1 && BACK) { if (BACK.haunt) m.haunt0 = BACK.haunt; m.fed0 = BACK.a || 0; }   /* 第二个 页154回来 */ const CY = L.from ? CARRY[L.from - 1] : null; if (CY) { m.fed0 = CY.a; m.fed0B = CY.b; if (L.V.includes('记仇')) m.grudge0 = CY.g ? (L.gmap ? L.gmap(CY.g) : CY.g) : null; }   // 第二个 09:36 页62：第 8 张'第二天'也照第 7 张真丢你的地方，不再用写死的；第 7 张没甩掉过它，第 8 张开局就什么都不记   // 第二个 08:58 页60隔天：'又一天'开局记着你昨天（第 from 张最后过关那局）喂过它几只   // 第二个 第 15 天 01:50 页45邻居   // 第二个·页11 21:47 页35骗
@@ -455,7 +470,8 @@ function start(i) {
   const yday0 = (L.day === 1 && BACK) ? '　还是上回那只蜥蜴。' + (BACK.a ? `它身子底下有${DOT(BACK.a)}个绿点。` : '') : '';   // 第二个 页154回来
   const CN7 = ['零', '一', '两', '三', '四', '五', '六', '七', '八', '九', '十'];   /* 第三个 页173果：烂果多两只，地上会到七只以上（果甲第 5 天看见'undefined只'） */
   const dayLine = !L.day ? '' : (L.day === 1 ? `第 1 天。地上有${CN7[DP.n]}只虫。` : (DAYINFO[L.day - 2] ? `第 ${L.day} 天。` + (DAYINFO[L.day - 2].empty ? '昨天你空着肚子回的窝，今天再空着回去就熬不过去了。' : '') + `昨天${DAYINFO[L.day - 2].empty ? '天黑' : '你回窝'}的时候，地上还剩${CN7[DAYINFO[L.day - 2].left]}只虫；今天地上有${CN7[DP.n]}只。` : `第 ${L.day} 天。地上有${CN7[DP.n]}只虫。`));   // 第二个 17:42 页77几天：只写数，不写为什么
-  document.getElementById('intro').textContent = dayLine + goal() + (yday || yday0) + ((DIAN.ju[i] >= 4 && !PASSED.has(i) && i + 1 < LEVELS.length) ? '　（卡住了也可以点上面那排张名，先去玩后面的。）' : '');   // 第二个 第 15 天 02:13：整八2、4 卡在石缝四局，不知道张名能点，后面几张没见到
+  const logLine = (L.day && L.day >= LOGDAY) ? ((L.day === LOGDAY ? '上面那条路上横着一截朽木。' : '') + (logCount0(L.day) >= 2 ? `朽木里有${CN7[logCount0(L.day)]}只，窸窸窣窣的。` : '朽木里只剩一只，一只生不出来，没动静。')) : '';   /* 吹万 页184朽木 */
+  document.getElementById('intro').textContent = dayLine + logLine + goal() + (yday || yday0) + ((DIAN.ju[i] >= 4 && !PASSED.has(i) && i + 1 < LEVELS.length) ? '　（卡住了也可以点上面那排张名，先去玩后面的。）' : '');   // 第二个 第 15 天 02:13：整八2、4 卡在石缝四局，不知道张名能点，后面几张没见到
   if (L.day && m.rot) document.getElementById('intro').textContent += '　昨天那颗果子没人拿，烂在它石头跟前，它一早吃了。';   // 第三个 第 18 天 页173果
   const canX = L.V.includes('吐');
   document.getElementById('keys').innerHTML = (L.faceB && L.day ? '红的、青的都是蜥蜴，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。' /* 第二个 页113：天里不写黄格那句，跟第 1 天一样 */ : L.faceB ? '这张有两只蜥蜴，一只红的、一只青的，尖的一头是脸。各有一块灰石头，石头周围淡淡涂着它自己颜色的那一块地。涂黄的格子是它们脸朝着的那一条（青的那条描着青边），一直到墙：你这一步走完还站在黄格里，它就看见你。' : '红的是蜥蜴，尖的一头是它的脸。灰的那块是它的石头。' /* 第二个 第 16 天 00:23：黄格那句拿掉，让它停一拍再冲自己教（首分钟/预期.md 末尾四个人） */) + '淡淡的白线是这一回合谁从哪儿动过来。<br>方向键或 WASD 走一格，空格不动' + (canX ? (L.V.includes('吐选') ? '，按 X 再按一个方向，把吃下去的一只虫往那边扔，最远 3 格，碰到墙、虫或蜥蜴就停（这一步你不动）' : '，X 把吃下去的一只虫吐出去（这一步你不动；虚线框那格就是会落的地方）') : '') + `。Z 撤一步，R 从头再来。天黑前（${lim()} 步以内）要回到窝。`;
@@ -477,7 +493,9 @@ function draw(anim) {
   if (anim && WeiDraw.animate) WeiDraw.animate(cv, m, info, showR ? () => setTimeout(showR, 500) : null); else { (WeiDraw.still || WeiDraw.frame)(cv, m, Object.assign(info, { prev }), 1); showR && showR(); }
   if (IT) { const B = IT.who === 'B', me = B ? st.lzB : st.lz, ot = B ? st.lz : st.lzB, h = me.hun || 0; document.getElementById('status').textContent = `第 ${li + 1} 天　你是${itName(IT.who)}的　走了 ${n} 步，还剩 ${lim() - n} 步天黑　你的肚子：${me.mode === '吃' ? '在嚼' : h >= 5 ? '鼓鼓的' : h >= 1 ? '饱劲过了' : '瘪了'}` + (ot ? `　${itName(B ? 'A' : 'B')}的：${(ot.hun || 0) >= 5 ? '鼓鼓的' : (ot.hun || 0) >= 1 ? '饱劲过了' : '瘪了'}` : '');   /* 页172：当青的那天，肚子写青的 */ document.getElementById('log').innerHTML = log.map(t => `<div>${t}</div>`).join(''); document.getElementById('log').style.display = ''; return; }   // 第四个 页168你是它
   document.getElementById('status').textContent = `第 ${li + 1} ${LEVELS[li].day ? '天' : '张'}　走了 ${n} 步，还剩 ${lim() - n} 步　肚子里 ${st.ate} 只，要带 ${m.need} 只回窝` +   // 第二个 第 15 天 08:30 页57带几只：整十五1、2 都把要带几只弄错过（第 4、5、6、14 张），开头那句看过就忘
- (m.V.has('日子') ? `　${st.lzB ? '红的' : '蜥蜴的'}肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '饱劲过了' : '瘪了'}` + (st.lzB ? `，青的：${st.lzB.hun >= 5 ? '鼓鼓的' : st.lzB.hun >= 1 ? '饱劲过了' : '瘪了'}` : '') : '');
+ (m.V.has('日子') ? `　${st.lzB ? '红的' : '蜥蜴的'}肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '饱劲过了' : '瘪了'}` + (st.lzB ? `，青的：${st.lzB.hun >= 5 ? '鼓鼓的' : st.lzB.hun >= 1 ? '饱劲过了' : '瘪了'}` : '') : '') +
+   (m.logAt ? (() => { const nl = st.bugs.filter(q => q && q[0] === m.logAt[0] && q[1] === m.logAt[1]).length, CNs = ['零','一','两','三','四','五','六'];   /* 吹万 页189朽木数：照玩具 ~/碰/朽木/ 那行，朽木里几只、几步后爬出一只，天天摆在那儿 */
+     return st.deep ? '　朽木：只剩一只，生不出来，没动静' : nl >= 4 ? `　朽木：${CNs[nl]}只，挤满了` : nl >= 2 ? `　朽木：${CNs[nl]}只，窸窸窣窣（再过 ${S.logLeft(m, st)} 步爬出一只）` : nl === 1 ? '　朽木：一只' : '　朽木：空了'; })() : '');
   document.getElementById('log').innerHTML = log.map(t => `<div>${t}</div>`).join('');
   document.getElementById('log').style.display = '';   // 第四个 页161：点了看它这几天会把这串藏起来，一接着玩就露出来
 }
@@ -520,7 +538,7 @@ function ghostNext(i) {
   const sI = DAYINFO[i], sC = CARRY[i]; DAYINFO[i] = gi; CARRY[i] = gc;
   try {
     const DP = dayPlan(L.day), text = dayText(L.day, DP.n);
-    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun; if (L.day) { m2.tree = null; m2.fruitAt = [6, 2]; m2.fruitStep = 999; m2.rot = ROT[L.day - 2] || null; }   /* 第五个 页176收：果子拿掉，回看重算跟着没有树 */
+    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun; logSetup(m2, L); if (L.day) { m2.tree = null; m2.fruitAt = [6, 2]; m2.fruitStep = 999; m2.rot = ROT[L.day - 2] || null; }   /* 第五个 页176收：果子拿掉，回看重算跟着没有树 */
     if (gi.haunt) m2.haunt0 = gi.haunt; if (L.faceB) m2.faceB = L.faceB; if (L.hun0B !== undefined) m2.hun0B = L.hun0B;
     m2.fed0 = gc.a; m2.fed0B = gc.b; if (L.V.includes('记仇')) m2.grudge0 = gc.g;
     const s2 = S.init(m2); return { m: m2, st: s2 };
@@ -750,7 +768,7 @@ function nightFrom(i, ss, pgc) {   // 跟 ghostNext 后半一样，那天的一�
   const sI = DAYINFO[i], sC = CARRY[i]; DAYINFO[i] = gi; CARRY[i] = gc;
   try {
     const DP = dayPlan(L.day), text = dayText(L.day, DP.n);
-    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun; if (L.day) { m2.tree = null; m2.fruitAt = [6, 2]; m2.fruitStep = 999; m2.rot = ROT[L.day - 2] || null; }   /* 第五个 页176收：果子拿掉，回看重算跟着没有树 */
+    const m2 = new S.Map(text, L.face, L.need, L.carry, L.V); m2.hun0 = DP.hun; logSetup(m2, L); if (L.day) { m2.tree = null; m2.fruitAt = [6, 2]; m2.fruitStep = 999; m2.rot = ROT[L.day - 2] || null; }   /* 第五个 页176收：果子拿掉，回看重算跟着没有树 */
     if (gi.haunt) m2.haunt0 = gi.haunt; if (L.faceB) m2.faceB = L.faceB; if (L.hun0B !== undefined) m2.hun0B = L.hun0B;
     m2.fed0 = gc.a; m2.fed0B = gc.b; if (L.V.includes('记仇')) m2.grudge0 = gc.g;
     return { m: m2, st: S.init(m2), dots: gc.a, gc };
@@ -1017,7 +1035,7 @@ function act(k) {
   else if (st.ate >= m.need && eq(st.pl, m.nest)) {
     over = true; msg.textContent = `回到窝了，过了！一共 ${n} 步。`;
     if (LEVELS[li].day) { const ss = hist.map(h => h.st).concat([st]); let ea = 0; for (let q = 1; q < ss.length; q++) if (ss[q].lz.mode === '吃' && ss[q - 1].lz.mode !== '吃') ea++; const lf = st.bugs.filter(b => b).length; ROT[li] = (st.fr && st.fd) ? st.fr.slice() : null; DAYINFO[li] = { left: lf, ate: ea, haunt: st.lz.haunt || null, all: st.bugs.filter(b => b).map(b => b.slice()) /* 第二个 页98：野的也过夜 */, dead: (() => { const D = []; for (let q = 1; q < ss.length; q++) (ss[q - 1].bugs || []).forEach((b, i) => { if (b && !(ss[q].bugs || [])[i]) D.push(b.slice()); }); return D; })() /* 第二个 页98：今天虫在哪几格没了（你吃的、它吃的），明天新来的生在这几格旁边 */, mine: st.bugs.map((b, i) => (b && st.mine && st.mine[i]) ? b.slice() : null).filter(Boolean) }; const CNN = x => x ? ['', '一', '两', '三', '四', '五', '六'][x] : '零'; let eb = 0; if (st.lzB) for (let q = 1; q < ss.length; q++) if (ss[q].lzB && ss[q - 1].lzB && ss[q].lzB.mode === '吃' && ss[q - 1].lzB.mode !== '吃') eb++;   /* 第二个 第 16 天 12:36 页113：两只的天各说各的（整1 第 6 天'它今天吃了零只'，对照日志才知道是红的零只、青的两只） */
-      msg.textContent += (st.lzB ? `红的今天吃了${CNN(ea)}只，青的吃了${CNN(eb)}只` : `它今天吃了${CNN(ea)}只`) + `，地上还剩${lf ? ['', '一', '两', '三', '四', '五', '六'][lf] : '零'}只。`; } /* 第二个 17:40 页77几天 */ dian('过'); PASSED.add(li); DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), fed: fedCounts() }; (GAMES[li] = GAMES[li] || []).push(Object.assign({}, DAYS[li], { how: '过了', n, ju: DIAN.ju[li] })); CARRY[li] = { a: (() => { const f = st.lz.fed || 0, L0 = LEVELS[li], f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : (L0.day === 1 && BACK ? (BACK.a || 0) : 0); return f > f0 ? f : Math.max(0, f - 1); })(), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null }; saveBack(li);   // 第二个 09:17 页61记仇隔天：也记着它最后在哪丢的你
+      msg.textContent += (st.lzB ? `红的今天吃了${CNN(ea)}只，青的吃了${CNN(eb)}只` : `它今天吃了${CNN(ea)}只`) + `，地上还剩${(() => { const nl = m.logAt ? st.bugs.filter(q => q && q[0] === m.logAt[0] && q[1] === m.logAt[1]).length : 0, dp = st.deep ? 1 : 0, CNx = ['零', '一', '两', '三', '四', '五', '六', '七', '八', '九', '十']; return CNx[lf - nl] + '只' + (m.logAt ? (dp ? '，朽木里只剩一只缩在深处' : `，朽木里${CNx[nl]}只`) : ''); })()}。`; } /* 第二个 17:40 页77几天 */ dian('过'); PASSED.add(li); DAYS[li] = { m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), fed: fedCounts() }; (GAMES[li] = GAMES[li] || []).push(Object.assign({}, DAYS[li], { how: '过了', n, ju: DIAN.ju[li] })); CARRY[li] = { a: (() => { const f = st.lz.fed || 0, L0 = LEVELS[li], f0 = L0.from && CARRY[L0.from - 1] ? (CARRY[L0.from - 1].a || 0) : (L0.day === 1 && BACK ? (BACK.a || 0) : 0); return f > f0 ? f : Math.max(0, f - 1); })(), b: st.lzB ? (st.lzB.fed || 0) : 0, g: st.lz.grudge || null }; saveBack(li);   // 第二个 09:17 页61记仇隔天：也记着它最后在哪丢的你
     if (li + 1 < LEVELS.length) document.getElementById('next').style.display = 'inline-block';
     else if (LEVELS[li].day) msg.innerHTML += ` 七天过完了。<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
     else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';

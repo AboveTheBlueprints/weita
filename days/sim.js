@@ -581,5 +581,54 @@ api.init = init3;
   };
   api.init = function (m) { const o = _initT(m); o.tick = 0; o.fr = null; o.fin = 0; o.fd = false; return o; };
 }
+// 吹万 第 18 天 17:05 页184朽木：梓韬第 14 天说食物也可以扩；朽木玩具（~/碰/朽木/）四个生人都在"剩一只就不生"那下停住。
+// 地上一截朽木（m.logAt）：里头的虫不跑；两只以上，每 LOGBREED 步爬出一只（最多 LOGCAP）；剩一只不生；空了就空了。
+// 你走上去只叼一只（原来一格上的虫一步全吃掉）。红饿了照旧找最近的虫，朽木多半最近。外面包一层，原来的 step 一个字没动。
+{
+  const LOGBREED = 8, LOGCAP = 4;   // 页187：5 改 8，比红饿一回（约 6 步）慢，醒过来的朽木会被红慢慢吃回一只，不是一只吃不完的碗
+  const _stepW = api.step, _initW = api.init;
+  api.step = function (m, st, k) {
+    api.logBorn = false; api.logStop = false; api.logEmpty = false; api.logTook = false; api.logWake = false; api.logReach = false; api.logLz = '';
+    if (!m.logAt) return _stepW(m, st, k);
+    const r = _stepW(m, st, k);
+    if (r === null || r === 'bad') return r;
+    const L = m.logAt, at = b => !!b && eq(b, L);
+    st.bugs.forEach((b, i) => { if (at(b) && r.bugs[i] && !at(r.bugs[i])) r.bugs[i] = L.slice(); });   // 朽木里的不跑
+    if (eq(r.pl, L) && r.ate - st.ate > 1) {   // 一步只叼一只
+      let extra = r.ate - st.ate - 1;
+      st.bugs.forEach((b, i) => { if (extra > 0 && at(b) && r.bugs[i] === null) { r.bugs[i] = L.slice(); extra -= 1; r.ate -= 1; } });
+    }
+    if (eq(r.pl, L) && r.ate > st.ate) api.logTook = true;
+    {   // 页187：朽木里的一步只被叼走一只——谁站在上面谁叼一只（红也一样，原来红一口吃光一格）
+      const eaters = (eq(r.pl, L) ? 1 : 0) + (eq(r.lz.pos, L) ? 1 : 0) + (r.lzB && eq(r.lzB.pos, L) ? 1 : 0);
+      let lost = st.bugs.filter(at).length - r.bugs.filter(at).length - Math.max(eaters, 0);
+      st.bugs.forEach((b, i) => { if (lost > 0 && at(b) && r.bugs[i] === null) { r.bugs[i] = L.slice(); lost -= 1; } });
+    }
+    {
+      const lzOn = eq(r.lz.pos, L) || (r.lzB && eq(r.lzB.pos, L));
+      if (lzOn && st.bugs.filter(at).length > r.bugs.filter(at).length + (eq(r.pl, L) && r.ate > st.ate ? 1 : 0)) api.logLz = (r.lzB && eq(r.lzB.pos, L) && !eq(r.lz.pos, L)) ? '青' : '红';
+    }
+    const n0 = st.bugs.filter(at).length + (st.deep || 0);
+    let deep = st.deep || 0;
+    if (deep && r.bugs.some(at)) {   // 页186：吐进去一只，深处那只醒了
+      r.bugs = r.bugs.concat([L.slice(), L.slice()]); if (r.mine) r.mine = r.mine.concat([false, false]); deep = 0; api.logWake = true;   // 醒过来那一下就爬出一只：吐进去的、深处的、新爬的，三只
+    }
+    if (!deep && r.bugs.filter(at).length === 1) {   // 掉到一只：缩进深处，谁也够不着
+      const k = r.bugs.findIndex(at); r.bugs[k] = null; deep = 1; if (n0 >= 2) api.logStop = true;
+    }
+    if (deep && eq(r.pl, L) && !eq(st.pl, L)) api.logReach = true;
+    const n1 = r.bugs.filter(at).length;
+    let lb = st.lb || 0;
+    if (n1 >= 2 && n1 < LOGCAP) {
+      lb += 1;
+      if (lb >= LOGBREED) { r.bugs = r.bugs.concat([L.slice()]); if (r.mine) r.mine = r.mine.concat([false]); lb = 0; api.logBorn = true; }
+    } else lb = 0;
+    r.deep = deep;
+    r.lb = lb;
+    return r;
+  };
+  api.init = function (m) { const o = _initW(m); o.lb = 0; o.deep = m.logDeep0 ? 1 : 0; return o; };
+  api.logLeft = function (m, st) { return m.logAt ? (LOGBREED - (st.lb || 0)) : 0; };
+}
 if (typeof module !== 'undefined') module.exports = api; else root.WeiSim = api;
 })(this);
