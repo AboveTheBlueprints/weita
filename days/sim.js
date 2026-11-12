@@ -378,7 +378,7 @@ function step(m, st, k) {
       else if (V.has('吐远')) t = farDrop(m, pl, pf, bugs, lz.pos, m._other && m._other.pos);   // 第二个 16:26 '吐远'：往脸朝的方向扔，最远 3 格，碰到墙、虫、蜥蜴前停
       else if (V.has('吐朝')) t = pf ? [pl[0] + DIRS[pf][0], pl[1] + DIRS[pf][1]] : pl;
       else [t] = m.stepToward(pl, lz.pos);
-      if (!eq(t, pl) && m.free(t) && !has(bugs, t)) at = t;
+      if (!eq(t, pl) && m.free(t) && (!has(bugs, t) || (m.logAt && eq(t, m.logAt)))) at = t;
     }
     ate -= 1; drop = [['虫', at]];
     const ni = bugs.indexOf(null);
@@ -418,9 +418,9 @@ function farDrop(m, pl, pf, bugs, lzp, lzp2) {   // 第四个 第 16 天 18:50�
   for (let i = 0; i < 3; i++) {   // 最远 3 格（16:33 另一处改过 2，16:35 改回 3，跟说明对上）
     const n = [t[0] + DIRS[pf][0], t[1] + DIRS[pf][1]];
     if (i === 0 && isLz(n)) { t = n; break; }   // 第二个·页11 17:30：紧挨着它往它那边扔，落进它嘴里（第一个：学4、闻1 都以为会落到它那，结果落在自己脚下）
+    if (m.logAt && eq(n, m.logAt) && m.free(n) && !isLz(n)) { t = n; break; }   // 吹万 第 19 天 02:1x：木头里有活虫也接得住（原来先按'碰到虫'停在你脚下；第一个 种子 2027 第 4 天从 (10,1) 朝左吐活木头，'落在你脚下'。站在木头上吐本来就进得去，旁边吐跟它对上）
     if (!m.free(n) || has(bugs, n) || isLz(n)) break;
-    t = n;
-    if (m.logAt && eq(n, m.logAt)) break;   // 吹万 第 19 天 01:40 页207接：飞过朽木那格就落进去（木头接住）。全2（555）第 4 天两回从旁边朝木头吐，一回落在木头右边、一回被红截；全1（2718）'从右边吐左，以为虫会进木头，结果它越过木头落到左边'。两人头一下都是从旁边往木头吐
+    t = n;   // 吹万 第 19 天 01:40 页207接：飞过朽木那格就落进去（木头接住）。全2（555）第 4 天两回从旁边朝木头吐，一回落在木头右边、一回被红截；全1（2718）'从右边吐左，以为虫会进木头，结果它越过木头落到左边'。两人头一下都是从旁边往木头吐
   }
   return t;
 }
@@ -436,7 +436,7 @@ function dropAt(m, st, dir) {
   else if (m.V.has('吐远')) t = farDrop(m, st.pl, st.pf, st.bugs, st.lz.pos, st.lzB && st.lzB.pos);
   else if (m.V.has('吐朝')) t = st.pf ? [st.pl[0] + DIRS[st.pf][0], st.pl[1] + DIRS[st.pf][1]] : st.pl;
   else [t] = m.stepToward(st.pl, st.lz.pos);
-  return (!eq(t, st.pl) && m.free(t) && !has(st.bugs, t)) ? t : st.pl;
+  return (!eq(t, st.pl) && m.free(t) && (!has(st.bugs, t) || (m.logAt && eq(t, m.logAt)))) ? t : st.pl;
 }
 
 function init(m) {
