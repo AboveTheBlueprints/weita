@@ -589,7 +589,10 @@ api.init = init3;
   const _stepW = api.step, _initW = api.init;
   api.step = function (m, st, k) {
     api.logBorn = false; api.logOn = false; api.logStop = false; api.logEmpty = false; api.logTook = false; api.logWake = false; api.logReach = false; api.logLz = '';
-    if (!m.logAt) return _stepW(m, st, k);
+    if (!m.logAt) return k === 'F' ? 'bad' : _stepW(m, st, k);
+    const dig = k === 'F';   // 吹万 第 19 天 00:16 页200掏：'掏'是单独一下（F 键 / 掏 按钮），站在朽木上才掏得出；站在上面按等就只是等（页196/199 三回'想守着、按等就扒了'）
+    const near = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]) <= 1;   // 页200 量完补：掏1 掏2 第 3 天头一下都是站在旁边按掏（'以为能伸手过去'），旁边也掏得着；有蜥蜴趴在上面就不行
+    if (dig) { const L0 = m.logAt; if (!near(st.pl, L0) || !st.bugs.some(b => !!b && eq(b, L0)) || (!eq(st.pl, L0) && (eq(st.lz.pos, L0) || (st.lzB && eq(st.lzB.pos, L0))))) return 'bad'; k = '.'; }
     const r = _stepW(m, st, k);
     if (r === null || r === 'bad') return r;
     r.dust = st.dust || 0;
@@ -597,12 +600,12 @@ api.init = init3;
     st.bugs.forEach((b, i) => { if (at(b) && r.bugs[i] && !at(r.bugs[i])) r.bugs[i] = L.slice(); });   // 朽木里的不跑
     {   // 吹万 第 18 天 20:45 页196等才叼：走上朽木不叼（门1 '走过朽木时直接叼到了一只，没想到'，木头多半是回家路过踩死的）；站在上面'等'一步，才扒出一只（门1 第 4 天'原地等不会拿虫'，他本来以为会）。
       api.logOn = false;
-      if (eq(r.pl, L) && k !== '.' && r.ate > st.ate) {   // 踩上去（或在上面撞墙）：吃掉的都放回去
+      if (eq(r.pl, L) && !dig && r.ate > st.ate) {   // 页200：等也不叼   // 踩上去（或在上面撞墙）：吃掉的都放回去
         let back = r.ate - st.ate;
         st.bugs.forEach((b, i) => { if (back > 0 && at(b) && r.bugs[i] === null) { r.bugs[i] = L.slice(); back -= 1; r.ate -= 1; } });
       }
       if (eq(r.pl, L) && !eq(st.pl, L) && r.bugs.some(at)) api.logOn = true;
-      if (k === '.' && eq(st.pl, L) && eq(r.pl, L)) {   // 在上面等一步：扒出一只
+      if (dig) {   // 页200：按掏（站在上面或旁边）掏出一只
         const i = r.bugs.findIndex(at); if (i >= 0) { r.bugs[i] = null; r.ate += 1; r.dust = (st.dust || 0) + 1; }   // 吹万 第 18 天 21:4x 页197木屑：你每扒一下，朽木边上落一撮木屑，留到第二天（画.js 画，不写字）
       }
     }
@@ -610,9 +613,9 @@ api.init = init3;
       let extra = r.ate - st.ate - 1;
       st.bugs.forEach((b, i) => { if (extra > 0 && at(b) && r.bugs[i] === null) { r.bugs[i] = L.slice(); extra -= 1; r.ate -= 1; } });
     }
-    if (eq(r.pl, L) && r.ate > st.ate) api.logTook = true;
+    if ((eq(r.pl, L) || dig) && r.ate > st.ate) api.logTook = true;
     {   // 页187：朽木里的一步只被叼走一只——谁站在上面谁叼一只（红也一样，原来红一口吃光一格）
-      const eaters = (eq(r.pl, L) ? 1 : 0) + (eq(r.lz.pos, L) ? 1 : 0) + (r.lzB && eq(r.lzB.pos, L) ? 1 : 0);
+      const eaters = (eq(r.pl, L) || dig ? 1 : 0) + (eq(r.lz.pos, L) ? 1 : 0) + (r.lzB && eq(r.lzB.pos, L) ? 1 : 0);
       let lost = st.bugs.filter(at).length - r.bugs.filter(at).length - Math.max(eaters, 0);
       st.bugs.forEach((b, i) => { if (lost > 0 && at(b) && r.bugs[i] === null) { r.bugs[i] = L.slice(); lost -= 1; } });
     }

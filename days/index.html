@@ -44,7 +44,7 @@
     <div id="pad">
       <span></span><button data-k="U">↑</button><span></span>
       <button data-k="L">←</button><button data-k=".">等</button><button data-k="R">→</button>
-      <span></span><button data-k="D">↓</button><button data-k="X" id="xbtn">吐</button>
+      <span></span><button data-k="D">↓</button><button data-k="X" id="xbtn">吐</button><button data-k="F" id="fbtn" style="display:none">掏</button>
     </div>
     </div>
   </div>
@@ -310,7 +310,7 @@ const LIMIT = 40;
 const lim = () => LEVELS[li].limit || LIMIT;   // 第二个·页11 17:39：一张图可以自己定天黑前几步（'天快黑了'）
 const FACE = { U: '上', R: '右', D: '下', L: '左' };
 const ARROW = { U: '^', R: '>', D: 'v', L: '<' };
-const KNAME = { U: '↑', R: '→', D: '↓', L: '←', '.': '等', X: '吐', XU: '往上吐', XR: '往右吐', XD: '往下吐', XL: '往左吐' };
+const KNAME = { U: '↑', R: '→', D: '↓', L: '←', '.': '等', X: '吐', XU: '往上吐', XR: '往右吐', XD: '往下吐', XL: '往左吐', F: '掏' };
 const S = WeiSim, eq = S.eq;
 let li = 0, m, st, prev, n, over, log, deadMark, lastDrop = null;
 
@@ -323,8 +323,8 @@ function events(k, a, b) {
   if (S.fruitAte && b._anyBug === undefined) out.push('你吃了一颗果子。');
   else if (b.ate > a.ate && !S.dugOut && !S.logTook) out.push('你吃到了一只虫！');
   if (m.logAt) { const nL = b.bugs.filter(q => q && q[0] === m.logAt[0] && q[1] === m.logAt[1]).length, CNL = ['零','一','两','三','四','五','六'];   /* 吹万 页184朽木 */
-    if (S.logOn) out.push(`你站在朽木上。里头${CNL[nL]}只缩着没出来，在上面等一下，能扒出一只。`);   /* 吹万 页196等才叼 */
-    if (S.logTook) out.push(`你在朽木上扒了扒，叼出一只虫。里头还剩${CNL[nL + (b.deep || 0)]}只。`);   /* 吹万 第 18 天 20:2x：剩的那只缩进深处后不在 bugs 里，原来写成'还剩零只'，下一句又说'只剩一只' */
+    if (S.logOn) out.push(`你站在朽木上。里头${CNL[nL]}只缩着没出来，按 F（或「掏」）能掏出一只。`);   /* 页200掏 */   /* 吹万 页196等才叼 */
+    if (S.logTook) out.push(`你伸手往朽木里掏了掏，叼出一只虫。里头还剩${CNL[nL + (b.deep || 0)]}只。`);   /* 吹万 第 18 天 20:2x：剩的那只缩进深处后不在 bugs 里，原来写成'还剩零只'，下一句又说'只剩一只' */
     if (S.logBorn) out.push(`朽木里窸窸窣窣，又爬出一只。里头现在${CNL[nL]}只。`);
     if (S.logLz) out.push(`${S.logLz}的从朽木里叼走一只。`);   /* 页187 */
     if (S.logStop) out.push('朽木里只剩一只了。一只生不出来，它往深处一缩，没动静了。');
@@ -497,6 +497,7 @@ function draw(anim) {
  (m.V.has('日子') ? `　${st.lzB ? '红的' : '蜥蜴的'}肚子：${st.lz.hun >= 5 ? '鼓鼓的' : st.lz.hun >= 1 ? '饱劲过了' : '瘪了'}` + (st.lzB ? `，青的：${st.lzB.hun >= 5 ? '鼓鼓的' : st.lzB.hun >= 1 ? '饱劲过了' : '瘪了'}` : '') : '') +
    (m.logAt ? (() => { const nl = st.bugs.filter(q => q && q[0] === m.logAt[0] && q[1] === m.logAt[1]).length, CNs = ['零','一','两','三','四','五','六'];   /* 吹万 页189朽木数：照玩具 ~/碰/朽木/ 那行，朽木里几只、几步后爬出一只，天天摆在那儿 */
      return st.deep ? '　朽木：只剩一只，生不出来，没动静' : nl >= 4 ? `　朽木：${CNs[nl]}只，挤满了` : nl >= 2 ? `　朽木：${CNs[nl]}只，窸窸窣窣（再过 ${S.logLeft(m, st)} 步爬出一只）` : nl === 1 ? '　朽木：一只' : '　朽木：空了'; })() : '');
+  { const fb = document.getElementById('fbtn'); if (fb) fb.style.display = m.logAt ? '' : 'none'; }   // 页200掏：有朽木的天才有'掏'
   document.getElementById('log').innerHTML = log.map(t => `<div>${t}</div>`).join('');
   document.getElementById('log').style.display = '';   // 第四个 页161：点了看它这几天会把这串藏起来，一接着玩就露出来
 }
@@ -1003,6 +1004,7 @@ function act(k) {
     if (st.ate < 1) { document.getElementById('msg').textContent = '肚子里没有虫，吐不出来。'; return; }
     aim = true; document.getElementById('msg').textContent = '往哪边扔？按方向键（虚线框是会落的地方；再按 X 不扔了）。'; draw(); return;
   }
+  if (k === 'F') { const L0 = m.logAt, nr = L0 && Math.abs(st.pl[0] - L0[0]) + Math.abs(st.pl[1] - L0[1]) <= 1, hasB = L0 && st.bugs.some(q => q && q[0] === L0[0] && q[1] === L0[1]); const why = !nr ? '够不着能掏的东西，得站在朽木上或紧挨着它。' : !hasB ? '朽木里掏不出来了。' : null; if (why) { document.getElementById('msg').textContent = why; return; } }   // 页200掏
   if (aim) { aim = false; if ('URDL'.includes(k) && k.length === 1) k = 'X' + k; else { document.getElementById('msg').textContent = ''; draw(); return; } }
   const L = LEVELS[li];
   if (k[0] === 'X' && !L.V.includes('吐')) { document.getElementById('msg').textContent = '这一张不能吐虫。'; return; }
@@ -1107,7 +1109,7 @@ function itAct(k) {
   }
   draw(true);
 }
-const KEYMAP = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R', w: 'U', s: 'D', a: 'L', d: 'R', W: 'U', S: 'D', A: 'L', D: 'R', ' ': '.', '.': '.', x: 'X', X: 'X' };
+const KEYMAP = { ArrowUp: 'U', ArrowDown: 'D', ArrowLeft: 'L', ArrowRight: 'R', w: 'U', s: 'D', a: 'L', d: 'R', W: 'U', S: 'D', A: 'L', D: 'R', ' ': '.', '.': '.', x: 'X', X: 'X', f: 'F', F: 'F' };   // 页200掏
 document.addEventListener('keydown', e => {
   if (e.key === 'r' || e.key === 'R') { dian('重来'); start(li); e.preventDefault(); return; }
   if (e.key === 'z' || e.key === 'Z' || e.key === 'Backspace') { undo(); e.preventDefault(); return; }
