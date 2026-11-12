@@ -69,7 +69,8 @@ function drawMe(g, X, Y, belly, pf) {
   }
   g.fillStyle = COL.me; g.beginPath(); g.arc(X, Y, C * 0.3, 0, 7); g.fill();
   g.fillStyle = '#0d2236'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('我', X, Y + 1);
-  for (let i = 0; i < belly; i++) drawBug(g, X - 14 + i * 14, Y + C * 0.38, 0.9);  // 肚子里有几只，脚下画几只小虫
+  // 吹万 第 18 天 16:58：肚子里的虫画小一半、压在'我'的圆边上，描一圈'我'的蓝。原来跟地上的一样大、画在脚下一格里，第二个 14:40 拿眼睛玩'开局"我"旁边那只绿虫以为是地上的，走一步它跟着走才知道是肚子里那只'
+  for (let i = 0; i < belly; i++) { const bx = X - (belly - 1) * 6 + i * 12, by = Y + C * 0.27; g.save(); g.translate(bx, by); g.scale(0.5, 0.5); g.translate(-bx, -by); drawBug(g, bx, by, 1); g.restore(); g.strokeStyle = COL.me; g.lineWidth = 1.5; g.beginPath(); g.arc(bx, by, 7.5, 0, 7); g.stroke(); }
 }
 
 function drawLiz(g, X, Y, face, a, eyes, hun) {   // 第二个·页11 20:15（页28肚子量过）：hun 给了就按它画肚子大小，吃饱 8 一回合瘪一格   // eyes：'眯' 吃饱了眯着眼 / '睁' 饱劲刚过、眼睛一下睁圆（第二个·页11 18:45，第一个'睁眼'要画到格子上）
