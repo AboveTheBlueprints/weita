@@ -270,7 +270,8 @@ function frame(cv, m, info, t) {
   if (!prev || (!turned && !moved)) {} // 视线没变就一直亮着
   // 声音：你走一步、虫跑一步、虫落地，都有一圈
   if (prev && t < 1) {
-    if (!same(prev.pl, st.pl) && !dead) drawSound(g, m, st.pl, tSound, info.heard ? '#7cc8ff' : 'rgba(124,200,255,0.75)');
+    const swapNow = prev.lz && st.lz && same(st.lz.pos, prev.pl) && same(st.pl, prev.lz.pos);   // 无字 13:33：让路那一步不荡你的脚步圈（13:17 那处连拍：脚步圈比两只加起来都大，盖住了错身）
+    if (!same(prev.pl, st.pl) && !dead && !swapNow) drawSound(g, m, st.pl, tSound, info.heard ? '#7cc8ff' : 'rgba(124,200,255,0.75)');
     prev.bugs.forEach((b, i) => { if (b && st.bugs[i] && !same(b, st.bugs[i])) drawSound(g, m, st.bugs[i], tSound, 'rgba(160,220,120,0.8)'); });
     if (info.spit) drawSound(g, m, info.spit.to, seg(t, 0.25, 1), 'rgba(160,220,120,0.8)');
   }
