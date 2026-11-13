@@ -57,7 +57,7 @@ function drawBug(g, X, Y, a, mine) {
   g.globalAlpha = 1;
 }
 
-function drawMe(g, X, Y, belly, pf) {
+function drawMe(g, X, Y, belly, pf, need, short) {   // 吹万 第 19 天 15:36 页222：need/short 给了就在肚子上画空坑
   if (root.WeiDraw && root.WeiDraw.ghost) { g.save(); g.globalAlpha = 0.5; const c0 = COL.me; COL.me = '#9a9a9a'; root.WeiDraw.ghost = false; try { drawMe(g, X, Y, 0, pf); } finally { root.WeiDraw.ghost = true; COL.me = c0; g.restore(); } return; }   // 第四个 页168你是它：你那天的样子画成半透明的灰，肚子里的虫不画
   if (pf && false) {   // 无字：脸就是小蜥蜴的头，不另画尖  // 10:28 你的朝向（第一个并的'吐朝'：吐在你脸前一格）：圆边上一个小尖
     const [dx, dy] = DV[pf];
@@ -74,7 +74,12 @@ function drawMe(g, X, Y, belly, pf) {
     g.beginPath(); g.moveTo(-22, 0); g.quadraticCurveTo(-34, -10, -30, 8); g.stroke();
     g.beginPath(); g.moveTo(-22, 0); g.quadraticCurveTo(-12, -11 - belly * 2, 6, -9); g.quadraticCurveTo(26, -6, 26, 0); g.quadraticCurveTo(26, 6, 6, 9); g.quadraticCurveTo(-12, 11 + belly * 2, -22, 0); g.fill();
     g.fillStyle = '#0d2236'; g.beginPath(); g.arc(16, -4.5, 2.6, 0, 7); g.arc(16, 4.5, 2.6, 0, 7); g.fill();
-    for (let i = 0; i < belly; i++) { const bx = -6 - i * 9 + (belly - 1) * 4.5; g.fillStyle = COL.bug; g.beginPath(); g.ellipse(bx, 0, 4.2, 5.2, 0, 0, 7); g.fill(); g.strokeStyle = '#2e4d1f'; g.lineWidth = 1.2; g.stroke(); }
+    // 吹万 第 19 天 15:36 页222肚上坑：'要带几只'从窝口挪到我肚子上。肚子上有 need 个坑，吃一只填一个；没填的是深色的空坑（不是虚线虫：页220/221 四个生人三个把虚线虫圈读成'存粮'）。
+    // 站在窝上还不够时，空坑的边发红、身子左右抖。
+    const slots = Math.max(belly, need || 0);
+    for (let i = 0; i < slots; i++) { const bx = -6 - i * 9 + (slots - 1) * 4.5;
+      if (i < belly) { g.fillStyle = COL.bug; g.beginPath(); g.ellipse(bx, 0, 4.2, 5.2, 0, 0, 7); g.fill(); g.strokeStyle = '#2e4d1f'; g.lineWidth = 1.2; g.stroke(); }
+      else { g.fillStyle = '#123049'; g.beginPath(); g.ellipse(bx, 0, 3.8, 4.8, 0, 0, 7); g.fill(); g.strokeStyle = short ? '#e8553a' : '#cfe8ff'; g.lineWidth = short ? 2 : 1.3; g.stroke(); } }
     g.restore(); }
 }
 
@@ -222,7 +227,7 @@ function frame(cv, m, info, t) {
     // 改成跟着肚子走：肚子里几只，窝口就填实几只；剩下的还是虚线。人站在窝上还不够时，缺的那几只发红、左右抖（跟撞墙那下一样是'不行'）。
     const have = Math.min(st && st.ate || 0, n), home = st && st.pl && st.pl[0] === m.nest[0] && st.pl[1] === m.nest[1], short = home && have < n;
     const now = (typeof performance !== 'undefined' ? performance.now() : 0);
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < 0 * n; i++) {   // 吹万 15:36 页222：窝口不画圈了，挪到我肚子上
       const x = X - (n - 1) * 7 + i * 14;
       g.save();
       if (i < have) { g.fillStyle = COL.bug; g.beginPath(); g.ellipse(x, Y, 4.5, 6, 0, 0, 7); g.fill(); }
@@ -393,7 +398,10 @@ function frame(cv, m, info, t) {
   }
   // 我
   const [mx, my] = prev ? at(prev.pl, dead ? dead.at : st.pl, ease(seg(t, 0, 0.35))) : at(st.pl);
-  drawMe(g, mx, my, (info.ev && info.ev.took && prev && t < 0.8) ? prev.ate : st.ate, st.pf);   // 吹万 第 19 天 15:1x：掏到时肚子等虫进了嘴才鼓（页220 无四1'不知道拿到了什么'）
+  { const home = m.nest && st.pl[0] === m.nest[0] && st.pl[1] === m.nest[1], short = home && m.need && (st.ate || 0) < m.need && !dead && t >= 0.35;   // 吹万 15:36 页222
+    const sh = short ? Math.sin(((typeof performance !== 'undefined') ? performance.now() : 0) / 40) * 2 : 0;
+    drawMe(g, mx + sh, my, (info.ev && info.ev.took && prev && t < 0.8) ? prev.ate : st.ate, st.pf, m.need || 0, short); }
+  if (false) // 吹万 15:36 页222：下面这段（15:07 头顶一排）不要了，挪到肚子上   // 吹万 第 19 天 15:1x：掏到时肚子等虫进了嘴才鼓（页220 无四1'不知道拿到了什么'）
   // 吹万 第 19 天 15:07 页220：站在窝上还不够时，人把窝口那几个圈盖住了，所以在头顶再画一排：有的实心、缺的红虚线左右抖
   if (m.nest && m.need && st.pl[0] === m.nest[0] && st.pl[1] === m.nest[1] && (st.ate || 0) < m.need && !dead && t >= 0.35) {
     const n = m.need, have = st.ate || 0, X = cx(m.nest[0]), Y = cx(m.nest[1]) - C * 0.62, sh = Math.sin(((typeof performance !== 'undefined') ? performance.now() : 0) / 45) * 2.5;
