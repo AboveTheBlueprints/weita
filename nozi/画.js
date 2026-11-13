@@ -365,9 +365,7 @@ function frame(cv, m, info, t) {
     if (n === 1) {   // 只剩一只：裂缝里透出一只蜷着的、暗的
       g.strokeStyle = '#1a1009'; g.lineWidth = 3; g.beginPath(); g.moveTo(X + 8, Y + 11); g.lineTo(X + 14, Y + 6); g.lineTo(X + 19, Y + 12); g.stroke();
       g.fillStyle = 'rgba(90,140,70,0.8)'; g.beginPath(); g.arc(X + 14, Y + 9.5, 3, 0, 7); g.fill();
-      // 吹万 第 19 天 14:26：木头上空一只虚线小圈，跟窝口'要带回去几只'是同一个记号：这儿还差一只。2024 那局第 4 天朽木门是靠记得过的，画上没有'往里放一只'
-      g.save(); g.setLineDash([3, 3]); g.strokeStyle = COL.bug; g.lineWidth = 1.6; g.globalAlpha = 0.6 + 0.4 * Math.abs(Math.sin(now * 0.6));
-      g.beginPath(); g.ellipse(X - C * 0.08, Y - C * 0.27 - 9, 4.5, 6, 0, 0, 7); g.stroke(); g.restore();
+      // 吹万 第 19 天 14:26 在这儿加过一只虚线小圈（'这儿还差一只'），15:34 撤了：页221 窝肚1 读成'里面看着有绿东西，按掏却没反应'，虚线圈在生人眼里是一只东西，不是空位
     }
   }
   // 吹万 第 18 天 21:4x 页197木屑：你在朽木上每扒一下，木头底下落一撮木屑；前几天的还在（颜色暗一点），不写字。
