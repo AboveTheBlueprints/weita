@@ -310,6 +310,18 @@ function frame(cv, m, info, t) {
   // 第一个 21:27 页33记号：被你甩掉过，它丢你的那一格一直留着那个淡淡的你（跟它找你时同一个记号，生人已经认得"它记得你在这儿"），它在石头上时再连一条淡线。不写字说为什么。
   if (!dead && m.V.has('记仇') && lz.grudge && !((lz.mode === '找' || lz.mode === '追') && lz.tgt === '你')) {
     ghostMe(g, lz.grudge, 0.55);
+    // 无字 13:44 吹万：它在岗上、脸朝着丢你那格的时候（站着盯、倒着退），那个圈描一道跟它视线同色的暖光：'它盯着这儿'。不连线（页76）。
+    if (lz.mode === '岗' && lz.face) {
+      const dx = lz.grudge[0] - lz.pos[0], dy = lz.grudge[1] - lz.pos[1];
+      const fv = ({ U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] })[lz.face] || [0, 0];
+      if (fv[0] * dx + fv[1] * dy > 0) {
+        const X = cx(lz.grudge[0]), Y = cx(lz.grudge[1]);
+        g.globalAlpha = 0.9; g.strokeStyle = 'rgba(245,215,130,1)'; g.lineWidth = 3;
+        g.beginPath(); g.arc(X, Y, C * 0.42, 0, 7); g.stroke();
+        g.globalAlpha = 0.25; g.fillStyle = 'rgba(245,215,130,1)'; g.beginPath(); g.arc(X, Y, C * 0.42, 0, 7); g.fill();
+        g.globalAlpha = 1;
+      }
+    }
     // 第二个 第 15 天 17:09 页76无线：拿掉它到问号那条虚线（八个生人七个说没懂，常读成'它打算走的路'）
   }
   if (drop && !dead && t >= 1) {   // 按 x 虫会落的那一格（第二个·页11 17:06：吐选瞄准时 drop 是几格，一格一个框）
