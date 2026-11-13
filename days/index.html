@@ -1004,7 +1004,7 @@ function act(k) {
     if (st.ate < 1) { document.getElementById('msg').textContent = '肚子里没有虫，吐不出来。'; return; }
     aim = true; document.getElementById('msg').textContent = '往哪边扔？按方向键（虚线框是会落的地方；再按 X 不扔了）。'; draw(); return;
   }
-  if (k === 'F') { const L0 = m.logAt, nr = L0 && Math.abs(st.pl[0] - L0[0]) + Math.abs(st.pl[1] - L0[1]) <= 1, hasB = L0 && st.bugs.some(q => q && q[0] === L0[0] && q[1] === L0[1]); const why = !nr ? '够不着能掏的东西，得站在朽木上或紧挨着它。' : !hasB ? (st.deep ? '朽木里只剩缩在深处的那一只，手够不着。' : '朽木空了，掏不出来。') : null;   /* 吹万 第 19 天 12:43：页216 三晚1 第 4 天撞'掏不出来了'四局、不知为什么；跟别的'够不着'那句对上，只写里头是什么样，不写怎么办 */ if (why) { document.getElementById('msg').textContent = why; return; } }   // 页200掏
+  if (k === 'F') { const L0 = m.logAt, nr = L0 && Math.abs(st.pl[0] - L0[0]) + Math.abs(st.pl[1] - L0[1]) <= 1, hasB = L0 && st.bugs.some(q => q && q[0] === L0[0] && q[1] === L0[1]); const why = !nr ? '够不着能掏的东西，得站在朽木上或紧挨着它。' : !hasB ? (st.deep ? '朽木里只剩一只，一只生不出来，缩在深处不出来。' : '朽木空了，掏不出来。') : null;   /* 吹万 第 19 天 12:43：页216 三晚1 第 4 天撞'掏不出来了'四局、不知为什么；跟别的'够不着'那句对上，只写里头是什么样，不写怎么办 */ /* 12:58 页219：掏不2 读'手够不着'当成站的位置不对，左、上、右换了四局；掏不1 是读开局'一只生不出来'连到往里吐的。改成跟开局同一句 */ if (why) { document.getElementById('msg').textContent = why; return; } }   // 页200掏
   if (aim) { aim = false; if ('URDL'.includes(k) && k.length === 1) k = 'X' + k; else { document.getElementById('msg').textContent = ''; draw(); return; } }
   const L = LEVELS[li];
   if (k[0] === 'X' && !L.V.includes('吐')) { document.getElementById('msg').textContent = '这一张不能吐虫。'; return; }
