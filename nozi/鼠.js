@@ -72,6 +72,10 @@
     const s = C(); g.save(); g.strokeStyle = col; g.lineWidth = w; if (dash) g.setLineDash(dash);
     g.strokeRect(c[0] * s + w / 2 + 2, c[1] * s + w / 2 + 2, s - w - 4, s - w - 4); g.restore();
   }
+  function spitHint(p) {   // 跟 画.js 里 X 粉笔键同一个条件
+    const W = window.WeiDraw || {}, st = G('st'), IT = G('IT'); if (IT || W._usedX || !st || !st.lz || !(st.ate >= 1)) return false;
+    const L = st.lz; return (L.mode === '停' || L.mode === '追') && L.tgt === '你' && (L.pos[0] === p[0] || L.pos[1] === p[1]);
+  }
   function frame(t) {
     place(); g.clearRect(0, 0, ov.width, ov.height);
     const p = me(), s = C(), pulse = 0.55 + 0.35 * Math.sin(t / 180);
@@ -85,6 +89,13 @@
         g.moveTo(hx - d[1] * 9 - d[0] * 9, hy + d[0] * 9 - d[1] * 9); g.lineTo(hx, hy); g.lineTo(hx + d[1] * 9 - d[0] * 9, hy - d[0] * 9 - d[1] * 9); g.stroke(); g.restore();
         let at = null; try { at = WeiSim.dropAt(G('m'), G('st'), dragDir); } catch (e) {}
         if (at) box(at, `rgba(120,200,255,${pulse})`, 3, [6, 5]);
+      } else if (!down && spitHint(p)) {
+        // 无字：X 那个粉笔键第一次画出来时（肚里有一只、它停下盯着你），鼠标的人也给一下：粉笔虚线从你身上朝它一抽一抽地伸出去=按住往那边拖
+        const L = G('st').lz.pos, dx = Math.sign(L[0] - p[0]), dy = dx ? 0 : Math.sign(L[1] - p[1]), cx = p[0] * s + s / 2 + dy * s * 0.3, cy = p[1] * s + s / 2 + (dx ? s * 0.3 : 0), k = (t % 1100) / 1100, len = s * (0.35 + 0.6 * k);
+        g.save(); g.globalAlpha = 0.75 * (1 - k * 0.6); g.strokeStyle = '#f2efe4'; g.lineWidth = 3; g.setLineDash([6, 5]); g.lineCap = 'round';
+        g.beginPath(); g.moveTo(cx + dx * s * 0.3, cy + dy * s * 0.3); g.lineTo(cx + dx * len, cy + dy * len); g.stroke(); g.setLineDash([]);
+        const hx = cx + dx * len, hy = cy + dy * len; g.beginPath(); g.moveTo(hx - dy * 7 - dx * 7, hy + dx * 7 - dy * 7); g.lineTo(hx, hy); g.lineTo(hx + dy * 7 - dx * 7, hy - dx * 7 - dy * 7); g.stroke();
+        g.beginPath(); g.arc(cx + dx * s * 0.3, cy + dy * s * 0.3, 5, 0, Math.PI * 2); g.stroke(); g.restore();   // 起点一个小圈=按住的地方
       } else if (hover) {
         const k = keyFor(hover);
         if (k === 'F') { box(hover, `rgba(240,200,90,${pulse})`, 4); }

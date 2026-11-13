@@ -262,7 +262,11 @@ function frame(cv, m, info, t) {
   if (prev && t < 1 && !dead && (turned || moved)) drawSightCells(g, m, lz0.pos, lz0.face, 99, 1 - seg(t, 0, 0.2), prev.lzB ? prev.lzB.pos : null);
   // 第二个·页11 19:24（第一个查的：岔网1、2 都问"它朝着我、我也在黄格里，却只转头没扑"）：听见脚步刚转过来的那一回合它还没看，新黄线画淡，你下一步走完还站在里面才实
   const fresh = !dead && info.heard && turned && !moved;
+  // 无字 13:27：认得你的它（让路、吃过你吐的），视线换成淡绿：压在你身上也看得出它不会扑
+  const kind = m.V.has('让路') && (lz.fed || 0) >= 1, keepS = COL.sight;
+  if (kind) COL.sight = 'rgba(150,225,120,0.22)';
   if (!dead) drawSightCells(g, m, lz.pos, lz.face, (prev && (turned || moved)) ? Math.ceil(tSight * 12) : 99, fresh ? 0.38 : 1, blkA);
+  COL.sight = keepS;
   if (!prev || (!turned && !moved)) {} // 视线没变就一直亮着
   // 声音：你走一步、虫跑一步、虫落地，都有一圈
   if (prev && t < 1) {
