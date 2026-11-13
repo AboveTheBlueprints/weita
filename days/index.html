@@ -254,6 +254,7 @@ const DAYV = ['吐', '吐向它', '一件事', '不转回', '窝安全', '吐朝
 // 第二个 第 16 天 08:4x：不带 ?seed 打开时回到上回那块地（记在 localStorage），并把 seed 写进地址。起因：喊第二回两个生人认出来的全是'同一个早上少了一句'，换了地就对不上。'换一块地再过五天'照旧。
 const SEEDQ = location.search.match(/seed=(\d+)/);
 let SEEDLAST = 0; try { SEEDLAST = +localStorage.getItem('weita-days-seed') || 0; } catch (e) {}
+const SAID = new Set();   /* 页229：说过的那几种话 */
 let SEED = SEEDQ ? +SEEDQ[1] : SEEDLAST > 0 ? SEEDLAST : (Date.now() % 100000) + 1;
 try { localStorage.setItem('weita-days-seed', String(SEED)); } catch (e) {}
 // 第二个 第 17 天 页154回来：同一块地再打开，第 1 天的红带着上回最后过的那天的记性（老地方、绿点），跟第 N 天传到第 N+1 天一样；上回没喂过就跟头一回一样。测试用 ?back=x.y.a（老地方两个数，没有写 -.-；a 是绿点几个）。再回1、再回2 两个回来的人第 1 天都认出是接着上回的，见 页154回来/说明.md
@@ -1030,8 +1031,10 @@ function act(k) {
     prev = st; heardNow = false; earNow = null; draw(true); return;
   }
   heardNow = S.heard; earNow = [S.ear || null, (S.B && S.B.ear) || null]; dian(k);
-  const ev = events2(k, st, r);   // 09:55 第三个：空着的步把有事的挤下去了，没动静的那步淡淡写一句
-  log.unshift(ev.length ? `第 ${n} 步（${KNAME[k]}）：` + ev.join(' ') : `<span style="color:#77735f">第 ${n} 步（${KNAME[k]}）：你走了一格，它没动静。</span>`);
+  const ev = events2(k, st, r);
+  /* 吹万 第 19 天 22:48 照 页229起名一回：兔子洞里一条脾气只在它头一回露出来时说一句（先演后起名），之后只画不说。每步那串字里同一种话整局只说一回（数字、方向不算区别），没有新话的一步不记。四个生人（种子 31，前 4 张两人、七天两人）都过、都想再玩，没人说字少。'往你上回喂它的地方'例外，照旧每回说：页128 量过它只靠字，十个没字的生人零个看见，说一回够不够没量到 */
+  for (let i = ev.length - 1; i >= 0; i--) { const t = String(ev[i]).replace(/<[^>]+>/g, ''); if (/上回喂它的地方/.test(t)) continue; const key = t.replace(/[0-9零一两二三四五六七八九十]+/g, '#').replace(/[上下左右]/g, '@'); if (SAID.has(key)) ev.splice(i, 1); else SAID.add(key); }
+  if (ev.length) log.unshift(`第 ${n} 步（${KNAME[k]}）：` + ev.join(' '));
   prev = st; st = r;
   if (st.ate + (st.hid || []).filter(b => b).length < m.need && st.bugs.every(b => !b) && !(st.deep && st.ate > 0) && n < lim()) {   /* 吹万 第 18 天 20:2x：朽木深处还有一只、你肚子里有一只时，吐进去就能醒成三只，不是'凑不够'。种子 777 第 4 天这句叫我放弃，我照吐了，47 步过 */   /* 第二个 第 17 天 18:1x：加 n < lim()。种子 64 第 6 天空着回窝、第 7 天虫全被吃光，这条一直接着，下面天黑那条永远到不了：第 50 步过了也不天黑，没回看、没结尾，只剩 R */ msg.textContent = `你肚子里只剩 ${st.ate} 只，地上也没有虫了，凑不够 ${m.need} 只，今天带不够虫回窝了。可以接着看它，` + (canEndDay() ? '也可以现在就这样过完这一天，或者按 R 从头再来。' : '天黑前随时按 R 从头再来。'); if (canEndDay()) document.getElementById('endday').style.display = 'inline-block'; }   // 第二个 第 16 天 02:05 页93：不当场判输，让人看完它吃那一口（赶7、渣8 都撞上）
   else if (st.ate < m.need && eq(st.pl, m.nest) && n < lim()) { msg.textContent = `到窝了，可肚子里只有 ${st.ate} 只，要带 ${m.need} 只回来。`; }   // 第二个·页11 17:29：七1、七2 带着不够数的虫回窝，屏幕没反应，以为要出去再进来   // 第二个 第 17 天 02:57：加 n < lim()，不然在窝里等到天黑，这条一直挡着天黑那条，没有'过完这一天'的按钮，只能 R
