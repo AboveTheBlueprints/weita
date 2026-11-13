@@ -216,11 +216,23 @@ function frame(cv, m, info, t) {
   cv.width = m.w * C; cv.height = m.h * C;
   drawFloor(g, m); drawNest(g, m.nest);
   drawChalk(g, m, root.WeiDraw && root.WeiDraw.chalk);
-  { const X = cx(m.nest[0]), Y = cx(m.nest[1]) - 1, n = m.need || 0;   // 无字：窝口上面几个虚线小圈，要带回去几只
-    g.save(); g.setLineDash([3, 3]); g.strokeStyle = COL.bug; g.lineWidth = 1.6;
-    for (let i = 0; i < n; i++) { g.beginPath(); g.ellipse(X - (n - 1) * 7 + i * 14, Y, 4.5, 6, 0, 0, 7); g.stroke(); }
-    g.restore(); }
   const { prev, st, dead, drop } = info;
+  { const X = cx(m.nest[0]), Y = cx(m.nest[1]) - 1, n = m.need || 0;   // 无字：窝口上面几个虚线小圈，要带回去几只
+    // 吹万 第 19 天 15:06 页220无字四天：两个生人都把这几个虚线圈读成'存粮'，无四2 第 4 张带一只回家三局没过、'已经到家怎么还差一点'。
+    // 改成跟着肚子走：肚子里几只，窝口就填实几只；剩下的还是虚线。人站在窝上还不够时，缺的那几只发红、左右抖（跟撞墙那下一样是'不行'）。
+    const have = Math.min(st && st.ate || 0, n), home = st && st.pl && st.pl[0] === m.nest[0] && st.pl[1] === m.nest[1], short = home && have < n;
+    const now = (typeof performance !== 'undefined' ? performance.now() : 0);
+    for (let i = 0; i < n; i++) {
+      const x = X - (n - 1) * 7 + i * 14;
+      g.save();
+      if (i < have) { g.fillStyle = COL.bug; g.beginPath(); g.ellipse(x, Y, 4.5, 6, 0, 0, 7); g.fill(); }
+      else {
+        const sh = short ? Math.sin(now / 45) * 2.5 : 0;
+        g.setLineDash([3, 3]); g.strokeStyle = short ? '#e8553a' : COL.bug; g.lineWidth = short ? 2.2 : 1.6;
+        g.beginPath(); g.ellipse(x + sh, Y, 4.5, 6, 0, 0, 7); g.stroke();
+      }
+      g.restore();
+    } }
   // 第二个 第 15 天 01:52 页45邻居：两只的时候，各自的地淡淡涂一层它的颜色，石头画一块灰石（之间三：地画成跟它同一个记号，人才读出'谁在自家附近谁横'）
   if (st.lzB && root.WeiSim && root.WeiSim.lands) {
     const L = root.WeiSim.lands(m);
@@ -384,6 +396,14 @@ function frame(cv, m, info, t) {
   // 我
   const [mx, my] = prev ? at(prev.pl, dead ? dead.at : st.pl, ease(seg(t, 0, 0.35))) : at(st.pl);
   drawMe(g, mx, my, st.ate, st.pf);
+  // 吹万 第 19 天 15:07 页220：站在窝上还不够时，人把窝口那几个圈盖住了，所以在头顶再画一排：有的实心、缺的红虚线左右抖
+  if (m.nest && m.need && st.pl[0] === m.nest[0] && st.pl[1] === m.nest[1] && (st.ate || 0) < m.need && !dead && t >= 0.35) {
+    const n = m.need, have = st.ate || 0, X = cx(m.nest[0]), Y = cx(m.nest[1]) - C * 0.62, sh = Math.sin(((typeof performance !== 'undefined') ? performance.now() : 0) / 45) * 2.5;
+    for (let i = 0; i < n; i++) { const x = X - (n - 1) * 8 + i * 16; g.save();
+      if (i < have) { g.fillStyle = COL.bug; g.beginPath(); g.ellipse(x, Y, 5, 6.5, 0, 0, 7); g.fill(); }
+      else { g.setLineDash([3, 3]); g.strokeStyle = '#e8553a'; g.lineWidth = 2.2; g.beginPath(); g.ellipse(x + sh, Y, 5, 6.5, 0, 0, 7); g.stroke(); }
+      g.restore(); }
+  }
   // 蜥蜴
   const lp = dead ? dead.from : lz.pos;
   const [lx, ly] = prev ? at(prev.lz.pos, dead ? dead.at : lp, tMove) : at(lp);
