@@ -395,7 +395,7 @@ function frame(cv, m, info, t) {
   }
   // 我
   const [mx, my] = prev ? at(prev.pl, dead ? dead.at : st.pl, ease(seg(t, 0, 0.35))) : at(st.pl);
-  drawMe(g, mx, my, st.ate, st.pf);
+  drawMe(g, mx, my, (info.ev && info.ev.took && prev && t < 0.8) ? prev.ate : st.ate, st.pf);   // 吹万 第 19 天 15:1x：掏到时肚子等虫进了嘴才鼓（页220 无四1'不知道拿到了什么'）
   // 吹万 第 19 天 15:07 页220：站在窝上还不够时，人把窝口那几个圈盖住了，所以在头顶再画一排：有的实心、缺的红虚线左右抖
   if (m.nest && m.need && st.pl[0] === m.nest[0] && st.pl[1] === m.nest[1] && (st.ate || 0) < m.need && !dead && t >= 0.35) {
     const n = m.need, have = st.ate || 0, X = cx(m.nest[0]), Y = cx(m.nest[1]) - C * 0.62, sh = Math.sin(((typeof performance !== 'undefined') ? performance.now() : 0) / 45) * 2.5;

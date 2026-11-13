@@ -44,15 +44,25 @@ function fx(g, m, info, t) {
   if (e.ateMe) { const [x, y] = P(e.ateMe); rays(g, x, y, 8, 14 + 10 * ease(t), 22 + 16 * ease(t), '#b6f08f', 1 - t, 3); ring(g, x, y, 16 + 14 * ease(t), '#8fd16a', 0.9 * (1 - t), 2.5); }
   // 它吃到一只：它嘴边橙色两下
   if (e.lizAte) { const [x, y] = P(e.lizAte); rays(g, x, y, 6, 12 + 8 * ease(t), 18 + 10 * ease(t), '#ffb36b', 1 - t, 3, 0.5); }
-  // 掏到：你的手（一道蓝）伸进木头，叼着一只虫抽回来
+  // 吹万 第 19 天 15:1x 页220无四：无四1 在朽木上掏了 13 下全是掏空，"掏了好几次却还是不知道拿到了什么"；无四2"木头似乎只有第一次掏得到"。
+  // 掏到：手伸进去（0–.35）→ 叼着虫抽回来（.35–.75）→ 虫进你嘴里、一圈绿往你身上收，你肚子那一下才鼓（画.js 那边肚子等到 .8 才换）。
+  // 掏空：手伸进去 → 空着、两根指头张开抽回来，手里漏下一撮灰；深处那只探一下头又缩回去。没有进肚子那一圈，跟掏到一眼分得开；格子不顶（撞墙才顶）。
   const same = e.log && e.pl && e.pl[0] === e.log[0] && e.pl[1] === e.log[1];
-  // 站在木头上掏到：虫从木头里蹦起来，在头顶亮一下，落进你肚子
-  if (e.took && same) { const [x, y] = P(e.log); const q = ease(t); const yy = y - 34 * bell(q) + 14 * q; bugHead(g, x, yy, 0.9 - 0.4 * q, 1 - 0.5 * q); if (t > 0.25 && t < 0.7) rays(g, x, y - 34, 7, 10, 18, '#b6f08f', bell((t - 0.25) / 0.45), 2.5); shake(g, x, y, t); }
-  // 站在木头上掏空：手往下一探，木头里冒出一小口灰，深处那点闪一下暗
-  if (e.digFail && same) { const [x, y] = P(e.log); puff(g, x, y - 6, t, '#8a8270', 7, 20); if (e.deep) ring(g, x, y, 10 + 6 * bell(t * 2), '#2a1a0c', 0.9, 4); }
-  if (e.took && e.log && !same) { const [x0, y0] = P(e.pl), [x1, y1] = P(e.log); const k = t < 0.45 ? ease(t / 0.45) : 1 - ease((t - 0.45) / 0.55); arm(g, x0, y0, x1, y1, k); if (t >= 0.45) { const q = ease((t - 0.45) / 0.55); bugHead(g, x1 + (x0 - x1) * q, y1 + (y0 - y1) * q - 10 * bell(q), 0.8, 1 - 0.3 * q); } shake(g, x1, y1, t); }
-  // 掏空：手伸进去，空着抽回来；木头里那个暗点一下一下闪暗
-  if (e.digFail && e.log && !same) { const [x0, y0] = P(e.pl), [x1, y1] = P(e.log); const k = t < 0.45 ? ease(t / 0.45) : 1 - ease((t - 0.45) / 0.55); arm(g, x0, y0, x1, y1, k); if (e.deep) { ring(g, x1, y1, 7 + 4 * bell(t * 2), '#5a3a20', 0.9, 3); dot(g, x1, y1, 4, '#3d6a2a', 0.5 + 0.5 * bell(t)); } else puff(g, x1, y1, t, '#8a8270', 6, 18); }
+  if ((e.took || e.digFail) && e.log && e.pl) {
+    const [x0, y0] = P(e.pl), [x1, y1] = P(e.log);
+    const out = same ? 0 : (t < 0.35 ? ease(t / 0.35) : t < 0.75 ? 1 - ease((t - 0.35) / 0.4) : 0);
+    if (!same) arm(g, x0, y0, x1, y1, out, !!e.digFail);
+    if (t < 0.5) shake(g, x1, y1, t * 2);
+    if (e.took) {
+      if (t >= 0.3 && t < 0.8) { const q = ease(Math.min(1, (t - 0.3) / 0.45)); const tip = same ? [x1, y1 - 30 * bell(q)] : [x1 + (x0 - x1) * q * 0.85, y1 + (y0 - y1) * q * 0.85]; bugHead(g, tip[0], tip[1] - 6, 0.9, 1); }
+      if (t >= 0.25 && t < 0.55) rays(g, x1, y1 - 8, 7, 10, 18, '#b6f08f', bell((t - 0.25) / 0.3), 2.5);
+      gulp(g, x0, y0, t);
+    } else {
+      if (e.deep) { const up = t < 0.3 ? ease(t / 0.3) : 1 - ease(Math.min(1, (t - 0.3) / 0.25)); if (t < 0.6) bugHead(g, x1, y1 - 8 - 14 * up, 0.85, 0.2 + 0.8 * up); ring(g, x1, y1, 6 + 14 * (1 - ease(Math.min(1, t / 0.6))), '#2a1a0c', 0.9 * (1 - t), 4); }   // 深处那只：探出头来，手一到就缩回去
+      else puff(g, x1, y1 - 4, Math.min(1, t * 1.6), '#8a8270', 7, 20);
+      fizzle(g, x0, y0, t);
+    }
+  }
   // 木头里又爬出一只：木头抖一下，一个虫头从木头里钻出来
   if (e.born && e.log) { const [x, y] = P(e.log); shake(g, x, y, t); bugHead(g, x + 10, y - 8 - 14 * ease(t), 0.5 + 0.5 * ease(t), 1); rays(g, x + 10, y - 22, 5, 6, 12, '#b6f08f', bell(t), 2); }
   // 吐进木头、深处那只醒了：一圈亮绿从木头中心炸开，两个虫头冒出来
@@ -68,7 +78,11 @@ function fx(g, m, info, t) {
   // 回窝过关：窝上一圈一圈金色往外，窝口亮
   if (e.win) { const [x, y] = P(e.win); for (let i = 0; i < 3; i++) { const q = Math.max(0, Math.min(1, t * 1.4 - i * 0.2)); ring(g, x, y, 14 + 70 * ease(q), '#ffd970', 1 - q, 4 - i); } dot(g, x, y + 6, 12, '#ffe9a8', 0.6 * bell(t)); }
 }
-function arm(g, x0, y0, x1, y1, k) { if (k <= 0) return; const x = x0 + (x1 - x0) * k * 0.85, y = y0 + (y1 - y0) * k * 0.85; g.save(); g.strokeStyle = '#5fb3ff'; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x, y); g.stroke(); g.fillStyle = '#9fd3ff'; g.beginPath(); g.arc(x, y, 5, 0, 7); g.fill(); g.restore(); }
+function arm(g, x0, y0, x1, y1, k, empty) { if (k <= 0) return; const x = x0 + (x1 - x0) * k * 0.85, y = y0 + (y1 - y0) * k * 0.85; g.save(); g.strokeStyle = '#5fb3ff'; g.lineWidth = 6; g.lineCap = 'round'; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x, y); g.stroke(); if (empty) { const an = Math.atan2(y0 - y, x0 - x); g.strokeStyle = '#9fd3ff'; g.lineWidth = 4; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(x, y); g.lineTo(x - Math.cos(an + s * 0.9) * 12, y - Math.sin(an + s * 0.9) * 12); g.stroke(); } } else { g.fillStyle = '#9fd3ff'; g.beginPath(); g.arc(x, y, 5, 0, 7); g.fill(); } g.restore(); }   // empty：空手，两根指头张开
+// 掏到的虫进了肚子：一圈绿往你身上收紧，收到底往外迸一下（只有掏到才有）
+// 掏空：跟进肚子那一圈同一个样子，可是灰的、虚线，收到一半就散了——什么也没进来
+function fizzle(g, x, y, t) { if (t < 0.72) return; const q = (t - 0.72) / 0.28; g.save(); g.setLineDash([5, 6]); g.lineDashOffset = 20 * q; ring(g, x, y, 28 - 8 * ease(q), '#a39a86', 0.9 * (1 - q), 3); g.restore(); }
+function gulp(g, x, y, t) { if (t < 0.72) return; const q = (t - 0.72) / 0.28; ring(g, x, y, 28 - 18 * ease(q), '#b6f08f', 1 - 0.5 * q, 3); if (q > 0.5) rays(g, x, y, 8, 14, 16 + 10 * ease((q - 0.5) * 2), '#d8ffb8', bell((q - 0.5) * 2), 2.5); }
 function shake(g, x, y, t) { const a = bell(t); g.save(); g.globalAlpha = 0.8 * a; g.strokeStyle = '#d9a86a'; g.lineWidth = 2; for (const s of [-1, 1]) { g.beginPath(); g.moveTo(x + s * 24, y - 6); g.lineTo(x + s * 30, y - 9); g.moveTo(x + s * 24, y + 4); g.lineTo(x + s * 31, y + 5); g.stroke(); } g.restore(); }
 
 root.WeiDraw = root.WeiDraw || {};
