@@ -400,8 +400,8 @@ function frame(cv, m, info, t) {
   const [mx, my] = prev ? at(prev.pl, dead ? dead.at : st.pl, ease(seg(t, 0, 0.35))) : at(st.pl);
   { const home = m.nest && st.pl[0] === m.nest[0] && st.pl[1] === m.nest[1], short = home && m.need && (st.ate || 0) < m.need && !dead && t >= 0.35;   // 吹万 15:36 页222
     const sh = short ? Math.sin(((typeof performance !== 'undefined') ? performance.now() : 0) / 40) * 2 : 0;
-    drawMe(g, mx + sh, my, (info.ev && info.ev.took && prev && t < 0.8) ? prev.ate : st.ate, st.pf, m.need || 0, short); }
-  if (false) // 吹万 15:36 页222：下面这段（15:07 头顶一排）不要了，挪到肚子上   // 吹万 第 19 天 15:1x：掏到时肚子等虫进了嘴才鼓（页220 无四1'不知道拿到了什么'）
+    drawMe(g, mx + sh, my, (info.ev && info.ev.took && prev && t < 0.8) ? prev.ate : st.ate, st.pf, 0, short); }   // 吹万 16:00 页222：肚上坑两个生人一个字没提（坑2 第 2 张空肚子回洞四局'没说缺了什么'），need 传 0 不画坑；身子抖留着
+  // 吹万 16:00：下面这段（15:07 头顶一排）恢复：页221 窝肚1 是看着它第三局读出'第四张总差一只虫'的，六个生人里唯一一句   // 吹万 第 19 天 15:1x：掏到时肚子等虫进了嘴才鼓（页220 无四1'不知道拿到了什么'）
   // 吹万 第 19 天 15:07 页220：站在窝上还不够时，人把窝口那几个圈盖住了，所以在头顶再画一排：有的实心、缺的红虚线左右抖
   if (m.nest && m.need && st.pl[0] === m.nest[0] && st.pl[1] === m.nest[1] && (st.ate || 0) < m.need && !dead && t >= 0.35) {
     const n = m.need, have = st.ate || 0, X = cx(m.nest[0]), Y = cx(m.nest[1]) - C * 0.62, sh = Math.sin(((typeof performance !== 'undefined') ? performance.now() : 0) / 45) * 2.5;
