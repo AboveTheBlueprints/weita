@@ -629,7 +629,7 @@ api.init = init3;
     if (deep && r.bugs.some(at)) {   // 页186：吐进去一只，深处那只醒了
       r.bugs = r.bugs.concat([L.slice(), L.slice()]); if (r.mine) r.mine = r.mine.concat([false, false]); deep = 0; api.logWake = true;   // 醒过来那一下就爬出一只：吐进去的、深处的、新爬的，三只
     }
-    if (!deep && r.bugs.filter(at).length === 1) {   // 掉到一只：缩进深处，谁也够不着
+    if (false && !deep && r.bugs.filter(at).length === 1) {   // 掉到一只：缩进深处——吹万 第 20 天 页262 关掉：剩一只就露头、掏得出，掏走了木头空了变灰
       const k = r.bugs.findIndex(at); r.bugs[k] = null; deep = 1; if (n0 >= 2) api.logStop = true;
     }
     if (deep && eq(r.pl, L) && !eq(st.pl, L)) api.logReach = true;
@@ -643,7 +643,7 @@ api.init = init3;
     r.lb = lb;
     return r;
   };
-  api.init = function (m) { const o = _initW(m); o.lb = 0; o.deep = m.logDeep0 ? 1 : 0; o.dust = 0; return o; };
+  api.init = function (m) { const o = _initW(m); o.lb = 0; o.deep = 0; if (m.logDeep0 && m.logAt) { o.bugs = o.bugs.concat([m.logAt.slice()]); if (o.mine) o.mine = o.mine.concat([false]); } o.dust = 0; return o; };
   api.logLeft = function (m, st) { return m.logAt ? (LOGBREED - (st.lb || 0)) : 0; };
 }
 if (typeof module !== 'undefined') module.exports = api; else root.WeiSim = api;

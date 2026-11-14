@@ -354,10 +354,10 @@ function frame(cv, m, info, t) {
     const X = cx(m.logAt[0]), Y = cx(m.logAt[1]), n = st.bugs.filter(onLog).length + (st.deep ? 1 : 0);
     // 无字：木头大一号，身上三个虫洞；有几只活的就有几个洞里探出虫头、触角一摆一摆；只剩一只时没有头探出来，木头中间裂缝里透出一只蜷着的、暗的；空了就三个黑洞
     const now = (typeof performance !== 'undefined' ? performance.now() : 0) / 300;
-    g.fillStyle = '#7a5632'; if (g.roundRect) { g.beginPath(); g.roundRect(X - C * 0.47, Y - C * 0.27, C * 0.94, C * 0.54, 8); g.fill(); } else g.fillRect(X - C * 0.47, Y - C * 0.27, C * 0.94, C * 0.54);
-    g.fillStyle = '#5a3d20'; g.beginPath(); g.ellipse(X + C * 0.43, Y, C * 0.08, C * 0.25, 0, 0, 7); g.fill();
+    g.fillStyle = n === 0 ? '#5b5048' : '#7a5632'; if (g.roundRect) { g.beginPath(); g.roundRect(X - C * 0.47, Y - C * 0.27, C * 0.94, C * 0.54, 8); g.fill(); } else g.fillRect(X - C * 0.47, Y - C * 0.27, C * 0.94, C * 0.54);
+    g.fillStyle = n === 0 ? '#423a33' : '#5a3d20'; g.beginPath(); g.ellipse(X + C * 0.43, Y, C * 0.08, C * 0.25, 0, 0, 7); g.fill();
     g.strokeStyle = '#4a321c'; g.lineWidth = 1.5; for (const dy of [-0.15, 0.13]) { g.beginPath(); g.moveTo(X - C * 0.42, Y + C * dy); g.lineTo(X + C * 0.3, Y + C * dy + 2); g.stroke(); }
-    const H = [[-0.3, 0.0], [-0.08, -0.06], [0.14, 0.02]], show = n >= 2 ? Math.min(n, 3) : 0;
+    const H = [[-0.3, 0.0], [-0.08, -0.06], [0.14, 0.02]], show = Math.min(n, 3);   /* 页262：剩一只也探头 */
     H.forEach(([hx, hy], i) => {
       const px = X + C * hx, py = Y + C * hy;
       g.fillStyle = '#1a1009'; g.beginPath(); g.ellipse(px, py, 5, 4, 0, 0, 7); g.fill();
@@ -367,10 +367,8 @@ function frame(cv, m, info, t) {
         g.strokeStyle = '#2e4d1f'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(px - 2, py - 8); g.lineTo(px - 6 + w * 3, py - 15); g.moveTo(px + 2, py - 8); g.lineTo(px + 6 + w * 3, py - 15); g.stroke();
       }
     });
-    if (n === 1) {   // 只剩一只：裂缝里透出一只蜷着的、暗的
-      g.strokeStyle = '#1a1009'; g.lineWidth = 3; g.beginPath(); g.moveTo(X + 8, Y + 11); g.lineTo(X + 14, Y + 6); g.lineTo(X + 19, Y + 12); g.stroke();
-      g.fillStyle = 'rgba(90,140,70,0.8)'; g.beginPath(); g.arc(X + 14, Y + 9.5, 3, 0, 7); g.fill();
-      // 吹万 第 19 天 14:26 在这儿加过一只虚线小圈（'这儿还差一只'），15:34 撤了：页221 窝肚1 读成'里面看着有绿东西，按掏却没反应'，虚线圈在生人眼里是一只东西，不是空位
+    if (n === 0) {   // 吹万 第 20 天 页260/262：空了，木头褪灰、多一道裂纹
+      g.strokeStyle = '#2a231d'; g.lineWidth = 2; g.beginPath(); g.moveTo(X - C * 0.2, Y - C * 0.27); g.lineTo(X - C * 0.12, Y - C * 0.05); g.lineTo(X - C * 0.2, Y + C * 0.1); g.stroke();
     }
   }
   // 吹万 第 18 天 21:4x 页197木屑：你在朽木上每扒一下，木头底下落一撮木屑；前几天的还在（颜色暗一点），不写字。
@@ -378,7 +376,7 @@ function frame(cv, m, info, t) {
     const X = cx(m.logAt[0]), Y = cx(m.logAt[1]), old = m.logDust0 || 0, all = old + (st.dust || 0);
     for (let i = 0; i < all; i++) {
       const bx = X - C * 0.3 + (i % 4) * C * 0.2, by = Y + C * 0.33 + Math.floor(i / 4) * 5;
-      g.strokeStyle = i < old ? '#a8865a' : '#e6c58c'; g.lineWidth = 2.8; g.lineCap = 'round';   // 木屑画成几根浅色的小卷片，跟虫渣的深褐点分开
+      g.strokeStyle = i < old ? '#4a3826' : '#5e4630'; g.lineWidth = 2;   /* 页260：浅奶粗线被读成掏出来的东西，改暗褐细线 */ g.lineCap = 'round';   // 木屑画成几根浅色的小卷片，跟虫渣的深褐点分开
       for (const [dx, dy, a] of [[-4, 0, 0.5], [3, -1.5, -0.7], [0, 3, 1.3], [5, 2.5, 0.2], [-3, 4, -0.3]]) { g.beginPath(); g.moveTo(bx + dx - 3.6 * Math.cos(a), by + dy - 3.6 * Math.sin(a)); g.lineTo(bx + dx + 3.6 * Math.cos(a), by + dy + 3.6 * Math.sin(a)); g.stroke(); }
       g.lineCap = 'butt';
     }
