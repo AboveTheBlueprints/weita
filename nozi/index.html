@@ -270,8 +270,8 @@ const DAYINFO = {}; const ROT = {};   /* 第三个 第 18 天 页173果：第 d 
 function dayRng(s) { return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }; }
 // 吹万 第 18 天 17:06 页184朽木：第 LOGDAY 天起，红石头正下方三格（过道口）一截朽木。头一天里头两只；往后每天开局是昨天天黑时里头剩的那几只。
 const LOGAT = [9, 1], LOGDAY = 3, LOG0 = 2;   /* 页188朽木手：挪到上路 (9,1)，人去右边的路上最先碰到它；你叼一只它就在你脚下缩进去 */   /* 页187朽木醒：第 3 天开局两只、活的；红多半先吃一只，你看着它掉到一只、缩进去 */   /* 页186朽木种：第 3 天起，开局只剩深处一只 */
-function logCount0(d) { if (d < LOGDAY) return 0; if (d === LOGDAY) return LOG0; const Y = DAYINFO[d - 2]; const c = Y ? (Y.all || []).filter(k => k[0] === LOGAT[0] && k[1] === LOGAT[1]).length : 0; return c >= 2 ? c : 1; }   /* 页186：不到两只就是深处那一只 */
-function logSetup(mm, L) { if (!L.day || L.day < LOGDAY) return; mm.logAt = LOGAT.slice(); mm.logDust0 = (DAYINFO[L.day - 2] && DAYINFO[L.day - 2].dust) || 0;   /* 吹万 页197木屑：前几天扒下的木屑还在地上 */ mm.bugs = mm.bugs.filter(b => !(b[0] === LOGAT[0] && b[1] === LOGAT[1])); const c = logCount0(L.day); if (c >= 2) { for (let i = 0; i < c; i++) mm.bugs.push(LOGAT.slice()); } else mm.logDeep0 = true; }
+function logCount0(d) { if (d < LOGDAY) return 0; if (d === LOGDAY) return LOG0; const Y = DAYINFO[d - 2]; const c = Y ? (Y.all || []).filter(k => k[0] === LOGAT[0] && k[1] === LOGAT[1]).length : 0; return c; }   /* 页186：不到两只就是深处那一只——吹万 第 20 天 13:3x 改：深处那只关掉了（b538004），这里原来托底的'至少一只'变成每天白送一只露头的；现在昨天剩几只今天就几只，空了就是空的 */
+function logSetup(mm, L) { if (!L.day || L.day < LOGDAY) return; mm.logAt = LOGAT.slice(); mm.logDust0 = (DAYINFO[L.day - 2] && DAYINFO[L.day - 2].dust) || 0;   /* 吹万 页197木屑：前几天扒下的木屑还在地上 */ mm.bugs = mm.bugs.filter(b => !(b[0] === LOGAT[0] && b[1] === LOGAT[1])); const c = logCount0(L.day); for (let i = 0; i < c; i++) mm.bugs.push(LOGAT.slice()); }
 function dayText(d, nBugs) {   // 第二个 第 16 天 04:45 页98虫过夜：昨天地上剩的虫（野的也算）第二天还在原地；新来的两只生在昨天虫没了的那几格（虫渣）或剩下的那几只旁边（两步以内、离窝 10 步以外），不再从五个虫位里随机挑。第 1 天照旧五个虫位。
   const MAP = d >= 6 ? DAYMAP2 : DAYMAP;   // 第二个 页113
   const spots = []; MAP.split('\n').forEach((r, y) => [...r].forEach((c, x) => c === '*' && spots.push([x, y])));
