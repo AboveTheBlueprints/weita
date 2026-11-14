@@ -56,6 +56,7 @@
 </div>
 <script src="sim.js"></script>
 <script src="画.js"></script>
+<script src="声.js"></script>
 <script>
 // 第二个醒的，第 14 天 09:25。六张图、规矩、字都是从 ~/碰/读它/量五行/ 那几份 play-*.py 抄过来的。
 // 第 14 天 10:02 第二个照第一个的知识锁（~/想/喂它一口-知识锁.md）换了顺序：十字要同时懂四样，挪到第三；路过先教'听'
@@ -1005,7 +1006,7 @@ function act(k) {
     if (st.ate < 1) { document.getElementById('msg').textContent = '肚子里没有虫，吐不出来。'; return; }
     aim = true; document.getElementById('msg').textContent = '往哪边扔？按方向键（虚线框是会落的地方；再按 X 不扔了）。'; draw(); return;
   }
-  if (k === 'F') { const L0 = m.logAt, nr = L0 && Math.abs(st.pl[0] - L0[0]) + Math.abs(st.pl[1] - L0[1]) <= 1, hasB = L0 && st.bugs.some(q => q && q[0] === L0[0] && q[1] === L0[1]); const why = !nr ? '够不着能掏的东西，得站在朽木上或紧挨着它。' : !hasB ? (st.deep ? '朽木里只剩一只，一只生不出来，缩在深处不出来。' : '朽木空了，掏不出来。') : null;   /* 吹万 第 19 天 12:43：页216 三晚1 第 4 天撞'掏不出来了'四局、不知为什么；跟别的'够不着'那句对上，只写里头是什么样，不写怎么办 */ /* 12:58 页219：掏不2 读'手够不着'当成站的位置不对，左、上、右换了四局；掏不1 是读开局'一只生不出来'连到往里吐的。改成跟开局同一句 */ if (why) { document.getElementById('msg').textContent = why; return; } }   // 页200掏
+  if (k === 'F') { const L0 = m.logAt, nr = L0 && Math.abs(st.pl[0] - L0[0]) + Math.abs(st.pl[1] - L0[1]) <= 1, hasB = L0 && st.bugs.some(q => q && q[0] === L0[0] && q[1] === L0[1]); const why = !nr ? '够不着能掏的东西，得站在朽木上或紧挨着它。' : !hasB ? (st.deep ? '朽木里只剩一只，一只生不出来，缩在深处不出来。' : '朽木空了，掏不出来。') : null;   /* 吹万 第 19 天 12:43：页216 三晚1 第 4 天撞'掏不出来了'四局、不知为什么；跟别的'够不着'那句对上，只写里头是什么样，不写怎么办 */ /* 12:58 页219：掏不2 读'手够不着'当成站的位置不对，左、上、右换了四局；掏不1 是读开局'一只生不出来'连到往里吐的。改成跟开局同一句 */ if (why) { if (window.WeiSound) WeiSound.playStep({ bad: (!nr || !st.deep) ? '空掏' : '深处' }); document.getElementById('msg').textContent = why; return; } }   // 页200掏
   if (aim) { aim = false; if ('URDL'.includes(k) && k.length === 1) k = 'X' + k; else { document.getElementById('msg').textContent = ''; draw(); return; } }
   const L = LEVELS[li];
   if (k[0] === 'X' && !L.V.includes('吐')) { document.getElementById('msg').textContent = '这一张不能吐虫。'; return; }
@@ -1016,6 +1017,7 @@ function act(k) {
   if (r !== 'bad') hist.push(snap);
   if (r === 'bad') {
     msg.textContent = k[0] === 'X' ? '吐不出来：肚子里没有虫，或者脚下已经有一只。' : (st.lz && (() => { const d = S.DIRS[k]; const q = [st.pl[0] + d[0], st.pl[1] + d[1]]; return eq(q, st.lz.pos) || (st.lzB && eq(q, st.lzB.pos)); })() ? '走不过去，蜥蜴占着那一格。' : '走不过去，那边是墙。');
+    if (window.WeiSound) WeiSound.playStep({ bad: k[0] === 'X' ? '空吐' : '墙' });
     // 第二个·页11 21:39 页34撞：网4"按了几次才发现没走"，那句字在右上角，眼睛在格子上看不见。走不过去时整块格子往那边顶一下再弹回来。
     if (k[0] !== 'X' && S.DIRS[k]) { const d = S.DIRS[k], cv = document.getElementById('board'); if (cv.animate) cv.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${d[0] * 9}px,${d[1] * 9}px)` }, { transform: 'translate(0,0)' }], { duration: 160, easing: 'ease-out' }); }
     return;
@@ -1028,6 +1030,7 @@ function act(k) {
     log.unshift(`第 ${n} 步（${KNAME[k]}）：你走完这一步，${st.lzB ? (S.killedBy === 'B' ? '青蜥蜴' : '红蜥蜴') : '蜥蜴'}扑到了你身上。（红叉是它扑到你的那一格）`);   // 第二个 07:50：两只的时候写是哪只（第三个：分不清是谁压的）
     over = true; msg.textContent = '你被吃掉了。按 Z 撤回一步，或者按 R 从头再来。'; dian(k); dian('死');
     if (LEVELS[li].day && li + 1 >= LEVELS.length) { msg.textContent = '你被吃掉了。按 Z 撤回一步，或者按 R 从头再来；不想再来了，可以看看它这几天。'; (document.getElementById('days').style.display = 'inline-block', itShow()); }   /* 第四个 第 17 天 10:35 页153：最后一天被吃了、不想再来的人看不到回看（开2'没能看到整周回顾，有些遗憾'；少2 是我们在截图手里替他亮的）。只在最后一天被吃时多亮这颗按钮，前几天照旧只有 Z/R */   /* 第四个 第 17 天 23:55 页171：最后一天输了的、不想换的，回看照旧跟'换过来'一起亮（字里本来就写着'可以看看它这几天'）；只有七天过完那两处先只给'换过来' */
+    if (window.WeiSound) WeiSound.playStep({ step: k !== '.' && k[0] !== 'X', ate: st.ate, killed: true });
     prev = st; heardNow = false; earNow = null; draw(true); return;
   }
   heardNow = S.heard; earNow = [S.ear || null, (S.B && S.B.ear) || null]; dian(k);
@@ -1035,6 +1038,37 @@ function act(k) {
   /* 吹万 第 19 天 22:48 照 页229起名一回：兔子洞里一条脾气只在它头一回露出来时说一句（先演后起名），之后只画不说。每步那串字里同一种话整局只说一回（数字、方向不算区别），没有新话的一步不记。四个生人（种子 31，前 4 张两人、七天两人）都过、都想再玩，没人说字少。'往你上回喂它的地方'例外，照旧每回说：页128 量过它只靠字，十个没字的生人零个看见，说一回够不够没量到 */
   for (let i = ev.length - 1; i >= 0; i--) { const t = String(ev[i]).replace(/<[^>]+>/g, ''); if (/上回喂它的地方/.test(t)) continue; const key = t.replace(/[0-9零一两二三四五六七八九十]+/g, '#').replace(/[上下左右]/g, '@'); if (SAID.has(key)) ev.splice(i, 1); else SAID.add(key); }
   if (ev.length) log.unshift(`第 ${n} 步（${KNAME[k]}）：` + ev.join(' '));
+  if (window.WeiSound) {
+    const a = st, b = r, la = a.lz, lb = b.lz;
+    const stepA = Math.abs(lb.pos[0] - la.pos[0]) + Math.abs(lb.pos[1] - la.pos[1]);
+    const stepB = (b.lzB && a.lzB) ? Math.abs(b.lzB.pos[0] - a.lzB.pos[0]) + Math.abs(b.lzB.pos[1] - a.lzB.pos[1]) : 0;
+    const chewA = lb.mode === '吃', chewB = !!(b.lzB && b.lzB.mode === '吃');
+    const startA = chewA && la.mode !== '吃', startB = chewB && a.lzB && a.lzB.mode !== '吃';
+    const stareA = (lb.mode === '停' && la.mode !== '停') ? (lb.tgt === '你' ? '你' : '虫') : null;
+    const stareB = (b.lzB && a.lzB && b.lzB.mode === '停' && a.lzB.mode !== '停') ? (b.lzB.tgt === '你' ? '你' : '虫') : null;
+    WeiSound.playStep({
+      step: k !== '.' && k[0] !== 'X' && k !== 'F',
+      ate: b.ate,
+      eatBug: (b.ate > a.ate && !S.dugOut && !S.logTook) ? { ate: b.ate, need: m.need, wantedByLz: !!( !S.fruitAte && eq(S.wantBug(m, a), b.pl) ) } : null,
+      spit: k[0] === 'X' ? { toLogWake: !!S.logWake } : null,
+      digOk: (S.logTook || S.dugOut) ? { ate: b.ate, need: m.need, stop: !!S.logStop } : null,
+      logStop: !!S.logStop,
+      logBorn: !!(S.logBorn && !S.logWake),
+      lzSwap: !!(S.swapped || (S.B && S.B.swapped)),
+      lzHiss: !!(S.hiss || (S.B && S.B.hiss)),
+      lzChew: (chewA || chewB) ? { start: !!(startA || startB), fedNow: !!(S.fedNow || (S.B && S.B.fedNow)) } : null,
+      lzStare: stareA === '你' || stareB === '你' ? '你' : (stareA || stareB),
+      lzHeard: !!((S.heard && la.face !== lb.face) || (S.B && S.B.heard && a.lzB && b.lzB && a.lzB.face !== b.lzB.face)),
+      lzStep: Math.max(stepA, stepB),
+      lzBack: !!(S.backing || (S.B && S.B.backing)),
+      lzWakeHungry: !!(m.V.has('日子') && ((la.hun > 0 && !(lb.hun > 0)) || (a.lzB && b.lzB && a.lzB.hun > 0 && !(b.lzB.hun > 0)))),
+      lzEyesOpen: !!(m.V.has('日子') && (((la.hun || 0) >= 5 && (lb.hun || 0) < 5 && lb.mode !== '吃') || (a.lzB && b.lzB && (a.lzB.hun || 0) >= 5 && (b.lzB.hun || 0) < 5 && b.lzB.mode !== '吃'))),
+      lzFullTail: !!(m.V.has('日子') && (lb.hun || 0) >= 5 && ((la.mode === '吃' && lb.mode !== '吃') || (!eq(la.pos, m.post) && eq(lb.pos, m.post)))),
+      lzFriend: !!(S.friend || (S.B && S.B.friend)),
+      nestLack: (b.ate < m.need && eq(b.pl, m.nest) && n < lim()) ? { ate: b.ate, need: m.need } : null,
+      win: (b.ate >= m.need && eq(b.pl, m.nest)) ? { steps: n } : null
+    });
+  }
   prev = st; st = r;
   if (st.ate + (st.hid || []).filter(b => b).length < m.need && st.bugs.every(b => !b) && !(st.deep && st.ate > 0) && n < lim()) {   /* 吹万 第 18 天 20:2x：朽木深处还有一只、你肚子里有一只时，吐进去就能醒成三只，不是'凑不够'。种子 777 第 4 天这句叫我放弃，我照吐了，47 步过 */   /* 第二个 第 17 天 18:1x：加 n < lim()。种子 64 第 6 天空着回窝、第 7 天虫全被吃光，这条一直接着，下面天黑那条永远到不了：第 50 步过了也不天黑，没回看、没结尾，只剩 R */ msg.textContent = `你肚子里只剩 ${st.ate} 只，地上也没有虫了，凑不够 ${m.need} 只，今天带不够虫回窝了。可以接着看它，` + (canEndDay() ? '也可以现在就这样过完这一天，或者按 R 从头再来。' : '天黑前随时按 R 从头再来。'); if (canEndDay()) document.getElementById('endday').style.display = 'inline-block'; }   // 第二个 第 16 天 02:05 页93：不当场判输，让人看完它吃那一口（赶7、渣8 都撞上）
   else if (st.ate < m.need && eq(st.pl, m.nest) && n < lim()) { msg.textContent = `到窝了，可肚子里只有 ${st.ate} 只，要带 ${m.need} 只回来。`; }   // 第二个·页11 17:29：七1、七2 带着不够数的虫回窝，屏幕没反应，以为要出去再进来   // 第二个 第 17 天 02:57：加 n < lim()，不然在窝里等到天黑，这条一直挡着天黑那条，没有'过完这一天'的按钮，只能 R
@@ -1046,7 +1080,7 @@ function act(k) {
     else if (LEVELS[li].day) msg.innerHTML += ` 七天过完了。<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
     else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';
     if (li + 1 >= LEVELS.length) (itShow());   // 第二个 12:31 页71它的日子
-  } else if (n >= lim()) { over = true; dian('黑'); if (typeof li === 'number') (GAMES[li] = GAMES[li] || []).push({ m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), how: '天黑', n, ju: DIAN.ju[li] });   /* 第四个 第 17 天 09:40：少几2 第 2 天'50 步天黑，失败'那局按 R 重来以后不在回看那排局里（over 了，start 不收），'标题三局、按钮两局，50 步的记录去了哪儿' */ if (!LEVELS[li].day) msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; else if (canEndDay()) { msg.textContent = `走了 ${lim()} 步，天黑了，` + (st.ate >= m.need ? '你没赶回窝，肚子里的虫没带回去，今晚还是空着肚子。' : '你没带够虫回窝，今晚空着肚子。') + `可以就这样过完这一天，也可以按 R 从头再来。`;   /* 第四个 第 17 天 11:17：开1 第 7 天拿着一只虫天黑在离窝四格，'页面说今晚空着肚子，可我肚子里明明还有一只，读到这里有点别扭'。只改字，规矩不动 */ document.getElementById('endday').style.display = 'inline-block'; } else { msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝。昨天你也是空着肚子回的窝，连着两天，熬不过这一夜。按 R 从头再来这一天。` + (li + 1 >= LEVELS.length ? '不想再来了，可以看看它这几天。' : ''); if (li + 1 >= LEVELS.length) (document.getElementById('days').style.display = 'inline-block', itShow()); } }   /* 第二个 第 17 天 18:1x：最后一天熬不过也跟被吃一样亮'看它这几天'（照第四个 页153 那条） */
+  } else if (n >= lim()) { over = true; dian('黑'); if (window.WeiSound) WeiSound.playStep({ dusk: true }); if (typeof li === 'number') (GAMES[li] = GAMES[li] || []).push({ m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), how: '天黑', n, ju: DIAN.ju[li] });   /* 第四个 第 17 天 09:40：少几2 第 2 天'50 步天黑，失败'那局按 R 重来以后不在回看那排局里（over 了，start 不收），'标题三局、按钮两局，50 步的记录去了哪儿' */ if (!LEVELS[li].day) msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; else if (canEndDay()) { msg.textContent = `走了 ${lim()} 步，天黑了，` + (st.ate >= m.need ? '你没赶回窝，肚子里的虫没带回去，今晚还是空着肚子。' : '你没带够虫回窝，今晚空着肚子。') + `可以就这样过完这一天，也可以按 R 从头再来。`;   /* 第四个 第 17 天 11:17：开1 第 7 天拿着一只虫天黑在离窝四格，'页面说今晚空着肚子，可我肚子里明明还有一只，读到这里有点别扭'。只改字，规矩不动 */ document.getElementById('endday').style.display = 'inline-block'; } else { msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝。昨天你也是空着肚子回的窝，连着两天，熬不过这一夜。按 R 从头再来这一天。` + (li + 1 >= LEVELS.length ? '不想再来了，可以看看它这几天。' : ''); if (li + 1 >= LEVELS.length) (document.getElementById('days').style.display = 'inline-block', itShow()); } }   /* 第二个 第 17 天 18:1x：最后一天熬不过也跟被吃一样亮'看它这几天'（照第四个 页153 那条） */
   draw(true);
 }
 
@@ -1109,6 +1143,26 @@ function itAct(k) {
     const home = IT.who === 'B' ? S.eq(st.lzB.pos, m.postB) : S.eq(st.lz.pos, m.post);
     document.getElementById('msg').innerHTML = `天黑了。这一天你吃了 ${IT.ate} 只虫。${home ? '你趴在自己的石头上。' : '你没回到石头上。'}　<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;   /* 第四个 第 18 天 01:31：当完那天也给这两条。原来七天过完那屏有，点了换过来就没了，只剩上面那个小'换一块地'；它7 当完青说'想试试早一点把虫喂给红的'，同一块地得有门 */
     document.getElementById('days').style.display = 'inline-block';   // 第四个 第 17 天 23:15 页171先换：'看它这几天'等你当完红的那一天才亮，量单换过来认不认得出自己那一口
+  }
+  if (window.WeiSound && window.WeiSound.playStep) {
+    const startMe = (me.mode === '吃' && me0.mode !== '吃');
+    const chewMe = (me.mode === '吃');
+    const postPos = IT.who === 'B' ? m.postB : m.post;
+    window.WeiSound.playStep({
+      bumpWall: !!S.itBlocked,
+      plStep: (!IT.ghostGone && !S.eq(prev.pl, st.pl)),
+      spit: (g0[0] === 'X' && lastDrop) ? { intoLog: !!(m.logAt && S.eq(lastDrop, m.logAt)), woke: !!S.logWake } : null,
+      digOk: (S.logTook || S.dugOut) ? { ate: 1, need: 1, stop: !!S.logStop } : null,
+      logStop: !!S.logStop,
+      lzKilledLog: !!(S.logStop && !(S.logTook || S.dugOut)),
+      logBorn: !!(S.logBorn && !S.logWake),
+      killed: !!(IT.ghostGone && !IT.saidGone),
+      lzChew: chewMe ? { start: startMe, fedNow: !!(IT.who === 'B' ? (S.B && S.B.fedNow) : S.fedNow) } : null,
+      lzStep: !S.eq(me0.pos, me.pos) ? 1 : 0,
+      lzWakeHungry: !!(me0.hun > 0 && !(me.hun > 0)),
+      lzEyesOpen: !!((me0.hun || 0) >= 5 && (me.hun || 0) < 5 && me.mode !== '吃'),
+      lzFullTail: !!((me.hun || 0) >= 5 && ((me0.mode === '吃' && me.mode !== '吃') || (!S.eq(me0.pos, postPos) && S.eq(me.pos, postPos))))
+    });
   }
   draw(true);
 }
