@@ -1024,7 +1024,7 @@ function act(k) {
   const msg = document.getElementById('msg');
   if (r !== 'bad') hist.push(snap);
   if (r === 'bad') {
-    msg.textContent = k[0] === 'X' ? '吐不出来：肚子里没有虫，或者脚下已经有一只。' : (st.lz && (() => { const d = S.DIRS[k]; const q = [st.pl[0] + d[0], st.pl[1] + d[1]]; return eq(q, st.lz.pos) || (st.lzB && eq(q, st.lzB.pos)); })() ? '走不过去，蜥蜴占着那一格。' : '走不过去，那边是墙。');
+    msg.textContent = k[0] === 'X' ? '吐不出来：肚子里没有虫，或者脚下已经有一只。' : k === 'F' ? '掏不着，蜥蜴趴在朽木上。' : (st.lz && (() => { const d = S.DIRS[k]; const q = [st.pl[0] + d[0], st.pl[1] + d[1]]; return eq(q, st.lz.pos) || (st.lzB && eq(q, st.lzB.pos)); })() ? '走不过去，蜥蜴占着那一格。' : '走不过去，那边是墙。');
     // 第二个·页11 21:39 页34撞：网4"按了几次才发现没走"，那句字在右上角，眼睛在格子上看不见。走不过去时整块格子往那边顶一下再弹回来。
     if (window.WeiFX) WeiFX.SND.bump();
     if (window.WeiSound) WeiSound.playStep({ bad: k[0] === 'X' ? '空吐' : '墙' });
