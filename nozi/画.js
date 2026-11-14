@@ -68,12 +68,15 @@ function drawMe(g, X, Y, belly, pf, need, short) {   // 吹万 第 19 天 15:36 
     g.closePath(); g.fill();
   }
   { const ang = { R: 0, D: Math.PI / 2, L: Math.PI, U: -Math.PI / 2 }[pf || 'R'];   // 无字：'我'画成一只蓝色小蜥蜴，肚子里的虫在肚子里鼓起来
-    g.save(); g.translate(X, Y); g.rotate(ang); g.scale(0.82, 0.8 + 0.13 * belly);
-    g.fillStyle = COL.me; g.strokeStyle = COL.me; g.lineWidth = 3.4;
+    const lean = !!(root.WeiDraw && root.WeiDraw.lean) && (belly === 0 || root.WeiDraw.leanAll);   // 吹万 第 20 天 页257/259：瘦一圈、发灰、露肋
+    const lt = lean ? (root.WeiDraw.leanT == null ? 1 : root.WeiDraw.leanT) : 0;
+    g.save(); g.translate(X, Y); g.rotate(ang); g.scale(0.82, (0.8 + 0.13 * belly) * (1 - 0.38 * lt));
+    g.fillStyle = lt > 0.5 ? '#6f8fa8' : COL.me; g.strokeStyle = g.fillStyle; g.lineWidth = 3.4;
     for (const s2 of [-1, 1]) { g.beginPath(); g.moveTo(4, s2 * 7); g.lineTo(11, s2 * 16); g.stroke(); g.beginPath(); g.moveTo(-10, s2 * 7); g.lineTo(-17, s2 * 16); g.stroke(); }
     g.beginPath(); g.moveTo(-22, 0); g.quadraticCurveTo(-34, -10, -30, 8); g.stroke();
     g.beginPath(); g.moveTo(-22, 0); g.quadraticCurveTo(-12, -11 - belly * 2, 6, -9); g.quadraticCurveTo(26, -6, 26, 0); g.quadraticCurveTo(26, 6, 6, 9); g.quadraticCurveTo(-12, 11 + belly * 2, -22, 0); g.fill();
     g.fillStyle = '#0d2236'; g.beginPath(); g.arc(16, -4.5, 2.6, 0, 7); g.arc(16, 4.5, 2.6, 0, 7); g.fill();
+    if (lt > 0.5) { g.strokeStyle = '#0d2236'; g.lineWidth = 1.6; for (const rx of [-10, -4, 2]) for (const s3 of [-1, 1]) { g.beginPath(); g.moveTo(rx - 2, s3 * 3); g.lineTo(rx + 1, s3 * 8.5); g.stroke(); } }
     // 吹万 第 19 天 15:36 页222肚上坑：'要带几只'从窝口挪到我肚子上。肚子上有 need 个坑，吃一只填一个；没填的是深色的空坑（不是虚线虫：页220/221 四个生人三个把虚线虫圈读成'存粮'）。
     // 站在窝上还不够时，空坑的边发红、身子左右抖。
     const slots = Math.max(belly, need || 0);
@@ -161,9 +164,9 @@ function drawSightCells(g, m, pos, face, upto, alpha, block) {   // upto：画�
 }
 
 // 一圈声音：离出声那格 1、2、3 格（横竖加起来算）的格子一层一层亮一下。它在这圈里、又闲着，就会转头。
-function drawSound(g, m, q, t, color) {   // 无字：一圈菱形的波往外荡三格（隔着墙也荡），不再每格画一个圈
+function drawSound(g, m, q, t, color, maxD) {   // 无字：一圈菱形的波往外荡三格（隔着墙也荡），不再每格画一个圈
   const X = cx(q[0]), Y = cx(q[1]);
-  for (let d = 1; d <= 3; d++) {
+  for (let d = 1; d <= (maxD || 3); d++) {
     const a = Math.sin(Math.PI * seg(t, (d - 1) * 0.1, (d - 1) * 0.1 + 0.35));
     if (a <= 0) continue;
     const r = C * (d + 0.45);
@@ -288,7 +291,7 @@ function frame(cv, m, info, t) {
   // 声音：你走一步、虫跑一步、虫落地，都有一圈
   if (prev && t < 1) {
     const swapNow = prev.lz && st.lz && same(st.lz.pos, prev.pl) && same(st.pl, prev.lz.pos);   // 无字 13:33：让路那一步不荡你的脚步圈（13:17 那处连拍：脚步圈比两只加起来都大，盖住了错身）
-    if (!same(prev.pl, st.pl) && !dead && !swapNow) drawSound(g, m, st.pl, tSound, info.heard ? '#7cc8ff' : 'rgba(124,200,255,0.75)');
+    if (!same(prev.pl, st.pl) && !dead && !swapNow) drawSound(g, m, st.pl, tSound, info.heard ? '#7cc8ff' : 'rgba(124,200,255,0.75)', (m.quiet && !st.ate) ? 2 : 3);
     prev.bugs.forEach((b, i) => { if (b && st.bugs[i] && !same(b, st.bugs[i])) drawSound(g, m, st.bugs[i], tSound, 'rgba(160,220,120,0.8)'); });
     if (info.spit) drawSound(g, m, info.spit.to, seg(t, 0.25, 1), 'rgba(160,220,120,0.8)');
   }

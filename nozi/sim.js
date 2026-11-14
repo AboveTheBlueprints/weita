@@ -124,7 +124,7 @@ function lizardTurn(m, lz, player, bugs, sounds) {
   const V = m.V;
   if (V.has('一件事')) return lizardOne(m, lz, player, bugs, sounds);
   if (V.has('听') && mode === '岗' && sounds.length) {
-    let near = sounds.map(([w, q]) => [Math.abs(q[0] - pos[0]) + Math.abs(q[1] - pos[1]), w === '虫' ? 0 : 1, q]).filter(x => x[0] > 0 && x[0] <= 3);
+    let near = sounds.map(([w, q]) => [Math.abs(q[0] - pos[0]) + Math.abs(q[1] - pos[1]), w === '虫' ? 0 : 1, q, w]).filter(x => x[0] > 0 && x[0] <= (x[3] === '你轻' ? 2 : 3));
     if (near.length) {
       near.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2][0] - b[2][0] || a[2][1] - b[2][1]);
       const q = near[0][2];
@@ -250,7 +250,7 @@ function lizardOne(m, lz, player, bugs, sounds) {
   }
   if (mode === '岗') {
     if (V.has('听') && sounds.length) {
-      let near = sounds.map(([w, q]) => [Math.abs(q[0] - pos[0]) + Math.abs(q[1] - pos[1]), w === '虫' ? 0 : 1, q]).filter(x => x[0] > 0 && x[0] <= 3);
+      let near = sounds.map(([w, q]) => [Math.abs(q[0] - pos[0]) + Math.abs(q[1] - pos[1]), w === '虫' ? 0 : 1, q, w]).filter(x => x[0] > 0 && x[0] <= (x[3] === '你轻' ? 2 : 3));
       // 第五个 第 17 天 18:58 '听惯了'：前三步里它看见过你、没动（认你或吃饱），你的脚步它就不回头（第一个 18:33 种子 37：一格宽竖道里跟在它后面，每迈一步它都转回来）。虫的动静照旧转
       if (V.has('日子') && (lz.knew || 0) > 0 && near.some(x => x[1] === 1)) {
         api.heardKnown = true; api.ear = near.find(x => x[1] === 1)[2]; near = near.filter(x => x[1] !== 1);
@@ -404,7 +404,7 @@ function step(m, st, k) {
       return withPf(V, { pl, ate, bugs: nb, lz: { pos: lz.pos, face: lz.face, mode: '吃', tgt: null, mem: null, eat: 2 } }, pf);
     }
   }
-  const sounds = drop.concat(k !== '.' && k[0] !== 'X' ? [['你', pl]] : []);
+  const sounds = drop.concat(k !== '.' && k[0] !== 'X' ? [[(m.quiet && !ate) ? '你轻' : '你', pl]] : []);   // 吹万 页261瘦脚轻
   bugs.forEach((a, i) => { const b = nb[i]; if (b !== null && !(a !== null && eq(a, b))) sounds.push(['虫', b]); });
   bugs = nb;
   const [lz2, dead] = api.itKey && api.itWho !== 'B' ? itMove(m, lz, pl, bugs) : lizardTurn(m, lz, pl, bugs, sounds);   // 第四个 第 17 天 22:25 页168你是它：红的听你的键
@@ -531,7 +531,7 @@ function step3(m, st, k) {
   const mB = Object.create(m); mB.post = m.postB; mB.face = m.faceB || m.face; mB.land = L.b; mB.grudge0 = null;
   mB._other = { pos: r.lz.pos, mode: r.lz.mode };
   const lzB = fa.hiss ? Object.assign({}, st.lzB, { mode: '逃' }) : st.lzB;
-  const sounds = (k !== '.' && k[0] !== 'X') ? [['你', r.pl]] : [];
+  const sounds = (k !== '.' && k[0] !== 'X') ? [[(m.quiet && !r.ate) ? '你轻' : '你', r.pl]] : [];
   let bugs = bugsTurn(m, r.bugs, lzB.pos, r.pl, r.mine);
   FLAGS.forEach(f => api[f] = (f === 'hiss' ? false : null));
   const bugs0 = bugs.slice();

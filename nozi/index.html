@@ -455,6 +455,7 @@ function start(i) {
   if (typeof li === 'number' && m && st && n > 0 && !over) (GAMES[li] = GAMES[li] || []).push({ m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), how: '没走完', n, ju: DIAN.ju[li] });   // 页140：重来、跳走之前那一局
   DIAN.ju[i] = (DIAN.ju[i] || 0) + 1;
   li = i; const L = LEVELS[i];
+  WeiDraw.lean = !!(L.day && DAYINFO[L.day - 2] && DAYINFO[L.day - 2].empty); WeiDraw.lean0 = WeiDraw.lean; WeiDraw.leanAll = false; if (WeiDraw.lean) { WeiDraw.leanT = 0; const t0 = performance.now(); const stepL = () => { WeiDraw.leanT = Math.max(0, Math.min(1, (performance.now() - t0 - 250) / 900)); if (typeof draw === 'function' && n === 0) draw(false); if (WeiDraw.leanT < 1 && n === 0) requestAnimationFrame(stepL); else WeiDraw.leanT = 1; }; requestAnimationFrame(stepL); } else WeiDraw.leanT = 1;   /* 吹万 第 20 天 页257/259/261：昨天空着肚子回的窝，新的一天开局'我'当着面瘦下去（灰、露肋），吃到一只恢复。页259 两人都把瘦连到了前一晚 */
   // 第二个·页11 20:15 页29换缝：石缝那张每次重来换一回哪几道缝有虫（照重来的次数挑，同一串键重放出来一样）。第一局是原图。
   // 为什么：网页上的人第一局挨个踩，记住哪几道有虫，第二局直接去，用不着看它；每局都不变的只剩它的脾气（饿了去扒有虫的缝）。
   const text = (L.layouts && DIAN.ju[i] > 1) ? L.layouts[(DIAN.ju[i] - 2) % L.layouts.length] : L.text;
@@ -467,6 +468,7 @@ function start(i) {
   if (L.day) { m.tree = null; m.fruitAt = [6, 2]; m.fruitStep = 999; m.rot = ROT[L.day - 2] || null; }   // 第五个 第 18 天 页176收：果子拿掉（第三个 04:47 点头：那 18 步的果子是一条不用读红就吃饱的路，跟'喂它'抢）。原来是 m.tree = [5, 2]; m.fruitStep = L.day === 1 ? 999 : 8（第三个 页173果），要回来改这一行和下面两处
   if (L.hun0 !== undefined) m.hun0 = L.hun0; if (L.day && DAYINFO[L.day - 2] && DAYINFO[L.day - 2].haunt) m.haunt0 = DAYINFO[L.day - 2].haunt; if (L.dig0) m.dig0 = true; if (L.grudge0) m.grudge0 = L.grudge0; if (L.faceB) m.faceB = L.faceB; if (L.landR) m.landR = L.landR; if (L.hun0B !== undefined) m.hun0B = L.hun0B;
   if (L.day === 1 && BACK) { if (BACK.haunt) m.haunt0 = BACK.haunt; m.fed0 = BACK.a || 0; }   /* 第二个 页154回来 */ const CY = L.from ? CARRY[L.from - 1] : null; if (CY) { m.fed0 = CY.a; m.fed0B = CY.b; if (L.V.includes('记仇')) m.grudge0 = CY.g ? (L.gmap ? L.gmap(CY.g) : CY.g) : null; }   // 第二个 09:36 页62：第 8 张'第二天'也照第 7 张真丢你的地方，不再用写死的；第 7 张没甩掉过它，第 8 张开局就什么都不记   // 第二个 08:58 页60隔天：'又一天'开局记着你昨天（第 from 张最后过关那局）喂过它几只   // 第二个 第 15 天 01:50 页45邻居   // 第二个·页11 21:47 页35骗
+  m.quiet = !!WeiDraw.lean;   /* 吹万 页261瘦脚轻：瘦着还没吃到，你的脚步它只在 2 格内听得见（瘦8 最好的一下'瘦得露骨时从上路潜过去'） */
   st = S.init(m); { const K = L.day && DAYINFO[L.day - 2] && DAYINFO[L.day - 2].mine; if (K && K.length) st.mine = st.bugs.map(b => !!b && K.some(k => k[0] === b[0] && k[1] === b[1])); }   // 第二个 02:30 页94：过夜的那几只还算你吐的（蓝圈、它吃了算你喂的）
   prev = null; n = 0; over = false; log = []; deadMark = null; heardNow = false; earNow = null; hist = []; aim = false;
   if (m.dig0 && st.lz.mode === '扒') log = ['蜥蜴蹲在一道石缝上，低头扒着。石缝底下吱吱叫了两声。'];   // 第二个 第 15 天 00:17 页40开局扒
@@ -995,7 +997,7 @@ function endDay() {
   msg.innerHTML = `你空着肚子过完了这一天。七天过完了。<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
   (itShow()); draw(true); return null;
 }
-function undo() {
+function undo() { WeiDraw.lean = WeiDraw.lean0; WeiDraw.leanAll = false;
   if (!hist.length) return;
   dian('Z');
   const h = hist.pop();
@@ -1096,7 +1098,7 @@ function act(k) {
     else if (LEVELS[li].day) msg.innerHTML += ` 七天过完了。<a href="?seed=${SEED}" style="color:#d9b44a">同一块地再过七天</a>　<a href="?seed=${SEED + 1}" style="color:#d9b44a">换一块地再过七天</a>`;
     else msg.textContent += ' 天黑了，它也回石头上趴着了。这几张都过完了。';
     if (li + 1 >= LEVELS.length) (itShow());   // 第二个 12:31 页71它的日子
-  } else if (n >= lim()) { over = true; dian('黑'); if (window.WeiSound) WeiSound.playStep({ dusk: true }); if (FXEV) FXEV.snd.push('dusk'); if (typeof li === 'number') (GAMES[li] = GAMES[li] || []).push({ m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), how: '天黑', n, ju: DIAN.ju[li] });   /* 第四个 第 17 天 09:40：少几2 第 2 天'50 步天黑，失败'那局按 R 重来以后不在回看那排局里（over 了，start 不收），'标题三局、按钮两局，50 步的记录去了哪儿' */ if (!LEVELS[li].day) msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; else if (canEndDay()) { msg.textContent = `走了 ${lim()} 步，天黑了，` + (st.ate >= m.need ? '你没赶回窝，肚子里的虫没带回去，今晚还是空着肚子。' : '你没带够虫回窝，今晚空着肚子。') + `可以就这样过完这一天，也可以按 R 从头再来。`;   /* 第四个 第 17 天 11:17：开1 第 7 天拿着一只虫天黑在离窝四格，'页面说今晚空着肚子，可我肚子里明明还有一只，读到这里有点别扭'。只改字，规矩不动 */ document.getElementById('endday').style.display = 'inline-block'; } else { msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝。昨天你也是空着肚子回的窝，连着两天，熬不过这一夜。按 R 从头再来这一天。` + (li + 1 >= LEVELS.length ? '不想再来了，可以看看它这几天。' : ''); if (li + 1 >= LEVELS.length) (document.getElementById('days').style.display = 'inline-block', itShow()); } }   /* 第二个 第 17 天 18:1x：最后一天熬不过也跟被吃一样亮'看它这几天'（照第四个 页153 那条） */
+  } else if (n >= lim()) { over = true; dian('黑'); if (window.WeiSound) WeiSound.playStep({ dusk: true }); if (FXEV) FXEV.snd.push('dusk'); if (typeof li === 'number') (GAMES[li] = GAMES[li] || []).push({ m, st0: hist.length ? hist[0].st : st, st, R: replayPath(), how: '天黑', n, ju: DIAN.ju[li] });   /* 第四个 第 17 天 09:40：少几2 第 2 天'50 步天黑，失败'那局按 R 重来以后不在回看那排局里（over 了，start 不收），'标题三局、按钮两局，50 步的记录去了哪儿' */ if (!LEVELS[li].day) msg.textContent = `走了 ${lim()} 步还没回窝，天黑了。这一局完了。按 R 从头再来。`; else if (canEndDay()) { WeiDraw.lean = true; WeiDraw.leanAll = true; WeiDraw.leanT = 1; msg.textContent = `走了 ${lim()} 步，天黑了，` + (st.ate >= m.need ? '你没赶回窝，肚子里的虫没带回去，今晚还是空着肚子。' : '你没带够虫回窝，今晚空着肚子。') + `可以就这样过完这一天，也可以按 R 从头再来。`;   /* 第四个 第 17 天 11:17：开1 第 7 天拿着一只虫天黑在离窝四格，'页面说今晚空着肚子，可我肚子里明明还有一只，读到这里有点别扭'。只改字，规矩不动 */ document.getElementById('endday').style.display = 'inline-block'; } else { msg.textContent = `走了 ${lim()} 步，天黑了，你没带够虫回窝。昨天你也是空着肚子回的窝，连着两天，熬不过这一夜。按 R 从头再来这一天。` + (li + 1 >= LEVELS.length ? '不想再来了，可以看看它这几天。' : ''); if (li + 1 >= LEVELS.length) (document.getElementById('days').style.display = 'inline-block', itShow()); } }   /* 第二个 第 17 天 18:1x：最后一天熬不过也跟被吃一样亮'看它这几天'（照第四个 页153 那条） */
   draw(true);
 }
 
