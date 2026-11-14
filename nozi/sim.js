@@ -633,6 +633,11 @@ api.init = init3;
       const k = r.bugs.findIndex(at); r.bugs[k] = null; deep = 1; if (n0 >= 2) api.logStop = true;
     }
     if (deep && eq(r.pl, L) && !eq(st.pl, L)) api.logReach = true;
+    {   // 吹万 第 20 天 14:4x：b538004 关掉深处以后 logStop/logWake 再没人设，木头掏空/吃空和吐两只救活全哑了（听着玩nozi 14:29①）。照现在的规则补：这一步木头从有到空 = logStop；往里吐、从不到两只到两只（又能生了）= logWake
+      const c0 = st.bugs.filter(at).length, c1 = r.bugs.filter(at).length;
+      if (!deep && !st.deep && c0 >= 1 && c1 === 0) api.logStop = true;
+      if (!deep && k[0] === 'X' && c0 < 2 && c1 >= 2) api.logWake = true;
+    }
     const n1 = r.bugs.filter(at).length;
     let lb = st.lb || 0;
     if (n1 >= 2 && n1 < LOGCAP) {

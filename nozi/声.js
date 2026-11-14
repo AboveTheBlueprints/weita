@@ -112,12 +112,23 @@
       return maxEnd - t0;
     }
 
+    if (ev.thin) {   // 吹万 第 20 天 14:4x：开局当面瘦下去，一口气慢慢泄掉
+      noiseBurst(ctx, dest, 900, 250, 1.2, t0, 0.85, 0.10, 'lowpass');
+      tone(ctx, dest, 'sine', 220, 150, t0 + 0.05, 0.8, 0.10, 0.08);
+      mark(t0 + 0.95);
+    }
+
     // 2. 我自己的动作（t0 起）
     if (ev.step && !ev.lzSwap) {
       const ate = ev.ate || 0;
       const fNoise = Math.max(600, 1150 - ate * 140);
+      if (ev.lean) {   // 吹万 第 20 天 14:4x：瘦着，脚步只剩一丝擦地声（原来的三分之一、更高更细，没有底下那一下闷的）
+        noiseBurst(ctx, dest, 1500, 1200, 2.5, t0, 0.03, 0.045, 'bandpass');
+        tone(ctx, dest, 'sine', 210, 150, t0, 0.025, 0.018, 0.004);
+      } else {
       noiseBurst(ctx, dest, fNoise, fNoise * 0.75, 2.2, t0, 0.038, 0.065, 'bandpass');
       tone(ctx, dest, 'sine', Math.max(95, 155 - ate * 15), 65, t0, 0.035, 0.05, 0.004);
+      }
       mark(t0 + 0.12);
     }
 
@@ -308,6 +319,13 @@
       tone(ctx, dest, 'triangle', 175, 98, tN + 0.13, 0.20, 0.32, 0.006);
       noiseBurst(ctx, dest, 320, 160, 4.0, tN + 0.13, 0.15, 0.18, 'bandpass');
       mark(tN + 0.38);
+    } else if (ev.dusk && ev.starve) {
+      /* 吹万 第 20 天 14:4x：连着两晚空着、熬不过去。不是天黑那声温的往下沉：一下低的断掉，一口气没接上，后面空着 */
+      const tD = t0 + 0.12;
+      tone(ctx, dest, 'sine', 330, 196, tD, 0.45, 0.20, 0.04);
+      tone(ctx, dest, 'triangle', 147, 55, tD + 0.40, 0.55, 0.32, 0.01, 400, 2.0);
+      noiseBurst(ctx, dest, 600, 150, 1.5, tD + 0.40, 0.35, 0.10, 'lowpass');
+      mark(tD + 1.6);
     } else if (ev.dusk) {
       /* 页225 吹万 18:10：天黑原来没声（WeiFX.dusk 被我静音了），听2 第 2 张天黑那一下正好撞上红饿醒的咕噜，读成了'结束音'。一声长的往下沉 + 一口气 */
       const tD = t0 + 0.12;
