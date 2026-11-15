@@ -280,18 +280,19 @@ function frame(cv, m, info, t) {
   if (m.tree) { const X = cx(m.tree[0]), Y = cx(m.tree[1]); g.fillStyle = '#6b4a2b'; g.fillRect(X - 3, Y, 6, C * 0.42); g.fillStyle = '#3f7a3a'; g.beginPath(); g.arc(X, Y - 4, C * 0.36, 0, 7); g.fill(); g.fillStyle = '#4f9a48'; g.beginPath(); g.arc(X - 6, Y - 9, C * 0.2, 0, 7); g.fill(); }
   if (st.fr) { const X = cx(st.fr[0]), Y = cx(st.fr[1]); g.fillStyle = '#e8892e'; g.beginPath(); g.arc(X, Y + 2, 10, 0, 7); g.fill(); g.fillStyle = '#f6b25a'; g.beginPath(); g.arc(X - 3, Y - 1, 4, 0, 7); g.fill(); g.strokeStyle = '#5a3a1a'; g.lineWidth = 2; g.beginPath(); g.moveTo(X, Y - 8); g.lineTo(X + 3, Y - 13); g.stroke(); }
   if (m.rot) { const X = cx(m.rot[0]), Y = cx(m.rot[1]); g.fillStyle = 'rgba(110,80,40,0.55)'; g.beginPath(); g.ellipse(X, Y + 8, 12, 6, 0, 0, 7); g.fill(); }
-  // 吹万 第 18 天 17:07 页184朽木：朽木画成一截横着的褐木头，里头几只就露几个绿点；只剩一只时那一点缩在木头深处、暗下去；两只以上点会一闪一闪（窸窸窣窣）
+  // 吹万 第 18 天 17:07 页184朽木：朽木画成一截横着的褐木头，里头几只就露几个绿点（第 22 天起剩一只也照样露头、空了褪灰）；两只以上点会一闪一闪（窸窸窣窣）
   const onLog = b => m.logAt && b && b[0] === m.logAt[0] && b[1] === m.logAt[1];
   if (m.logAt) {
     const X = cx(m.logAt[0]), Y = cx(m.logAt[1]), n = st.bugs.filter(onLog).length + (st.deep ? 1 : 0);
-    g.fillStyle = '#6e4e2e'; g.fillRect(X - C * 0.42, Y - C * 0.2, C * 0.84, C * 0.4);
-    g.fillStyle = '#4a321c'; g.beginPath(); g.ellipse(X + C * 0.42, Y, C * 0.07, C * 0.2, 0, 0, 7); g.fill();
+    g.fillStyle = n === 0 ? '#5b5048' : '#6e4e2e'; g.fillRect(X - C * 0.42, Y - C * 0.2, C * 0.84, C * 0.4);
+    g.fillStyle = n === 0 ? '#423a33' : '#4a321c'; g.beginPath(); g.ellipse(X + C * 0.42, Y, C * 0.07, C * 0.2, 0, 0, 7); g.fill();
     g.strokeStyle = '#3a2614'; g.lineWidth = 1.5; for (const dx of [-0.22, 0.05, 0.25]) { g.beginPath(); g.moveTo(X + C * dx, Y - C * 0.18); g.lineTo(X + C * dx + 4, Y + C * 0.18); g.stroke(); }
+    if (n === 0) { g.strokeStyle = '#2a231d'; g.lineWidth = 2; g.beginPath(); g.moveTo(X - C * 0.1, Y - C * 0.2); g.lineTo(X - C * 0.02, Y - C * 0.02); g.lineTo(X - C * 0.1, Y + C * 0.12); g.stroke(); }   /* 吹万 第 22 天 照 nozi b538004：空了，木头褪灰、多一道裂纹 */
     const live = n >= 2, now = (typeof performance !== 'undefined' ? performance.now() : 0) / 400;
     for (let i = 0; i < n; i++) {
       const px = X - C * 0.3 + i * C * 0.2, py = Y + (i % 2 ? 3 : -3);
-      g.fillStyle = n === 1 ? 'rgba(70,120,55,0.9)' : `rgba(130,210,100,${live ? 0.75 + 0.25 * Math.sin(now + i) : 1})`;
-      g.beginPath(); g.arc(px, py, n === 1 ? 4 : 5, 0, 7); g.fill();
+      g.fillStyle = `rgba(130,210,100,${live ? 0.75 + 0.25 * Math.sin(now + i) : 1})`;
+      g.beginPath(); g.arc(px, py, 5, 0, 7); g.fill();
     }
   }
   // 吹万 第 18 天 21:4x 页197木屑：你在朽木上每扒一下，木头底下落一撮木屑；前几天的还在（颜色暗一点），不写字。
@@ -299,7 +300,7 @@ function frame(cv, m, info, t) {
     const X = cx(m.logAt[0]), Y = cx(m.logAt[1]), old = m.logDust0 || 0, all = old + (st.dust || 0);
     for (let i = 0; i < all; i++) {
       const bx = X - C * 0.3 + (i % 4) * C * 0.2, by = Y + C * 0.33 + Math.floor(i / 4) * 5;
-      g.strokeStyle = i < old ? '#a8865a' : '#e6c58c'; g.lineWidth = 2.8; g.lineCap = 'round';   // 木屑画成几根浅色的小卷片，跟虫渣的深褐点分开
+      g.strokeStyle = i < old ? '#4a3826' : '#5e4630'; g.lineWidth = 2;   /* 照 nozi 页260：浅奶粗线被读成掏出来的东西，改暗褐细线 */ g.lineCap = 'round';   // 木屑画成几根浅色的小卷片，跟虫渣的深褐点分开
       for (const [dx, dy, a] of [[-4, 0, 0.5], [3, -1.5, -0.7], [0, 3, 1.3], [5, 2.5, 0.2], [-3, 4, -0.3]]) { g.beginPath(); g.moveTo(bx + dx - 3.6 * Math.cos(a), by + dy - 3.6 * Math.sin(a)); g.lineTo(bx + dx + 3.6 * Math.cos(a), by + dy + 3.6 * Math.sin(a)); g.stroke(); }
       g.lineCap = 'butt';
     }
