@@ -473,7 +473,7 @@ function start(i) {
   const yday0 = (L.day === 1 && BACK) ? '　还是上回那只蜥蜴。' + (BACK.a ? `它身子底下有${DOT(BACK.a)}个绿点。` : '') : '';   // 第二个 页154回来
   const CN7 = ['零', '一', '两', '三', '四', '五', '六', '七', '八', '九', '十'];   /* 第三个 页173果：烂果多两只，地上会到七只以上（果甲第 5 天看见'undefined只'） */
   const dayLine = !L.day ? '' : (L.day === 1 ? `第 1 天。地上有${CN7[DP.n]}只虫。` : (DAYINFO[L.day - 2] ? `第 ${L.day} 天。` + (DAYINFO[L.day - 2].empty ? '昨天你空着肚子回的窝，今天再空着回去就熬不过去了。' : '') + `昨天${DAYINFO[L.day - 2].empty ? '天黑' : '你回窝'}的时候，地上还剩${CN7[DAYINFO[L.day - 2].left]}只虫；今天地上有${CN7[DP.n]}只。` : `第 ${L.day} 天。地上有${CN7[DP.n]}只虫。`));   // 第二个 17:42 页77几天：只写数，不写为什么
-  const logLine = (L.day && L.day >= LOGDAY) ? ((L.day === LOGDAY ? '上面那条路上横着一截朽木。' : '') + (logCount0(L.day) >= 2 ? `朽木里有${CN7[logCount0(L.day)]}只，窸窸窣窣的。` : '朽木里只剩一只，一只生不出来，没动静。')) : '';   /* 吹万 页184朽木 */
+  const logLine = (L.day && L.day >= LOGDAY) ? ((L.day === LOGDAY ? '上面那条路上横着一截朽木。' : '') + (logCount0(L.day) >= 2 ? `朽木里有${CN7[logCount0(L.day)]}只，窸窸窣窣的。` : (logCount0(L.day) === 1 ? '朽木里只剩一只，一只生不出来，没动静。' : '朽木空了，褪成了灰的。'))) : '';   /* 吹万 页184朽木 */
   document.getElementById('intro').textContent = dayLine + logLine + goal() + (yday || yday0) + ((DIAN.ju[i] >= 4 && !PASSED.has(i) && i + 1 < LEVELS.length) ? '　（卡住了也可以点上面那排张名，先去玩后面的。）' : '');   // 第二个 第 15 天 02:13：整八2、4 卡在石缝四局，不知道张名能点，后面几张没见到
   if (L.day && m.rot) document.getElementById('intro').textContent += '　昨天那颗果子没人拿，烂在它石头跟前，它一早吃了。';   // 第三个 第 18 天 页173果
   const canX = L.V.includes('吐');
